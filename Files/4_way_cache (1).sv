@@ -248,7 +248,7 @@ endcase
 
 ////////////////////////////////////////////////////////
 // BANKS 1, 2, 3
-task automatic update_bank(input [31:0] data_mem_in, input [31:0] tag, input [31:0] tag_mem_in, output reg [31:0] data_mem_out, output reg [31:0] tag_mem_out, output reg [31:0] tag_mem_bus_out, output reg [31:0] data_mem_bus_out, output reg hit_out, output reg valid_out, output reg dirty_out);
+task automatic update_bank(input integer bank_index, input [31:0] data_mem_in, input [31:0] tag, input [31:0] tag_mem_in, output reg [31:0] data_mem_out, output reg [31:0] tag_mem_out, output reg [31:0] tag_mem_bus_out, output reg [31:0] data_mem_bus_out, output reg hit_out, output reg valid_out, output reg dirty_out);
 	if(tag_mem_in[0] != 1) begin
 		data_mem_out = data_mem_in;               // read cache line from memory
 		valid_out = 1;                            // set valid bit
@@ -267,15 +267,10 @@ task automatic update_bank(input [31:0] data_mem_in, input [31:0] tag, input [31
 	end
 endtask
 
-// BANK 1
-update_bank(data_mem_in, tag, tag_mem1[set_index], data_mem1[set_index], tag_mem1[set_index], tag_mem_bus1, data_mem_bus1, hit1, valid1, dirty1);
-
-// BANK 2
-update_bank(data_mem_in, tag, tag_mem2[set_index], data_mem2[set_index], tag_mem2[set_index], tag_mem_bus2, data_mem_bus2, hit2, valid2, dirty2);
-
-// BANK 3
-update_bank(data_mem_in, tag, tag_mem3[set_index], data_mem3[set_index], tag_mem3[set_index], tag_mem_bus3, data_mem_bus3, hit3, valid3, dirty3);
-
+// BANKS
+for (integer i = 0; i < 3; i++) begin
+	update_bank(i, data_mem_in, tag, tag_mem[i][set_index], data_mem[i][set_index], tag_mem[i][set_index], tag_mem_bus[i], data_mem_bus[i], hit[i], valid[i], dirty[i]);
+end
 ////////////////////////////////////////////////////////
 
 $display("end");
