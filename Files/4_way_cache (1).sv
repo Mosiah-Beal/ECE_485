@@ -194,7 +194,21 @@ $display("byte_index = %d", byte_index);
 ////////////////////////////////////////////////////////
 // BANK 0
 
-task automatic update_cache_2b11(input [1:0] n, input hit, input [31:0] data_mem_in, input [31:0] shared_cache_in, input [31:0] cache_bus_in, input [31:0] tag, output reg [31:0] data_mem0, output reg [31:0] tag_mem0, output reg [31:0] tag_mem_bus0, output reg [31:0] data_mem_bus0, output reg hit0);
+
+/*
+TODO:
+- implement update MESI protocol task (replaces update_cache_Invalid and update_cache_Exclusive)
+- depricate update_bank task (incomplete code)
+- add other 2 MESI tasks
+- for loop with case statement for all 4 banks (with break statement for early exit)
+
+- Check if all 4 are full/invalid before writing to memory
+- Implement LRU functionality
+- Make sure each n case in task does appropriate action (n==2 && busRdX == 1) for example is incorrect
+
+
+*/
+task automatic update_cache_Invalid(input [1:0] n, input hit, input [31:0] data_mem_in, input [31:0] shared_cache_in, input [31:0] cache_bus_in, input [31:0] tag, output reg [31:0] data_mem0, output reg [31:0] tag_mem0, output reg [31:0] tag_mem_bus0, output reg [31:0] data_mem_bus0, output reg hit0);
 	if(n < 3) begin
 		if(hit == 0) begin
 			data_mem0 = data_mem_in; //read cache line from memory
@@ -214,7 +228,7 @@ task automatic update_cache_2b11(input [1:0] n, input hit, input [31:0] data_mem
 	end
 endtask
 
-task automatic update_cache_2b00(input [1:0] n, input [31:0] cache_bus_in, input [31:0] tag, input [31:0] shared_cache_in, input busRd, input busRdX, output reg [31:0] data_mem0, output reg [31:0] tag_mem0, output reg [31:0] tag_mem_bus0, output reg [31:0] data_mem_bus0, output reg hit0);
+task automatic update_cache_Exclusive(input [1:0] n, input [31:0] cache_bus_in, input [31:0] tag, input [31:0] shared_cache_in, input busRd, input busRdX, output reg [31:0] data_mem0, output reg [31:0] tag_mem0, output reg [31:0] tag_mem_bus0, output reg [31:0] data_mem_bus0, output reg hit0);
 	if(n < 3) begin
 		if(n == 2 && busRdX == 1) begin
 			data_mem0 = shared_cache_in; //read cache line from memory
@@ -231,18 +245,61 @@ task automatic update_cache_2b00(input [1:0] n, input [31:0] cache_bus_in, input
 	end
 endtask
 
+task automatic update_cache_Modified(input [1:0] n, input [31:0] cache_bus_in, input [31:0] tag, input [31:0] shared_cache_in, input busRd, input busRdX, output reg [31:0] data_mem0, output reg [31:0] tag_mem0, output reg [31:0] tag_mem_bus0, output reg [31:0] data_mem_bus0, output reg hit0);
+	if(n < 3) begin
+		if(n == 2 && busRdX == 1) begin
+			data_mem0 = shared_cache_in; //read cache line from memory
+		end
+		tag_mem0 = {cache_bus_in,tag}; //write tag bits
+		tag_mem_bus0 = tag_mem0; //deliver data to CPU
+		data_mem_bus0 = data_mem0;
+		hit0 = 1;
+	end
+	else begin
+		$display("busRdX signal ignored already invalid");
+		tag_mem0 = {cache_bus_in,tag};
+		hit0 = 0;
+	end
+endtask
+
+task instructions(n)
+	case(n)
+		1: $display("00");	// run task for n=1
+		2: $display("01");	// run task for n=2
+		3: $display("10");	// run task for n=3
+		4: $display("11");	// run task for n=4
+endtask
+
+task MESI_State(address)
+	case(address)	// pass in which instruction to run on case chosen
+		M: $display("00");	// run task for Modified
+		E: $display("01");	// run task for Exclusive
+		S: $display("10");	// run task for Shared
+		I: $display("11");	// run task for Invalid
+endtask
+
+/* Rough plan for main logic
+	// get instruction from CPU
+	// task instructions(n); // figure out what to do
+	// search for tag in banks
+	// task MESI_State(address); // figure out what to do
+	// update cache (LRU?)
+*/
+////////////////////////////////////////////////////////
+
+
 
 //BANK 0
 case(tag_mem0[set_index][0:1]) 
 	2'b11: begin
-		update_cache_2b11(n, hit, data_mem_in, shared_cache_in, cache_bus_in, tag, data_mem0[set_index], tag_mem0[set_index], tag_mem_bus0, data_mem_bus0, hit0);
+		update_cache_Invalid(n, hit, data_mem_in, shared_cache_in, cache_bus_in, tag, data_mem0[set_index], tag_mem0[set_index], tag_mem_bus0, data_mem_bus0, hit0);
 		$display("000");
 		$display("tag = %h tag_mem0[set_index] = %h tag_mem0[set_index][2:11] = %h time = %t",
 			tag,tag_mem0[set_index],tag_mem0[set_index][2:11], $time);
 	end
 
 	2'b00: begin
-		update_cache_2b00(n, cache_bus_in, tag, shared_cache_in, busRd, busRdX, data_mem0[set_index], tag_mem0[set_index], tag_mem_bus0, data_mem_bus0, hit0);	
+		update_cache_Exclusive(n, cache_bus_in, tag, shared_cache_in, busRd, busRdX, data_mem0[set_index], tag_mem0[set_index], tag_mem_bus0, data_mem_bus0, hit0);	
 	end
 endcase
 
@@ -276,61 +333,3 @@ end
 $display("end");
 end
 endmodule
-
-
-
-
-
-//////////////////////////////////////////////
-// Implementation of banks using 2D array
-// BANK 1
-
-if(tag_mem[1][set_index][0] != 1) begin
-	data_mem[1][set_index] = data_mem_in;             // read cache line from memory
-	valid[1] = 1;                                     // set valid bit
-	tag_mem[1][set_index] = {valid[1],dirty[1],tag};  // write tag bits
-	tag_mem_bus[1] = tag_mem[1][set_index];           // deliver data to CPU
-	data_mem_bus[1] = data_mem[1][set_index];
-	hit[1] = 0;
-	$display("010");
-	$display("tag = %b tag_mem[1][set_index] = %b tag_mem[1][set_index][0:10] = %b time = %t",
-			  tag, tag_mem[1][set_index], tag_mem[1][set_index][2:11], $time);
-end else if((tag_mem[1][set_index][0] == 1) && (tag == tag_mem[1][set_index][2:13])) begin
-	hit[1] = 1;
-	tag_mem_bus[1] = tag_mem[1][set_index];           // deliver data to CPU
-	data_mem_bus[1] = data_mem[1][set_index];
-	$display("011");
-end else begin
-	hit[1] = 0;
-	$display("cast out algorithm here 1");
-	$display("tag = %b tag_mem[1][set_index] = %b tag_mem[1][set_index][2:13] = %b time = %t",
-			  tag, tag_mem[1][set_index], tag_mem[1][set_index][2:11], $time);
-end
-
-
-//////////////////////////////////////////////////////////
-// Experimental code for 4 way cache
-
-integer i;
-
-for(i = 0; i < 4; i = i + 1) begin
-	if(tag_mem[i][set_index][0] != 1) begin
-		data_mem[i][set_index] = data_mem_in;             // read cache line from memory
-		valid[i] = 1;                                     // set valid bit
-		tag_mem[i][set_index] = {valid[i],dirty[i],tag};  // write tag bits
-		tag_mem_bus[i] = tag_mem[i][set_index];           // deliver data to CPU
-		data_mem_bus[i] = data_mem[i][set_index];
-		hit[i] = 0;
-		$display("tag = %b tag_mem[%0d][set_index] = %b tag_mem[%0d][set_index][0:10] = %b time = %t",
-				  tag, i, tag_mem[i][set_index], i, tag_mem[i][set_index][2:11], $time);
-	end else if((tag_mem[i][set_index][0] == 1) && (tag == tag_mem[i][set_index][2:13])) begin
-		hit[i] = 1;
-		tag_mem_bus[i] = tag_mem[i][set_index];           // deliver data to CPU
-		data_mem_bus[i] = data_mem[i][set_index];
-	end else begin
-		hit[i] = 0;
-		$display("cast out algorithm here %0d", i);
-		$display("tag = %b tag_mem[%0d][set_index] = %b tag_mem[%0d][set_index][2:13] = %b time = %t",
-				  tag, i, tag_mem[i][set_index], i, tag_mem[i][set_index][2:11], $time);
-	end
-end
