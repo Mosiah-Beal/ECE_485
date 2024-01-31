@@ -268,7 +268,7 @@ task automatic update_bank(input integer bank_index, input [31:0] data_mem_in, i
 endtask
 
 // BANKS
-for (integer i = 0; i < 3; i++) begin
+for (integer i = 1; i < 4; i++) begin
 	update_bank(i, data_mem_in, tag, tag_mem[i][set_index], data_mem[i][set_index], tag_mem[i][set_index], tag_mem_bus[i], data_mem_bus[i], hit[i], valid[i], dirty[i]);
 end
 ////////////////////////////////////////////////////////
