@@ -60,7 +60,7 @@ output logic [512] data_mem_out); // not used will be implemented soon
 //address part breakdown into internal varibles 
 /*
 logic [1:0] byte_offset;	// which byte in the word		(2^2 = 4 bytes) bit[30:31] of address?
-logic [5:0] byte_index;		// which word in the block  	(2^6 = 64 words) bit[0:5] of address
+logic [5:0] byte_index;		// which word in the block  	(2^6 = 64 words) bit[0:5] of address {upper 6 bits of address}
 logic [13:0] set_index;		// which set in the cache		(2^14 = 16384 sets) bit[6:19] of address
 logic [10:0] tag;			// which block in the memory	(2^11 = 2048 ) bit[20:xx] of address?
 */
@@ -303,11 +303,29 @@ endmodule
 *	- need to implement full functionality for the different n instructions
 */
 
+task automatic probe_banks();
+	for (int i = 0; i < 4; i++) begin
+		$display("probe bank %d", i);
+		// probe bank
 
-task automatic probe_banks()
+
+		// if hit, return bank and update LRU
+		if (hit) begin
+			$display("hit in bank %d", i);
+			// update LRU
+			break;
+		end
+
+		else begin
+			$display("miss in bank %d", i);
+		end
 
 
-task automatic update_cache_Modified(input n, input [31:0] cache_bus_in, input [31:0] tag, input [31:0] shared_cache_in, input busRd, input busRdX, output reg [31:0] data_mem0, output reg [31:0] tag_mem0, output reg [31:0] tag_mem_bus0, output reg [31:0] data_mem_bus0, output reg hit0);
+	end
+endtask
+
+
+task automatic update_cache(input n, input [31:0] cache_bus_in, input [31:0] tag, input [31:0] shared_cache_in, input busRd, input busRdX, output reg [31:0] data_mem0, output reg [31:0] tag_mem0, output reg [31:0] tag_mem_bus0, output reg [31:0] data_mem_bus0, output reg hit0);
 	case(n)
 		0: begin
 			$display("0: read data request to L1 data cache\n");
@@ -339,115 +357,6 @@ endtask
    2'b10 represents Exclusive
    2'b11 represents Modified.
 */
-task automatic Modified_update(input n, output reg [1:0] MESI_bits);
-	case(n)
-		0: begin // read data request to L1 data cache
-			MESI_bits = 2'b01; // Transition to Shared state
-		end
-		1: begin // write data request to L1 data cache
-			MESI_bits = 2'b11; // Transition to Modified state
-		end
-		2: begin // instruction fetch (a read request to L1 instruction cache)
-			MESI_bits = 2'b01; // Transition to Shared state
-		end
-		3: begin // invalidate command from L2
-			MESI_bits = 2'b00; // Transition to Invalid state
-		end
-		4: begin // data request from L2 (in response to snoop)
-			MESI_bits = 2'b01; // Transition to Shared state
-		end
-		8: begin // clear the cache and reset all state (and statistics)
-			MESI_bits = 2'b00; // Transition to Invalid state
-		end
-		9: begin // print contents and state of the cache (allow subsequent trace activity)
-			// No transition, just print the current state
-			$display("Current MESI state: %b", MESI_bits);
-		end
-	endcase
-endtask
-
-task automatic Exclusive_update(input n, output reg [1:0] MESI_bits);
-	case(n)
-		0: begin // read data request to L1 data cache
-			MESI_bits = 2'b01; // Transition to Shared state
-		end
-		1: begin // write data request to L1 data cache
-			MESI_bits = 2'b11; // Transition to Modified state
-		end
-		2: begin // instruction fetch (a read request to L1 instruction cache)
-			MESI_bits = 2'b01; // Transition to Shared state
-		end
-		3: begin // invalidate command from L2
-			MESI_bits = 2'b00; // Transition to Invalid state
-		end
-		4: begin // data request from L2 (in response to snoop)
-			MESI_bits = 2'b01; // Transition to Shared state
-		end
-		8: begin // clear the cache and reset all state (and statistics)
-			MESI_bits = 2'b00; // Transition to Invalid state
-		end
-		9: begin // print contents and state of the cache (allow subsequent trace activity)
-			// No transition, just print the current state
-			$display("Current MESI state: %b", MESI_bits);
-		end
-	endcase
-endtask
-
-task automatic Shared_update(input n, output reg [1:0] MESI_bits);
-	case(n)
-		0: begin // read data request to L1 data cache
-			MESI_bits = 2'b01; // Remain in Shared state
-		end
-		1: begin // write data request to L1 data cache
-			MESI_bits = 2'b11; // Transition to Modified state
-		end
-		2: begin // instruction fetch (a read request to L1 instruction cache)
-			MESI_bits = 2'b01; // Remain in Shared state
-		end
-		3: begin // invalidate command from L2
-			MESI_bits = 2'b00; // Transition to Invalid state
-		end
-		4: begin // data request from L2 (in response to snoop)
-			MESI_bits = 2'b01; // Remain in Shared state
-		end
-		8: begin // clear the cache and reset all state (and statistics)
-			MESI_bits = 2'b00; // Transition to Invalid state
-		end
-		9: begin // print contents and state of the cache (allow subsequent trace activity)
-			// No transition, just print the current state
-			$display("Current MESI state: %b", MESI_bits);
-		end
-	endcase
-endtask
-
-task automatic Invalid_update(input n, output reg [1:0] MESI_bits);
-	case(n)
-		0: begin // read data request to L1 data cache
-			MESI_bits = 2'b01; // Transition to Shared state
-		end
-		1: begin // write data request to L1 data cache
-			MESI_bits = 2'b11; // Transition to Modified state
-		end
-		2: begin // instruction fetch (a read request to L1 instruction cache)
-			MESI_bits = 2'b01; // Transition to Shared state
-		end
-		3: begin // invalidate command from L2
-			MESI_bits = 2'b00; // Remain in Invalid state
-		end
-		4: begin // data request from L2 (in response to snoop)
-			MESI_bits = 2'b01; // Transition to Shared state
-		end
-		8: begin // clear the cache and reset all state (and statistics)
-			MESI_bits = 2'b00; // Remain in Invalid state
-		end
-		9: begin // print contents and state of the cache (allow subsequent trace activity)
-			// No transition, just print the current state
-			$display("Current MESI state: %b", MESI_bits);
-		end
-	endcase
-endtask
-
-//////////////////////////////////////////////
 
 task automatic Modified_update(input n, output reg [1:0] MESI_bits);
 	case(n)
@@ -556,66 +465,6 @@ endtask
 
 
 //////////////////////////////////////////////
-task automatic update_cache_Invalid(input [1:0] n, input hit, input [31:0] data_mem_in, input [31:0] shared_cache_in, input [31:0] cache_bus_in, input [31:0] tag, output reg [31:0] data_mem0, output reg [31:0] tag_mem0, output reg [31:0] tag_mem_bus0, output reg [31:0] data_mem_bus0, output reg hit0);
-	if(n < 3) begin
-		if(hit == 0) begin
-			data_mem0 = data_mem_in; //read cache line from memory
-		end
-		else begin
-			data_mem0 = shared_cache_in; //read cache line from memory
-		end
-		tag_mem0 = {cache_bus_in,tag}; //write tag bits
-		tag_mem_bus0 = tag_mem0; //deliver data to CPU
-		data_mem_bus0 = data_mem0;
-		hit0 = 0;
-	end
-	else begin
-		$display("busRdX signal ignored already invalid");
-		tag_mem0 = {cache_bus_in,tag};
-		hit0 = 0;
-	end
-endtask
-
-task automatic update_cache_Exclusive(input [1:0] n, input [31:0] cache_bus_in, input [31:0] tag, input [31:0] shared_cache_in, input busRd, input busRdX, output reg [31:0] data_mem0, output reg [31:0] tag_mem0, output reg [31:0] tag_mem_bus0, output reg [31:0] data_mem_bus0, output reg hit0);
-	if(n < 3) begin
-		if(n == 2 && busRdX == 1) begin
-			data_mem0 = shared_cache_in; //read cache line from memory
-		end
-		tag_mem0 = {cache_bus_in,tag}; //write tag bits
-		tag_mem_bus0 = tag_mem0; //deliver data to CPU
-		data_mem_bus0 = data_mem0;
-		hit0 = 1;
-	end
-	else begin
-		$display("busRdX signal ignored already invalid");
-		tag_mem0 = {cache_bus_in,tag};
-		hit0 = 0;
-	end
-endtask
-
-task automatic update_cache_Modified(input [1:0] n, input [31:0] cache_bus_in, input [31:0] tag, input [31:0] shared_cache_in, input busRd, input busRdX, output reg [31:0] data_mem0, output reg [31:0] tag_mem0, output reg [31:0] tag_mem_bus0, output reg [31:0] data_mem_bus0, output reg hit0);
-	if(n < 3) begin
-		if(n == 2 && busRdX == 1) begin
-			data_mem0 = shared_cache_in; //read cache line from memory
-		end
-		tag_mem0 = {cache_bus_in,tag}; //write tag bits
-		tag_mem_bus0 = tag_mem0; //deliver data to CPU
-		data_mem_bus0 = data_mem0;
-		hit0 = 1;
-	end
-	else begin
-		$display("busRdX signal ignored already invalid");
-		tag_mem0 = {cache_bus_in,tag};
-		hit0 = 0;
-	end
-endtask
-
-
-
-
-
-
-//////////////////////////////////////////////
 // MESI State tasks
 //////////////////////////////////////////////
 
@@ -704,3 +553,110 @@ begin
 		end
 	endcase
 end
+
+
+
+
+
+//////////////////////////////////////////////
+// LRU for 8-way set associative cache. Counts down from 7 to 0 depending on the order of access
+// Duplicate the structure of the cache lines from the explanation pdf
+/*
+integer ways = 8;					// 8 way set associative cache
+reg [5:0] Tag[ways-1:0];			// 6 bits for tag (index in the example)
+reg [2:0] LRU[ways-1:0];			// 3 bits for indexing the 8 ways
+reg [1:0] MESI_bits[ways-1:0];		// 2 bits for MESI states (00, 01, 10, 11) (Invalid, Shared, Exclusive, Modified)
+
+// Cache lines structure
+// 	[Tag0], [Tag1], [Tag2], [Tag3], [Tag4], [Tag5], [Tag6], [Tag7]
+//	[LRU0], [LRU1], [LRU2], [LRU3], [LRU4], [LRU5], [LRU6], [LRU7]	// 000 is least recently used, 111 is most recently used
+//	[MESI_bits0], [MESI_bits1], [MESI_bits2], [MESI_bits3], [MESI_bits4], [MESI_bits5], [MESI_bits6], [MESI_bits7]
+
+cache_lines [2:0][ways-1:0] = {Tag, LRU, MESI_bits};
+
+// Accessing an element will update the LRU
+// If a write miss occurs, the LRU way is selected for replacement
+// if the replaced line is modified, it is written back to memory before the new line is written
+
+// reg [31:0] address = 32'h984DE132;
+// reg [11:0] tag = address[31:20]; 		// 12 bits for tag. // 1001 1000 0100b = 0x984h
+// reg [13:0] set_index = address[19:6];	// 14 bits for set index. // 1101 1110 0001 00b = 0x3784h
+// reg [5:0] byte_offset = address[5:0];	// 6 bits for byte offset. // 11 0010b = 0x32h
+
+*/
+
+typedef struct packed {
+	reg [11:0] tag;         // 12 bits for tag
+	reg [13:0] set_index;   // 14 bits for set index
+	reg [5:0]  byte_offset; // 6 bits for byte offset
+} address_t;
+
+// Now you can declare an address like this and assign a value to it:
+address_t my_address = 32'h984DE132;
+
+// The packed struct will automatically unpack the 32-bit address into the 3 fields
+$display("tag = %h, set_index = %h, byte_offset = %h", my_address.tag, my_address.set_index, my_address.byte_offset);
+
+// Make an array of addresses to test LRU
+address_t addresses[7];
+addresses[0] = 32'h984DE132;
+addresses[1] = 32'h116DE12F;
+addresses[2] = 32'h100DE130;
+addresses[3] = 32'h999DE12E;
+addresses[4] = 32'h645DE10A;
+addresses[5] = 32'h846DE107;
+addresses[6] = 32'h211DE128;
+addresses[7] = 32'h777DE133;
+
+
+// Define the cache line structure
+typedef struct packed {
+	reg [5:0] tag;         // 6 bits for tag
+	reg [2:0] LRU;         // 3 bits for LRU
+	reg [1:0] MESI_bits;   // 2 bits for MESI states
+} cache_line_t;
+
+// Define the number of ways
+parameter ways = 8;
+
+// Declare the cache as an array of cache lines
+cache_line_t cache[ways-1:0];
+
+
+// Initialize the cache
+initial begin
+	for (int i = 0; i < ways; i++) begin
+		cache[i].LRU = i;	// LRU initially ordered according to index number of the cache lines (0, 1, 2, 3, 4, 5, 6, 7)
+		cache[i].MESI_bits = 2'b00; // Initialize MESI bits to Invalid
+		cache[i].tag = 6'b0; // Initialize tag to 0
+	end
+end
+
+
+// Now test the LRU functionality with the array of addresses
+for (int i = 0; i < 7; i++) begin	// Loop through the array of addresses
+
+	// Decrement the LRU for all ways and let it underflow
+	for (int j = 0; j < ways; j++) begin	
+		cache[j].LRU -= 1;	
+	end
+
+	// Find the way with the least recently used cache line
+	int LRU_way = 0;	// Start by assuming the first way is the least recently used
+	for (int j = 1; j < ways; j++) begin	// Loop through the other ways
+		if (cache[j].LRU == 3'b111) begin	// The LRU way would have underflowed to 3'b111
+			LRU_way = j;	// If the current way is least recently used, update the LRU way
+			$display("Least recently used way: %d", LRU_way);	// Print the least recently used way (debug if multiple ways have LRU = 111)
+			break;
+		end
+	end
+
+	// Write the new address to the least recently used way (already set to 3b'111 due to underflow)
+	cache[LRU_way].tag = addresses[i].tag;	// Update the tag
+end
+
+// Display the cache
+for (int i = 0; i < ways; i++) begin
+	$display("Way %d: tag = %h, LRU = %b, MESI_bits = %b", i, cache[i].tag, cache[i].LRU, cache[i].MESI_bits);
+end
+/////////////////////////////////////
