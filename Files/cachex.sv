@@ -1,3 +1,15 @@
+/* ARs
+* Select way
+* Select processor
+* Mesi implementation
+* 
+* Highlight way to select data
+* How to send to data to MESI
+* For loop to go through every bank and compare address tag to cacheline tag and output 8 hit/no hit
+* Determine hitm based on if (hit exists AND write instruction)
+*/
+
+
 /**********
 * Structs *
 ***********/
@@ -162,40 +174,6 @@ MESI_controller(.n(n), .mesi_now(cache_bus_in));
 
 endmodule
 
-/* ARs
-* Select way
-* Select processor
-* Mesi implementation
-* 
-* Highlight way to select data
-* How to send to data to MESI
-* For loop to go through every bank and compare address tag to cacheline tag and output 8 hit/no hit
-* Determine hitm based on if (hit exists AND write instruction)
-*/
-
-
-/*
-decription
-not needed since intruction will contain which cache it operates on
-
-function automatic logic (processor test_instruction)
-	
-    logic owner_mask = (test_instruction.PID | 3'b000);
-    //logic snoop_mask = (~(test_instruction.PID) & 3'b111);
-
-    for(logic PID = 4'b0000; PID == 4'b1000; PID << 1) {
-        // Check if PID is owner    // FIXME: Implement cache selection and make new struct with (do everything)
-        (PID & owner_mask) ? mem_op(owner) : //pass;
-    }
-    
-    for(logic PID = 4'b0000; PID == 4'b1000; PID << 1) {
-        // Check if PID is owner    // FIXME: Implement cache selection and make new struct with (do everything)
-        (PID & owner_mask) ? //pass  : mem_op(snooper);
-    }
-
-endfunction
-	
-*/
 
 /* the above section initialized the cache structure used in the functions
 * following sections provide functions which execute cache operation given the structure defined above
