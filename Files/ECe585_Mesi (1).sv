@@ -129,6 +129,7 @@ $display("Invalid", $time);
             cache_bus_out = state;
             case(n)
                 0: begin
+                //call mem op function
                 cache_bus_out = state;
                 busRd = 1;
                 busRdX = 0;
@@ -141,6 +142,7 @@ $display("Invalid", $time);
                 default: begin
                 cache_bus_out = state;
                 end
+                
             endcase
         end
 
