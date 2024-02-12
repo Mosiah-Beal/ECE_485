@@ -73,51 +73,87 @@ p2addresses[5] = 32'h846DE107;
 p2addresses[6] = 32'h211DE128;
 p2addresses[7] = 32'h777DE133;
 
+/* Alternatively 
+address_t p2addresses[8] = '{
+    32'h984DE132,
+    32'h116DE12F,
+    32'h100DE130,
+    32'h999DE12E,
+    32'h645DE10A,
+    32'h846DE107,
+    32'h211DE128,
+    32'h777DE133
+};
+*/
+
+
 /**********
 * Modules *
 ***********/
 
-module cache;
-/** Initialize data cache as a 2D array of cache lines  // These could be passed in as parameters
-*  16k = 2^14 sets      // rows
-*  8-way associative    // columns
-*  cache_line contains tag, LRU, MESI bits, and data
-**/
+module project;     // top level module
+    
+    // Instantiate an array of data caches
+    cache #(.sets(16384), .ways(8)) data_caches[7:0];
 
-// Define the number of ways
-parameter ways = 8;
-parameter sets = 16384; //16k = 2^14
+    // Instantiate an array of instruction caches
+    cache #(.sets(16384), .ways(4)) instruction_caches[3:0];
+    
+    // Do something with the processors
+    // processor processor0();
+    // processor processor1();
+    // processor processor2();
 
-// Declare the cache as an array of cache lines
-cache_line_t data_cache[sets-1][ways-1:0];   // L1 cache
+    
+    /** 
+        mesi controller instance will include call to mem ops functions. 
+        necessary struct info needs to be ported
+        MESI_controller(.n(n), .mesi_now(cache_bus_in));
+    */
 
 
-// Initialize the cache !!! note initialization for each set needs to be added !!!
-initial begin
-    // Initialize each set
-    for(int i = 0; i < sets; i++) begin
-        // Initialize each way
-        for(int j = 0; j < ways; j++) begin
-            data_cache[i][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-            data_cache[i][j].MESI_bits = 2'b00; // Initialize MESI bits to Invalid
-            data_cache[i][j].tag = 6'b0;        // Initialize tag to 0
-            data_cache[i][j].data = 512'b0      // Initialize mem to 0
+    // Declare the MESI controller module
+    // MESI_controller MESI_controller();
+
+    // Feed the processor instructions to the MESI controller
+    /** 
+        MESI_controller.processor_instruction = processor0.test_instruction;
+        MESI_controller.processor_instruction = processor1.test_instruction;
+        MESI_controller.processor_instruction = processor2.test_instruction;
+    */
+endmodule
+
+
+module cache #(parameter sets = 16384, parameter ways = 8); // cache module
+    /** Initialize data cache as a 2D array of cache lines
+    *  cache_line contains tag, LRU, MESI bits, and data
+    **/
+
+    // Declare the cache as an array of cache lines
+    cache_line_t data_cache[sets-1:0][ways-1:0];   // L1 cache
+
+    // Initialize the cache
+    initial begin
+        // Initialize each set
+        for(int i = 0; i < sets; i++) begin
+            // Initialize each way
+            for(int j = 0; j < ways; j++) begin
+                data_cache[i][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
+                data_cache[i][j].MESI_bits = 2'b00; // Initialize MESI bits to Invalid
+                data_cache[i][j].tag = 6'b0;        // Initialize tag to 0
+                data_cache[i][j].data = 512'b0;     // Initialize mem to 0
+            end
         end
     end
-end
-///////////////////////////////////////////////////////////////////////
+endmodule
 
 
-// Create a test instruction from processor 1
-processor test_instruction = {1, p1addresses[0], 1};
-
-
-
-// cache module struct definition
-address_t owner_address;    // the cache of the owner
-address_t snoop1;           // the cache of snooper 1
-address_t snoop2;           // the cache of snooper 2
-// Search the ways
+/************ 
+* Functions *
+*************
+* The following sections provide functions which execute cache operation given the structure defined above
+* LRU is not implemented but available for implementation
+*/ 
 
 /** find_hits
 * Determines which coloumn(s) of the cache produced a hit (if any)
@@ -163,103 +199,82 @@ function automatic logic find_hits (processor test_instruction)
     end
 endfunction
 
-
-
-
-/** description to line 200
-mesi controller instance will include call to mem ops functions. necessary struct info needs to be ported
-*/
-MESI_controller(.n(n), .mesi_now(cache_bus_in));
-
-
-endmodule
-
-
-/* the above section initialized the cache structure used in the functions
-* following sections provide functions which execute cache operation given the structure defined above
-* LRU is not implemented but available for implementation
-*/ 
-
-
-
 function automatic logic update_mesi ([2:0] n, [1:0] mesi_now);
 
-MESI_controller(.n(n), .mesi_now(cache_bus_in));
-
+    MESI_controller(.n(n), .mesi_now(cache_bus_in));
 endfunction
 
 function automatic logic owner_invalid_mem_op( 
-input [2:0] n, //Instruction            //killed (in test_instruction)
-input [1:0] mesi_now, //M,E,S,I         //killed (in cache)
-input cache_line_t cache,
-input address_t owner_address,          //killed (in test_instruction)
-input cache_line_t shared_cache_in,
-input data_mem_in,
-input hit,hitM,busRd,busRdX             // 4-state bus?    
-output [7:0] data
-);   
-logic [7:0] data_register;	// 
-// implement processor masking i.e decide which processor the instruction came from
+    input [2:0] n, //Instruction            //killed (in test_instruction)
+    input [1:0] mesi_now, //M,E,S,I         //killed (in cache)
+    input cache_line_t cache,
+    input address_t owner_address,          //killed (in test_instruction)
+    input cache_line_t shared_cache_in,
+    input data_mem_in,
+    input hit,hitM,busRd,busRdX             // 4-state bus?    
+    output [7:0] data
+    );   
+    logic [7:0] data_register;	// 
+    // implement processor masking i.e decide which processor the instruction came from
 
- 
-    case (n)
-    0: begin	// read instruction
-        // Check if hit is 0
-        if (hit == 0) begin
-            // Write data_mem_in to data memory
-            cache[set_index][ways-1].data = data_mem_in;
+    
+        case (n)
+        0: begin	// read instruction
+            // Check if hit is 0
+            if (hit == 0) begin
+                // Write data_mem_in to data memory
+                cache[set_index][ways-1].data = data_mem_in;
+            end
+            else begin
+                // Write data_mem_in to data memory from shared_cache_in
+                cache[set_index][ways-1].data = shared_cache_in.data;
+            end
+            
+        
+        // Write tag bits to tag memory
+            cache[set_index][ways-1].tag = owner_address.tag; 
+            // Deliver tag data to CPU
+            data_out = cache[set_index][ways-1].data[byte_offset +: 8];
+            // Reset hit flag
+            hit = 0;
         end
-        else begin
-            // Write data_mem_in to data memory from shared_cache_in
-            cache[set_index][ways-1].data = shared_cache_in.data;
+
+        1: begin	// Write instruction
+            // Check if hit is 0
+            if (hit == 0) begin
+                // Write data_mem_in to data memory
+                cache[set_index][ways-1].data = data_mem_in;
+            end
+            else begin
+                // Write data_mem_in to data memory from shared_cache_in
+                cache[set_index][ways-1].data = shared_cache_in.data;
+            end
+
+
+            // Write tag bits to tag memory
+            cache[set_index][ways-1].tag = owner_address.tag; 
+            // Deliver tag data to CPU
+            data_out = cache[set_index][ways-1].data[byte_offset +: 8];
+            // Reset hit flag
+            hit = 0;
         end
         
-	
-	// Write tag bits to tag memory
-        cache[set_index][ways-1].tag = owner_address.tag; 
-        // Deliver tag data to CPU
-        data_out = cache[set_index][ways-1].data[byte_offset +: 8];
-        // Reset hit flag
-        hit = 0;
-    end
-
-    1: begin	// Write instruction
-        // Check if hit is 0
-        if (hit == 0) begin
-            // Write data_mem_in to data memory
-            cache[set_index][ways-1].data = data_mem_in;
-        end
-        else begin
-            // Write data_mem_in to data memory from shared_cache_in
-            cache[set_index][ways-1].data = shared_cache_in.data;
+        // Check if n is 3 or 4
+        3, 4: begin
+            // Display message indicating busRdX signal is ignored because it's already invalid
+            $display("busRdX signal ignored already invalid");
+            // Write tag bits to tag memory
+            cache[set_index][ways-1].tag = owner_address.tag;
+            // Reset hit flag
+            hit = 0;
         end
 
-
-        // Write tag bits to tag memory
-        cache[set_index][ways-1].tag = owner_address.tag; 
-        // Deliver tag data to CPU
-        data_out = cache[set_index][ways-1].data[byte_offset +: 8];
-        // Reset hit flag
-        hit = 0;
-    end
-	
-    // Check if n is 3 or 4
-    3, 4: begin
-        // Display message indicating busRdX signal is ignored because it's already invalid
-        $display("busRdX signal ignored already invalid");
-        // Write tag bits to tag memory
-       	cache[set_index][ways-1].tag = owner_address.tag;
-        // Reset hit flag
-     	hit = 0;
-    end
-
-    default: begin
-        // Display debugging information
-        $display("000");
-        $display("tag = %h tag_mem0[set_index] = %h tag_mem0[set_index][2:11] = %h time = %t", tag, cache[n].tag_mem[set_index], cache[n].tag_mem[set_index][2:11], $time);
-    end
-endcase
-
+        default: begin
+            // Display debugging information
+            $display("000");
+            $display("tag = %h tag_mem0[set_index] = %h tag_mem0[set_index][2:11] = %h time = %t", tag, cache[n].tag_mem[set_index], cache[n].tag_mem[set_index][2:11], $time);
+        end
+    endcase
 endfunction
 
 function automatic logic invalid_state([0:1] cache_bus_in, [2:0] n, hit, hitM, busRd, BusRdX)
@@ -268,7 +283,6 @@ function automatic logic invalid_state([0:1] cache_bus_in, [2:0] n, hit, hitM, b
 
 	owner_mem_op(n, cache_bus_in, owner); //not complete!!
 	
-	snoop_mem_op(n, 
-	
+	snoop_mem_op(n, 	
 endfunction
 
