@@ -176,15 +176,15 @@ function automatic logic find_hits (*processor test_instruction)
                     case(test_intruction.n)  // which instruction is this?
 
         0:  // read instruction
-            data_read_bus[i] = 1;  // if read instruction -> hit;
+            data_read_bus[i] = 1;   // if read instruction -> hit;
 
-        1:  data_read_bus[i] = z;
+        1:  data_read_bus[i] = z;   // if write instruction -> hitM;
 
 
         2: data_read_bus[i] = 1;
 
         3:  // L2 invalidate
-            data_read_bus[i] = z;
+            data_read_bus[i] = z;   // if hit found on 
 
         default:  data_read_bus[i] = x;
 
