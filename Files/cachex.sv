@@ -27,7 +27,7 @@ typedef struct packed {
     address_t address;      // 32-bit address
     reg[2:0] PID;           // processor id
     logic[1:0] cache_num;   // which instruction cache
-} processor_instruction_t processor;
+} command_t;
 
 // Cache line struct, contains tag, LRU, MESI bits, and data
 typedef struct packed {
@@ -37,43 +37,70 @@ typedef struct packed {
 	reg [511:0] data        // 512 bits for data
 } cache_line_t;
 
+
 /************
 * Instances *
 *************/
+/*
+    // simulate processor0
+    address_t p0addresses [7];
+    p0addresses[0] = 32'h984DE132;
+    p0addresses[1] = 32'h116DE12F;
+    p0addresses[2] = 32'h100DE130;
+    p0addresses[3] = 32'h999DE12E;
+    p0addresses[4] = 32'h645DE10A;
+    p0addresses[5] = 32'h846DE107;
+    p0addresses[6] = 32'h211DE128;
+    p0addresses[7] = 32'h777DE133;
+
+    // simulate processor1
+    address_t p1addresses[7];
+    p1addresses[0] = 32'h984DE132;
+    p1addresses[1] = 32'h116DE12F;
+    p1addresses[2] = 32'h100DE130;
+    p1addresses[3] = 32'h999DE12E;
+    p1addresses[4] = 32'h645DE10A;
+    p1addresses[5] = 32'h846DE107;
+    p1addresses[6] = 32'h211DE128;
+    p1addresses[7] = 32'h777DE133;
+
+    // simulate processor2 
+    address_t p2addresses[7];
+    p2addresses[0] = 32'h984DE132;
+    p2addresses[1] = 32'h116DE12F;
+    p2addresses[2] = 32'h100DE130;
+    p2addresses[3] = 32'h999DE12E;
+    p2addresses[4] = 32'h645DE10A;
+    p2addresses[5] = 32'h846DE107;
+    p2addresses[6] = 32'h211DE128;
+    p2addresses[7] = 32'h777DE133;
+*/
+
 // simulate processor0
-address_t p0addresses [7];
-p0addresses[0] = 32'h984DE132;
-p0addresses[1] = 32'h116DE12F;
-p0addresses[2] = 32'h100DE130;
-p0addresses[3] = 32'h999DE12E;
-p0addresses[4] = 32'h645DE10A;
-p0addresses[5] = 32'h846DE107;
-p0addresses[6] = 32'h211DE128;
-p0addresses[7] = 32'h777DE133;
+address_t p0addresses[8] = '{
+    32'h984DE132,
+    32'h116DE12F,
+    32'h100DE130,
+    32'h999DE12E,
+    32'h645DE10A,
+    32'h846DE107,
+    32'h211DE128,
+    32'h777DE133
+};
 
 // simulate processor1
-address_t p1addresses[7];
-p1addresses[0] = 32'h984DE132;
-p1addresses[1] = 32'h116DE12F;
-p1addresses[2] = 32'h100DE130;
-p1addresses[3] = 32'h999DE12E;
-p1addresses[4] = 32'h645DE10A;
-p1addresses[5] = 32'h846DE107;
-p1addresses[6] = 32'h211DE128;
-p1addresses[7] = 32'h777DE133;
+address_t p1addresses[8] = '{
+    32'h984DE132,
+    32'h116DE12F,
+    32'h100DE130,
+    32'h999DE12E,
+    32'h645DE10A,
+    32'h846DE107,
+    32'h211DE128,
+    32'h777DE133
+};
 
-// simulate processor2 
-address_t p2addresses[7];
-p2addresses[0] = 32'h984DE132;
-p2addresses[1] = 32'h116DE12F;
-p2addresses[2] = 32'h100DE130;
-p2addresses[3] = 32'h999DE12E;
-p2addresses[4] = 32'h645DE10A;
-p2addresses[5] = 32'h846DE107;
-p2addresses[6] = 32'h211DE128;
-p2addresses[7] = 32'h777DE133;
-
-/* Alternatively 
+// simulate processor2
 address_t p2addresses[8] = '{
     32'h984DE132,
     32'h116DE12F,
@@ -84,25 +111,50 @@ address_t p2addresses[8] = '{
     32'h211DE128,
     32'h777DE133
 };
-*/
+
 
 
 /**********
 * Modules *
 ***********/
 
-module project;     // top level module
-    
-    // Instantiate an array of data caches
-    cache #(.sets(16384), .ways(8)) data_caches[7:0];
+// Example of potential module structure
+module top;
+    // Declare signals
+    wire [31:0] signal_from_p0_to_p1;
+    wire [31:0] signal_from_p1_to_p0;
 
-    // Instantiate an array of instruction caches
-    cache #(.sets(16384), .ways(4)) instruction_caches[3:0];
+    // Instantiate processor 0
+    processor p0 (
+        .output_signal(signal_from_p0_to_p1),
+        .input_signal(signal_from_p1_to_p0)
+    );
+
+    // Instantiate processor 1
+    processor p1 (
+        .output_signal(signal_from_p1_to_p0),
+        .input_signal(signal_from_p0_to_p1)
+    );
+endmodule
+
+
+
+
+module project;     // top level module
+
+    // Declare global signals
+    // hit buses for instruction and data caches
+    logic [1:0] instruction_read_bus;   // 4-way instruction caches
+    logic [2:0] data_read_bus;          // 8-way data caches
+
+    // Other signals
+
+
     
-    // Do something with the processors
-    // processor processor0();
-    // processor processor1();
-    // processor processor2();
+    // Instantiate the processors, each has their own 4-way instruction and 8-way data cache
+    processor processor0;
+    processor processor1;
+    processor processor2;
 
     
     /** 
@@ -123,6 +175,14 @@ module project;     // top level module
     */
 endmodule
 
+module processor;   
+    // Instantiate an array of data caches
+    cache #(.sets(16384), .ways(8)) data_cache;
+
+    // Instantiate an array of instruction caches
+    cache #(.sets(16384), .ways(4)) instruction_cache;
+endmodule
+
 
 module cache #(parameter sets = 16384, parameter ways = 8); // cache module
     /** Initialize data cache as a 2D array of cache lines
@@ -130,7 +190,7 @@ module cache #(parameter sets = 16384, parameter ways = 8); // cache module
     **/
 
     // Declare the cache as an array of cache lines
-    cache_line_t data_cache[sets-1:0][ways-1:0];   // L1 cache
+    cache_line_t cache[sets-1:0][ways-1:0];   // L1 cache
 
     // Initialize the cache
     initial begin
@@ -138,10 +198,10 @@ module cache #(parameter sets = 16384, parameter ways = 8); // cache module
         for(int i = 0; i < sets; i++) begin
             // Initialize each way
             for(int j = 0; j < ways; j++) begin
-                data_cache[i][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-                data_cache[i][j].MESI_bits = 2'b00; // Initialize MESI bits to Invalid
-                data_cache[i][j].tag = 6'b0;        // Initialize tag to 0
-                data_cache[i][j].data = 512'b0;     // Initialize mem to 0
+                ache[i][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
+                cache[i][j].MESI_bits = 2'b00; // Initialize MESI bits to Invalid
+                cache[i][j].tag = 6'b0;        // Initialize tag to 0
+                cache[i][j].data = 512'b0;     // Initialize mem to 0
             end
         end
     end
@@ -160,7 +220,7 @@ endmodule
 * Set the read_bus using the four states of the operator to specify 
 * hit(1), hitM(z), no hit(0), dont care(x)
 **/
-function automatic logic find_hits (processor test_instruction)
+function automatic logic find_hits (command_t test_instruction)
 
     address_t desired_address = test_instruction.address;   // get the address we are looking for
     logic [1:0] instruction_read_bus;   // 4-way instruction caches
