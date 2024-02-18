@@ -39,10 +39,10 @@ module MESI_controller(
             M: begin
 $display("Modified", $time);
                 case (n)
-                    0: nextstate = M;
-                    1: nextstate = M;
+                    0: nextstate = M;   // local read (assumed from same processor due to requirements, no transition to S)
+                    1: nextstate = M;   // local write
                     2: nextstate = M;
-                    3: nextstate = I;
+                    3: nextstate = I;   // Invalidate
                     4: nextstate = S;
                     8: nextstate = I;
                     default: nextstate = M;
@@ -52,10 +52,10 @@ $display("Modified", $time);
             E: begin
 $display("Exclusive", $time);
                 case (n)
-                    0: nextstate = E;
-                    1: nextstate = M;
+                    0: nextstate = S;   // (Assumed from different processor due to requirements, transition to S)
+                    1: nextstate = M;   // local write
                     2: nextstate = E;
-                    3: nextstate = I;
+                    3: nextstate = I;   // Invalidate
                     4: nextstate = S;
                     8: nextstate = I;
                     default: nextstate = E;
@@ -65,10 +65,10 @@ $display("Exclusive", $time);
             S: begin
 $display("Shared", $time);
                 case (n)
-                    0: nextstate = S;
-                    1: nextstate = M;
+                    0: nextstate = S;   // local read
+                    1: nextstate = M;   // local write
                     2: nextstate = S;
-                    3: nextstate = I;
+                    3: nextstate = I;   // Invalidate
                     4: nextstate = S;
                     8: nextstate = I;
                     default: nextstate = S;
@@ -80,9 +80,9 @@ $display("Invalid", $time);
                 case (n)
                     0: begin
                         if (hit || hitM)
-                            nextstate = S; // Transition to S or E depending on snoop hardware
+                            nextstate = S; // Multiple read
                         else
-                            nextstate = E;
+                            nextstate = E;  // Single read
                         end
                     1: nextstate = M; // RFO
                     2: begin
@@ -91,7 +91,7 @@ $display("Invalid", $time);
                         else
                             nextstate = E;
                         end
-                    3: nextstate = I;
+                    3: nextstate = I;   // Invalidate
                     4: nextstate = I;
                     8: nextstate = I;
                     default: nextstate = I;
