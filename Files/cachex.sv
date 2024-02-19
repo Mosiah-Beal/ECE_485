@@ -137,10 +137,17 @@ module top;
     );
 endmodule
 
+module mesi_controller( input (hit_bus_out) input command_t input cache_line_t
+
+);
 
 
+module project(
+    
+    input logic [34:0] command,
 
-module project;     // top level module
+
+);     // top level module
 
     // Declare global signals
     // hit buses for instruction and data caches
@@ -150,9 +157,9 @@ module project;     // top level module
     // Other signals
 
 
-    
+    mesi controller MESI_controller(.instruction_read_bus(instruction_read_bus), .data_read_bus(data_read_bus);
     // Instantiate the processors, each has their own 4-way instruction and 8-way data cache
-    processor processor0;
+    processor processor0(.instruction_read_bus(instruction_read_bus), .data_read_bus(data_read_bus));
     processor processor1;
     processor processor2;
 
@@ -175,7 +182,8 @@ module project;     // top level module
     */
 endmodule
 
-module processor;   
+module processor(input hit_bus_in,
+ output hit_bus_out );   
     // Instantiate an array of data caches
     cache #(.sets(16384), .ways(8)) data_cache;
 
@@ -198,7 +206,7 @@ module cache #(parameter sets = 16384, parameter ways = 8); // cache module
         for(int i = 0; i < sets; i++) begin
             // Initialize each way
             for(int j = 0; j < ways; j++) begin
-                ache[i][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
+                cache[i][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
                 cache[i][j].MESI_bits = 2'b00; // Initialize MESI bits to Invalid
                 cache[i][j].tag = 6'b0;        // Initialize tag to 0
                 cache[i][j].data = 512'b0;     // Initialize mem to 0
@@ -220,7 +228,9 @@ endmodule
 * Set the read_bus using the four states of the operator to specify 
 * hit(1), hitM(z), no hit(0), dont care(x)
 **/
-function automatic logic find_hits (command_t test_instruction)
+function automatic logic find_hits (command_t test_instruction
+hit_bus_in,
+hit bus_ out) 
 
     address_t desired_address = test_instruction.address;   // get the address we are looking for
     logic [1:0] instruction_read_bus;   // 4-way instruction caches
@@ -228,6 +238,7 @@ function automatic logic find_hits (command_t test_instruction)
     // integer instruction = test_instruction.n;
 
     //! higher level repeat for all caches !!! not done!!!!
+    //NEEDS TO MAKE OWNER CACHE AN X OUTPUT
 	for (int i = 0; i < ways; i++) begin
         
         data_read_bus[i] = 0;    // Assume this cache has no hit
@@ -264,9 +275,25 @@ function automatic logic update_mesi ([2:0] n, [1:0] mesi_now);
     MESI_controller(.n(n), .mesi_now(cache_bus_in));
 endfunction
 
+
+
+function automatic logic mem_op(input [2:0] n, input [1:0] mesi_now, input cache_line_t cache, input address_t owner_address, input cache_line_t shared_cache_in, input data_mem_in, input hit,hitM,busRd,busRdX, output [7:0] data);
+
+    // Check if the cache is invalid
+    if (mesi_now == 2'b00) begin
+        // Call the invalid memory operation function
+        invalid_mem_op(n, mesi_now, cache, owner_address, shared_cache_in, data_mem_in, hit, hitM, busRd, busRdX, data);
+    end
+    else begin
+        // Call the valid memory operation function
+        valid_mem_op(n, mesi_now, cache, owner_address, shared_cache_in, data_mem_in, hit, hitM, busRd, busRdX, data);
+    end
+endfunction
+
+
+
 function automatic logic owner_invalid_mem_op( 
-    input [2:0] n, //Instruction            //killed (in test_instruction)
-    input [1:0] mesi_now, //M,E,S,I         //killed (in cache)
+    input command_t test_instruction       
     input cache_line_t cache,
     input address_t owner_address,          //killed (in test_instruction)
     input cache_line_t shared_cache_in,

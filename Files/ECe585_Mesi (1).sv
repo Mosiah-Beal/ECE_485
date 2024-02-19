@@ -1,7 +1,8 @@
-module MESI_controller(
+module MESI_FSM(
     input logic clk,
     input logic rst,
     input logic [3] n,
+    input command_t instruction,
     input logic [32] address,
     input logic hit, //same as busRd but input
     input logic hitM, // same as busRdx but input
@@ -105,7 +106,7 @@ $display("Invalid", $time);
     // Combinational logic block for determining outputs based on the current state and input
     always_comb begin: Output_Logic
 	state_out = state;
-	case(state)
+	/*case(state)
         M:begin
         cache_bus_out = state;
         busRdX = 0;
@@ -152,7 +153,8 @@ $display("Invalid", $time);
         
         end
 
-    endcase
+    endcase */
+    
     end
 
 endmodule
