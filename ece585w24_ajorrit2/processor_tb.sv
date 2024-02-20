@@ -1,43 +1,271 @@
+`include "my_struct_package.sv"
+
 module processor_tb;
 
     // Parameters
     localparam CLK_PERIOD = 10; // Clock period in time units
 
-// Import the struct package
+    // Import the struct package
     import my_struct_package::*;
 
     // Declare signals
     logic clk = 0;
-    my_struct_package::command_t instruction;
-    my_struct_package::cache_line_t current_line_i[1][4];
-    my_struct_package::cache_line_t current_line_d[1][8];
+    logic re = 0;
+    logic we = 0;
+    logic [31:0] instr_address = 0;
+    logic [3:0] n;
+    command_t instruction;
+    cache_line_t current_line_i[1][4];
+    cache_line_t current_line_d[1][8];
+    cache_line_t return_line_i[1][4];
+    cache_line_t return_line_d[1][8];
+    cache_line_t test_line_i[1][4];
+    cache_line_t test_line_d[1][8];
     logic [11:0] p_bus;
 
     // Instantiate the processor module
     processor dut (
         .clk(clk),
+        .re(re),
+        .we(we),
         .instruction(instruction),
-	.current_line_i(current_line_i),
+        .return_line_i(return_line_i),
+        .return_line_d(return_line_d),
+        .current_line_i(current_line_i),
         .current_line_d(current_line_d),
         .p_bus(p_bus)
     );
 
     // Clock generation
     always #((CLK_PERIOD)/2) clk = ~clk;
+    
+    // Assign instructions
+    assign instruction = {n, instr_address, 3'b0, 2'b0};
 
     // Initialize signals
     initial begin
-        // Apply some dummy instructions
-        instruction = '{4'b0, 32'b0,3'b0,2'b0}; // Sample instruction type
-           
-        // Add more dummy instructions as needed
         
-        // Monitor p_bus
-        $monitor("Time = %0t: p_bus = %h data cache = %p instr cache = %p",
+	// Apply some dummy instructions
+        
+	//write operation
+	we = 1;
+	re = 0;
+	n  = 1;
+	instr_address = 32'hABCD_EF01;
+	return_line_d[0][0].tag        = instruction.address.tag;
+	return_line_d[0][0].LRU        = 3'b0;
+	return_line_d[0][0].MESI_bits  = 2'b11;
+       	return_line_d[0][0].data       = 32'hABCD_EF01;
+#10;	 
+        //read operation
+	we = 0;
+	re = 1;
+	n  = 0;
+	instr_address = 32'hABCD_EF01;
+       	return_line_d[0][0].tag        = instruction.address.tag;
+	return_line_d[0][0].LRU        = 3'b0;
+	return_line_d[0][0].MESI_bits  = 2'b11;
+       	return_line_d[0][0].data       = 32'hABCD_EF01; 
+#10;
+	// Write operation
+	we = 1;
+	re = 0;
+	n  = 1;
+	instr_address = 32'h1234_5678;
+	return_line_d[0][1].tag        = instruction.address.tag;
+	return_line_d[0][1].LRU        = 3'b0;
+	return_line_d[0][1].MESI_bits  = 2'b11;
+	return_line_d[0][1].data = 32'h1234_5678;
+#10;
+	// Read operation	
+	we = 0;
+	re = 1;
+	n  = 0;
+	instr_address = 32'h1234_5678;
+	return_line_d[0][1].tag        = instruction.address.tag;
+	return_line_d[0][1].LRU        = 3'b0;
+	return_line_d[0][1].MESI_bits  = 2'b11;
+	return_line_d[0][1].data = 32'h1234_5678;
+#10;
+	// Write operation
+	we = 1;
+	re = 0;
+	n  = 1;
+	instr_address = 32'h8765_4321;
+	return_line_d[0][2].tag        = instruction.address.tag;
+	return_line_d[0][2].LRU        = 3'b0;
+	return_line_d[0][2].MESI_bits  = 2'b11;
+	return_line_d[0][2].data = 32'h8765_4321;
+#10;
+	// Read operation
+	we = 0;
+	re = 1;
+	n  = 0;
+	instr_address = 32'h8765_4321;
+	return_line_d[0][2].tag        = instruction.address.tag;
+	return_line_d[0][2].LRU        = 3'b0;
+	return_line_d[0][2].MESI_bits  = 2'b11;
+	return_line_d[0][2].data = 32'h8765_4321;
+#10;
+	// Write operation
+	we = 1;
+	re = 0;
+	n  = 1;
+	instr_address = 32'h2468_ACE0;
+	return_line_d[0][3].tag        = instruction.address.tag;
+	return_line_d[0][3].LRU        = 3'b0;
+	return_line_d[0][3].MESI_bits  = 2'b11;
+	return_line_d[0][3].data = 32'h2468_ACE0;
+#10;
+	// Read operation
+	we = 0;
+	re = 1;
+	n  = 0;
+	instr_address = 32'h2468_ACE0;
+	return_line_d[0][3].tag        = instruction.address.tag;
+	return_line_d[0][3].LRU        = 3'b0;
+	return_line_d[0][3].MESI_bits  = 2'b11;
+	return_line_d[0][3].data = 32'h2468_ACE0;
+#10;
+	// Write operation
+	we = 1;
+	re = 0;
+	n  = 1;
+	instr_address = 32'hABC0_9876;
+	return_line_d[0][4].tag        = instruction.address.tag;
+	return_line_d[0][4].LRU        = 3'b0;
+	return_line_d[0][4].MESI_bits  = 2'b11;
+	return_line_d[0][4].data = 32'hABC0_9876;
+#10;
+	// Read operation
+	we = 0;
+	re = 1;
+	n  = 0;
+	instr_address = 32'hABC0_9876;
+	return_line_d[0][4].tag        = instruction.address.tag;
+	return_line_d[0][4].LRU        = 3'b0;
+	return_line_d[0][4].MESI_bits  = 2'b11;
+	return_line_d[0][4].data = 32'hABC0_9876;
+
+#10;
+       
+	// Write operation
+	we = 1;
+	re = 0;
+	n  = 1;
+	instr_address = 32'hABCD_EF01;
+	return_line_d[0][0].tag        = instruction.address.tag;
+	return_line_d[0][0].LRU        = 3'b0;
+	return_line_d[0][0].MESI_bits  = 2'b11;
+	return_line_d[0][0].data = 32'hABC0_9876;
+
+#10;
+	//read operation
+	we = 0;
+	re = 1;
+	n  = 0;
+	instr_address = 32'hABCD_EF01;
+	return_line_d[0][0].tag        = instruction.address.tag;
+	return_line_d[0][0].LRU        = 3'b0;
+	return_line_d[0][0].MESI_bits  = 2'b11;
+       	return_line_d[0][0].data = 32'hABCD_EF01; 
+
+#10;
+	// Write operation
+	we = 1;
+	re = 0;
+	n  = 1;
+	instr_address = 32'h1234_5678;
+	return_line_d[0][1].tag        = instruction.address.tag;
+	return_line_d[0][1].LRU        = 3'b0;
+	return_line_d[0][1].MESI_bits  = 2'b11;
+	return_line_d[0][1].data = 32'h1234_5678;
+
+#10;
+	// Read operation	
+	we = 0;
+	re = 1;
+	n  = 0;
+	instr_address = 32'h1234_5678;
+	return_line_d[0][1].tag        = instruction.address.tag;
+	return_line_d[0][1].LRU        = 3'b0;
+	return_line_d[0][1].MESI_bits  = 2'b11;
+	return_line_d[0][1].data = 32'h1234_5678;
+
+#10;
+	// Write operation
+	we = 1;
+	re = 0;
+	n  = 1;
+	instr_address = 32'h8765_4321;
+	return_line_d[0][2].tag        = instruction.address.tag;
+	return_line_d[0][2].LRU        = 3'b0;
+	return_line_d[0][2].MESI_bits  = 2'b11;
+	return_line_d[0][2].data = 32'h8765_4321;
+
+#10;
+	// Read operation
+	we = 0;
+	re = 1;
+	n  = 0;
+	instr_address = 32'h8765_4321;
+	return_line_d[0][2].tag        = instruction.address.tag;
+	return_line_d[0][2].LRU        = 3'b0;
+	return_line_d[0][2].MESI_bits  = 2'b11;
+	return_line_d[0][2].data = 32'h8765_4321;
+
+#10;
+	// Write operation
+	we = 1;
+	re = 0;
+	n  = 1;
+	instr_address = 32'h2468_ACE0;
+	return_line_d[0][3].tag        = instruction.address.tag;
+	return_line_d[0][3].LRU        = 3'b0;
+	return_line_d[0][3].MESI_bits  = 2'b11;
+	return_line_d[0][3].data = 32'h2468_ACE0;
+
+#10;
+	// Read operation
+	we = 0;
+	re = 1;
+	n  = 0;
+	instr_address = 32'h2468_ACE0;
+	return_line_d[0][3].tag        = instruction.address.tag;
+	return_line_d[0][3].LRU        = 3'b0;
+	return_line_d[0][3].MESI_bits  = 2'b11;
+	return_line_d[0][3].data = 32'h2468_ACE0;
+
+#10;
+	// Write operation
+	we = 1;
+	re = 0;
+	n  = 1;
+	instr_address = 32'hABC0_9876;
+	return_line_d[0][4].tag        = instruction.address.tag;
+	return_line_d[0][4].LRU        = 3'b0;
+	return_line_d[0][4].MESI_bits  = 2'b11;
+	return_line_d[0][4].data = 32'hABC0_9876;
+
+#10;
+	// Read operation
+	we = 0;
+	re = 1;
+	n  = 0;
+	instr_address = 32'hABC0_9876;
+	return_line_d[0][4].tag        = instruction.address.tag;
+	return_line_d[0][4].LRU        = 3'b0;
+	return_line_d[0][4].MESI_bits  = 2'b11;
+	return_line_d[0][4].data = 32'hABC0_9876;
+	 
+
+	// Monitor p_bus
+         $monitor("Time = %0t: p_bus = %b data cache = %p instr cache = %p",
          $time, p_bus, current_line_d, current_line_i);
 
         // Run simulation for a certain period
         #1000;
+	$stop;
         // Add more simulation time as needed
     end
 

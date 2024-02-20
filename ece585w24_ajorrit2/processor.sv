@@ -1,6 +1,10 @@
 module processor(
 	input  clk,
+	input  re,
+	input  we,
 	input  my_struct_package::command_t instruction,
+	input  my_struct_package::cache_line_t return_line_i[1][4],
+        input  my_struct_package::cache_line_t return_line_d[1][8],
 	output my_struct_package::cache_line_t current_line_i[1][4],
         output my_struct_package::cache_line_t current_line_d[1][8],
 	output [11:0] p_bus
@@ -10,7 +14,6 @@ module processor(
   // Import the struct package
     import my_struct_package::*;
 
-    address_t desired_address;
     int i = 0; 
     int j = 0;
     logic [7:0] data_read_bus;
@@ -20,28 +23,34 @@ module processor(
    // Instantiate the data cache with sets = 16384 and ways = 8
     cache #(.sets(16384), .ways(8)) data_cache (
         .clk(clk),
+	.re(re),
+	.we(we),
         .instruction(instruction),
+	.cache_in(return_line_d),
         .cache_out(current_line_d)
     );
 
     // Instantiate the instruction cache with sets = 16384 and ways = 4
     cache #(.sets(16384), .ways(4)) instruction_cache (
         .clk(clk),
+	.re(re),
+	.we(we),
         .instruction(instruction),
+	.cache_in(return_line_i),
         .cache_out(current_line_i)
     );
     
 always_comb begin : check_hits
 	
-
-    desired_address = instruction.address;   // get the address we are looking for
     
     //NEEDS TO MAKE OWNER CACHE AN X OUTPUT
     for (i = 0; i < 8; i++) begin
         data_read_bus[i] = 0;    // Assume this cache has no hit
+	$display("time = %t : instruction = %p\n", $time, instruction);
+	$display("time = %t : current_line_d = %p\n", $time, current_line_d);        
 
-        // check if there is a match in the way, using the set index passed in (updates read_bus)
-        if (desired_address.tag == current_line_d[0][i]) begin
+// check if there is a match in the way, using the set index passed in (updates read_bus)
+        if (instruction.address.tag == current_line_d[0][i].tag) begin
             case (instruction.n)  // which instruction is this?
                 0: begin // data read
                     data_read_bus[i] = 1;   // if read instruction -> hit;
@@ -69,9 +78,11 @@ always_comb begin : check_hits
     for (j = 0; j < 4; j++) begin
         
 	instruction_read_bus[j] = 0;    // Assume this cache has no hit
+	$display("time = %t : instruction = %p\n", $time, instruction);
+	$display("time = %t : current_line_d = %p\n", $time, current_line_d);
 
         // check if there is a match in the way, using the set index passed in (updates read_bus)
-        if (desired_address.tag == current_line_i[0][j]) begin
+        if (instruction.address.tag == current_line_i[0][j].tag) begin
             case (instruction.n)  // which instruction is this?
                 0: begin // data read
                     instruction_read_bus[j] = 1;   // if read instruction -> hit;
