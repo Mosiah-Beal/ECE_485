@@ -21,7 +21,7 @@ typedef struct packed {
 	reg [11:0] tag;         // 12 bits for tag
 	reg [2:0] LRU;          // 3 bits for LRU
 	reg [1:0] MESI_bits;    // 2 bits for MESI states
-	reg [511:0] data;        // 512 bits for data
+	reg [31:0] data;        // 512 bits for data
 } cache_line_t;
 
 endpackage
