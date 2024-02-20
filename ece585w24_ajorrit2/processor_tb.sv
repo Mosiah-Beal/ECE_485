@@ -10,8 +10,6 @@ module processor_tb;
 
     // Declare signals
     logic clk = 0;
-    logic re = 0;
-    logic we = 0;
     logic [31:0] instr_address = 0;
     logic [3:0] n;
     command_t instruction;
@@ -19,15 +17,11 @@ module processor_tb;
     cache_line_t current_line_d[1][8];
     cache_line_t return_line_i[1][4];
     cache_line_t return_line_d[1][8];
-    cache_line_t test_line_i[1][4];
-    cache_line_t test_line_d[1][8];
     logic [11:0] p_bus;
 
     // Instantiate the processor module
     processor dut (
         .clk(clk),
-        .re(re),
-        .we(we),
         .instruction(instruction),
         .return_line_i(return_line_i),
         .return_line_d(return_line_d),
@@ -48,8 +42,6 @@ module processor_tb;
 	// Apply some dummy instructions
         
 	//write operation
-	we = 1;
-	re = 0;
 	n  = 1;
 	instr_address = 32'hABCD_EF01;
 	return_line_d[0][0].tag        = instruction.address.tag;
@@ -58,8 +50,6 @@ module processor_tb;
        	return_line_d[0][0].data       = 32'hABCD_EF01;
 #10;	 
         //read operation
-	we = 0;
-	re = 1;
 	n  = 0;
 	instr_address = 32'hABCD_EF01;
        	return_line_d[0][0].tag        = instruction.address.tag;
@@ -68,8 +58,6 @@ module processor_tb;
        	return_line_d[0][0].data       = 32'hABCD_EF01; 
 #10;
 	// Write operation
-	we = 1;
-	re = 0;
 	n  = 1;
 	instr_address = 32'h1234_5678;
 	return_line_d[0][1].tag        = instruction.address.tag;
@@ -78,8 +66,6 @@ module processor_tb;
 	return_line_d[0][1].data = 32'h1234_5678;
 #10;
 	// Read operation	
-	we = 0;
-	re = 1;
 	n  = 0;
 	instr_address = 32'h1234_5678;
 	return_line_d[0][1].tag        = instruction.address.tag;
@@ -88,8 +74,6 @@ module processor_tb;
 	return_line_d[0][1].data = 32'h1234_5678;
 #10;
 	// Write operation
-	we = 1;
-	re = 0;
 	n  = 1;
 	instr_address = 32'h8765_4321;
 	return_line_d[0][2].tag        = instruction.address.tag;
@@ -98,8 +82,6 @@ module processor_tb;
 	return_line_d[0][2].data = 32'h8765_4321;
 #10;
 	// Read operation
-	we = 0;
-	re = 1;
 	n  = 0;
 	instr_address = 32'h8765_4321;
 	return_line_d[0][2].tag        = instruction.address.tag;
@@ -108,8 +90,6 @@ module processor_tb;
 	return_line_d[0][2].data = 32'h8765_4321;
 #10;
 	// Write operation
-	we = 1;
-	re = 0;
 	n  = 1;
 	instr_address = 32'h2468_ACE0;
 	return_line_d[0][3].tag        = instruction.address.tag;
@@ -118,8 +98,6 @@ module processor_tb;
 	return_line_d[0][3].data = 32'h2468_ACE0;
 #10;
 	// Read operation
-	we = 0;
-	re = 1;
 	n  = 0;
 	instr_address = 32'h2468_ACE0;
 	return_line_d[0][3].tag        = instruction.address.tag;
@@ -128,8 +106,6 @@ module processor_tb;
 	return_line_d[0][3].data = 32'h2468_ACE0;
 #10;
 	// Write operation
-	we = 1;
-	re = 0;
 	n  = 1;
 	instr_address = 32'hABC0_9876;
 	return_line_d[0][4].tag        = instruction.address.tag;
@@ -138,8 +114,6 @@ module processor_tb;
 	return_line_d[0][4].data = 32'hABC0_9876;
 #10;
 	// Read operation
-	we = 0;
-	re = 1;
 	n  = 0;
 	instr_address = 32'hABC0_9876;
 	return_line_d[0][4].tag        = instruction.address.tag;
@@ -150,8 +124,6 @@ module processor_tb;
 #10;
        
 	// Write operation
-	we = 1;
-	re = 0;
 	n  = 1;
 	instr_address = 32'hABCD_EF01;
 	return_line_d[0][0].tag        = instruction.address.tag;
@@ -161,8 +133,6 @@ module processor_tb;
 
 #10;
 	//read operation
-	we = 0;
-	re = 1;
 	n  = 0;
 	instr_address = 32'hABCD_EF01;
 	return_line_d[0][0].tag        = instruction.address.tag;
@@ -172,8 +142,6 @@ module processor_tb;
 
 #10;
 	// Write operation
-	we = 1;
-	re = 0;
 	n  = 1;
 	instr_address = 32'h1234_5678;
 	return_line_d[0][1].tag        = instruction.address.tag;
@@ -183,8 +151,6 @@ module processor_tb;
 
 #10;
 	// Read operation	
-	we = 0;
-	re = 1;
 	n  = 0;
 	instr_address = 32'h1234_5678;
 	return_line_d[0][1].tag        = instruction.address.tag;
@@ -194,8 +160,6 @@ module processor_tb;
 
 #10;
 	// Write operation
-	we = 1;
-	re = 0;
 	n  = 1;
 	instr_address = 32'h8765_4321;
 	return_line_d[0][2].tag        = instruction.address.tag;
@@ -205,8 +169,6 @@ module processor_tb;
 
 #10;
 	// Read operation
-	we = 0;
-	re = 1;
 	n  = 0;
 	instr_address = 32'h8765_4321;
 	return_line_d[0][2].tag        = instruction.address.tag;
@@ -216,8 +178,6 @@ module processor_tb;
 
 #10;
 	// Write operation
-	we = 1;
-	re = 0;
 	n  = 1;
 	instr_address = 32'h2468_ACE0;
 	return_line_d[0][3].tag        = instruction.address.tag;
@@ -227,8 +187,6 @@ module processor_tb;
 
 #10;
 	// Read operation
-	we = 0;
-	re = 1;
 	n  = 0;
 	instr_address = 32'h2468_ACE0;
 	return_line_d[0][3].tag        = instruction.address.tag;
@@ -238,8 +196,6 @@ module processor_tb;
 
 #10;
 	// Write operation
-	we = 1;
-	re = 0;
 	n  = 1;
 	instr_address = 32'hABC0_9876;
 	return_line_d[0][4].tag        = instruction.address.tag;
@@ -249,8 +205,6 @@ module processor_tb;
 
 #10;
 	// Read operation
-	we = 0;
-	re = 1;
 	n  = 0;
 	instr_address = 32'hABC0_9876;
 	return_line_d[0][4].tag        = instruction.address.tag;

@@ -10,8 +10,7 @@ module cache_tb;
 
     // Declare signals
     logic clk;
-    logic we;
-    logic re;
+    logic [3:0] n;
     logic [31:0] instr_address;
     my_struct_package::cache_line_t cache_out[1][ways];
     my_struct_package::cache_line_t cache_in[1][ways];
@@ -23,8 +22,6 @@ module cache_tb;
         .ways(ways)
     ) dut (
         .clk(clk),
-        .we(we),
-        .re(re),
         .instruction(instruction),
         .cache_in(cache_in),
         .cache_out(cache_out)
@@ -34,12 +31,11 @@ module cache_tb;
     always #5 clk = ~clk;
 
     // Assign instructions
-    assign instruction = {4'b0000, instr_address, 3'b0, 2'b0};
+    assign instruction = {n, instr_address, 3'b0, 2'b0};
     // Initialize signals
     initial begin
 	clk = 0;
-        we = 1;
-        re = 0;
+        n = 1;
 
 	  for(int i = 0; i < sets; i++) begin
             // Initialize each way
@@ -59,69 +55,63 @@ module cache_tb;
 	$display ("Time = %0t: cache_in = %p\n", $time,  cache_in);   // Initialize instruction data
 	#20;
 
-	we = 0;
-        re = 1;
+	n=0;
         instr_address = 32'h0000_0000; // Initialize instruction address
         cache_in[0][0].data = 32'h0000_0000;
         $display("Time = %0t: cache_out = %p\n", $time, cache_out);
 	$display ("Time = %0t: cache_in = %p\n", $time,  cache_in);
 	// Apply some dummy instructions
         #20;
-	re = 0;
-        we = 1;
+	n=1;
         instr_address = 32'hABCD_EF01;
        	cache_in[0][0].data = 32'hABCD_EF01;
 	$display("Time = %0t: cache_out = %p\n", $time, cache_out);
 	$display ("Time = %0t: cache_in = %p\n", $time,  cache_in);
 	#20;
-        we = 0;
-	re = 1;
+        n=0;
 	instr_address = 32'hABCD_EF01;
        	cache_in[0][0].data = 32'hABCD_EF01;
         $display("Time = %0t: cache_out = %p\n", $time, cache_out);
 	$display ("Time = %0t: cache_in = %p\n", $time,  cache_in);
 	#20;
-	we = 1;
-        re = 0;
+	n=1;
 	instr_address = 32'hFEDC_BA98;
 	cache_in[0][0].data = 32'hFEDC_BA98;
 	 $display("Time = %0t: cache_out = %p\n", $time, cache_out);
 	$display ("Time = %0t: cache_in = %p\n", $time,  cache_in);
 	#20
-	we = 0;
-        re = 1;
+	n=0;
         instr_address = 32'hFEDC_BA98;
 	cache_in[0][0].data = 32'hFEDC_BA98;
          $display("Time = %0t: cache_out = %p\n", $time, cache_out);
 	$display ("Time = %0t: cache_in = %p\n", $time,  cache_in);
 	#20;
-        we = 1;
-	re = 0;
+        n=1;
         instr_address = 32'h1357_9BDF;
         cache_in[0][0].data = 32'h1357_9BDF;
          $display("Time = %0t: cache_out = %p\n", $time, cache_out);
 	$display ("Time = %0t: cache_in = %p\n", $time,  cache_in);
 	#20;
-	we = 0;
-	re = 1;
+	n=0;
 	instr_address = 32'h1357_9BDF;
         cache_in[0][0].data = 32'h1357_9BDF;
          $display("Time = %0t: cache_out = %p\n", $time, cache_out);
 	$display ("Time = %0t: cache_in = %p\n", $time,  cache_in);
 	#20;
-	we = 1;
+	n=1;
         instr_address = 32'h1357_9BDF;
         cache_in[0][0].data = 32'h1357_9BDF;
         $display("Time = %0t: cache_out = %p\n", $time, cache_out);
 	$display ("Time = %0t: cache_in = %p\n", $time,  cache_in);
 	#20;
-	we = 1;
+	n=1;
         instr_address = 32'h1357_9BDF;
         cache_in[0][0].data = 32'h1357_9BDF;
          $display("Time = %0t: cache_out = %p\n", $time, cache_out);
 	$display ("Time = %0t: cache_in = %p\n", $time,  cache_in);
 	#20;
-
+	 n = 9;
+	#10
         // Add more instructions as needed
         
         // Monitor cache_out

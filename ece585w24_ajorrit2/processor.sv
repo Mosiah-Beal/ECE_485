@@ -1,7 +1,5 @@
 module processor(
 	input  clk,
-	input  re,
-	input  we,
 	input  my_struct_package::command_t instruction,
 	input  my_struct_package::cache_line_t return_line_i[1][4],
         input  my_struct_package::cache_line_t return_line_d[1][8],
@@ -23,8 +21,6 @@ module processor(
    // Instantiate the data cache with sets = 16384 and ways = 8
     cache #(.sets(16384), .ways(8)) data_cache (
         .clk(clk),
-	.re(re),
-	.we(we),
         .instruction(instruction),
 	.cache_in(return_line_d),
         .cache_out(current_line_d)
@@ -33,8 +29,6 @@ module processor(
     // Instantiate the instruction cache with sets = 16384 and ways = 4
     cache #(.sets(16384), .ways(4)) instruction_cache (
         .clk(clk),
-	.re(re),
-	.we(we),
         .instruction(instruction),
 	.cache_in(return_line_i),
         .cache_out(current_line_i)
