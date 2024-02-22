@@ -29,7 +29,7 @@ always_ff@(posedge clk, instruction.n)begin
 		//$display("set_index = %h : flag = %b\n", instruction.address.set_index, flag);
 
        		cache_out[0][i] <= cache[instruction.address.set_index][i];
-		
+		cache[instruction.address.set_index][i] <= cache_in[0][i];
 		// Print cache_out manually	
 		//$display("Time = %t: cache_out = %p\n", $time, cache_out);
 		//$display ("Time = %t: cache_in = %p\n", $time,  cache_in);
@@ -38,7 +38,8 @@ always_ff@(posedge clk, instruction.n)begin
 	
 		1:begin//write instruction
 		//$display("set_index = %h : flag = %b\n", instruction.address.set_index, flag);
-
+		
+		cache_out[0][i] <= cache[instruction.address.set_index][i];
 		cache[instruction.address.set_index][i] <= cache_in[0][i];
  
 		//$display("Time = %t: cache_out = %p\n", $time, cache_out);
@@ -49,11 +50,12 @@ always_ff@(posedge clk, instruction.n)begin
 		2:begin //read instruction
 
 		cache_out[0][i] <= cache[instruction.address.set_index][i]; 
-		
+		cache[instruction.address.set_index][i] <= cache_in[0][i];
 		end
 
 		3:begin //write/invalidate instruction
-
+		
+		cache_out[0][i] <= cache[instruction.address.set_index][i];
 		cache[instruction.address.set_index][i] <= cache_in[0][i];
 		
 		end
@@ -61,14 +63,14 @@ always_ff@(posedge clk, instruction.n)begin
 		4:begin //read instruction
 		
 		cache_out[0][i] <= cache[instruction.address.set_index][i];
-		
+		cache[instruction.address.set_index][i] <= cache_in[0][i];
 		end
 
 		8:begin //reset cache
 			for(int j = 0; j < sets; j++) begin
      
                 		cache[j][i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-              	  		cache[j][i].MESI_bits = 2'b11; // Initialize MESI bits to Invalid
+              	  		cache[j][i].MESI_bits = I; // Initialize MESI bits to Invalid
                			cache[j][i].tag = 12'b0;        // Initialize tag to 0
                 		cache[j][i].data = 32'b0;     // Initialize mem to 0
             			
