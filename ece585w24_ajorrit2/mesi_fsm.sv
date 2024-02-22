@@ -27,6 +27,8 @@ module mesi_fsm(
 
     // Combinational logic block for determining the next state based on the current state and input
  always_comb begin: Next_State_Logic
+$display("internal_line[0][0].tag = %h : internal_line[0][0].LRU = %h : internal_line[0][0].MESI_bits = %c : internal_line[0][0].data = %h", internal_line[0][0].tag,internal_line[0][0].LRU,internal_line[0][0].MESI_bits,internal_line[0][0].data); 
+$display("return_line[0][0].tag   = %h : return_line.LRU[0][0]   = %h : return_line[0][0].MESI_bits   = %c : return_line[0][0].data   = %h", return_line[0][0].tag,return_line[0][0].LRU,return_line[0][0].MESI_bits,return_line[0][0].data);
     case (internal_line[0][0].MESI_bits)
         M: begin
             $display("Modified", $time);
@@ -125,117 +127,13 @@ end
 
     // Combinational logic block for determining outputs based on the current state and input
     always_comb begin: Output_Logic
-    case (internal_line[0][0].MESI_bits)
-        M: begin
-            case (instruction.n)
-                0, 1:   // (0) local read (assumed from same processor due to requirements, no transition to S)
-                       // (1) local write
-                begin
-                    return_line[1][1] = internal_line[1][1];
-    		     // Local changes stay in M (may need to send signals)
+ // Copy internal_line to return_line
+        return_line[0][0] = internal_line[0][0];
 
-                end
-                2:      // (2) instruction fetch
-                begin
-                    return_line[1][1] = internal_line[1][1];
-    		   
-                end
-                3, 8:   // (3) Invalidate
-                        // (8) clear and reset
-                begin
-		    return_line[1][1] = internal_line[1][1];
-                    return_line[1][1].MESI_bits = I;
-                end
-                4:      // (4) Writeback (RFO, snoop) (owner -> E, others -> I)
-                begin
-		    return_line[1][1] = internal_line[1][1];
-                    return_line[1][1].MESI_bits = E;  // Multi-step process
-                end
-                default: // Invalid instruction, stay in M
-                begin
-                    return_line[1][1] = internal_line[1][1];
-                end
-            endcase
-        end
+        // Update mesi_bits based on nextstate
+        return_line[0][0].MESI_bits = nextstate;
+	return_line[0][0].LRU = 0;
     
-        E: begin
-            case (instruction.n)
-                0: begin   // (Assumed from different processor due to requirements, transition to S)
-                    return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = S;
-                end
-                1: begin   // local write
-                    return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = M;
-                end
-                2: begin
-                    return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = E;
-                end
-                3, 8: begin   // Invalidate
-                     return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = I;
-                end
-                4: begin
-		 return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = S;
-                end
-                default: begin
-                     return_line[1][1] = internal_line[1][1];
-                end
-            endcase
-        end
-
-        S: begin
-            case (instruction.n)
-                0, 2, 4: begin   // local read or no change in state
-		 return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = S;
-                end
-                1: begin   // local write
-                     return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = M;
-                end
-                3, 8: begin   // Invalidate
-                     return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = I;
-                end
-                default: begin
-                     return_line[1][1] = internal_line[1][1];
-		 end              
-	   endcase
-        end
-
-        I: begin
-            case (instruction.n)
-                0, 2: begin
-                    //if (hit || hitM)begin
-                   /// return_line[1][1] = internal_line[1][1];
-		   // return_line[1][1].MESI_bits = S; // Multiple read or Transition to S or E depending on snoop hardware
-		   // end
-                    ///else begin
-		    return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = E; // Single read
-		    //end
-                end
-                1: begin   // RFO
-                    return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = M;
-                end
-                3, 4, 8: begin   // Invalidate
-                    return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = I;
-                end
-                default: begin
-                     return_line[1][1] = internal_line[1][1];
-                end
-            endcase
-        end
-
-        default:    begin return_line[1][1] = internal_line[1][1];
-		    return_line[1][1].MESI_bits = I;
-		end
-    endcase
 end
 
 endmodule 

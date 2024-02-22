@@ -43,26 +43,45 @@ module mesi_fsm_tb;
 	address = 32'h0000_0000;
        // Initialize to zero
         
+	/*0 984DE132
+	0 116DE12F
+	0 100DE130
+	0 999DE12E
+	0 645DE10A
+	0 846DE107
+	0 211DE128
+	0 777DE133*/
 
         // Reset for a few cycles
         #10;
         rst = 0;
         #10;
 	
-	n = 0; address = 32'h408ed4;
+	n= 0; address = 32'h984DE132;
 
 #10;
-	n = 0; address = 32'h10019d94;
+	n = 0; address = 32'h116DE12F;
 
 #10;
-	n = 0; address = 32'h10019d94;
+	n = 0; address = 32'h100DE130;
 #10;
-	n = 0; address = 32'h10019d88;
+	n = 0; address = 32'h999DE12E;
 
 #10;
-	n = 0; address = 32'h408edc;
+	n = 0; address = 32'h645DE10A;
 
 #10;
+n = 0; address = 32'h846DE107;
+
+#10;
+n = 0; address = 32'h211DE128;
+
+#10;
+n = 0; address = 32'h777DE133;
+
+#10;
+
+
        
 
         // End simulation
