@@ -27,8 +27,8 @@ module mesi_fsm(
 
     // Combinational logic block for determining the next state based on the current state and input
  always_comb begin: Next_State_Logic
-$display("internal_line[0][0].tag = %h : internal_line[0][0].LRU = %h : internal_line[0][0].MESI_bits = %c : internal_line[0][0].data = %h", internal_line[0][0].tag,internal_line[0][0].LRU,internal_line[0][0].MESI_bits,internal_line[0][0].data); 
-$display("return_line[0][0].tag   = %h : return_line.LRU[0][0]   = %h : return_line[0][0].MESI_bits   = %c : return_line[0][0].data   = %h", return_line[0][0].tag,return_line[0][0].LRU,return_line[0][0].MESI_bits,return_line[0][0].data);
+$display(" internal_line[0][0].tag = %h     : internal_line[0][0].LRU = %h \n internal_line[0][0].MESI_bits = %h : internal_line[0][0].data = %h", internal_line[0][0].tag,internal_line[0][0].LRU,internal_line[0][0].MESI_bits,internal_line[0][0].data); 
+$display(" return_line[0][0].tag   = %h     : return_line.LRU[0][0]   = %h \n return_line[0][0].MESI_bits   = %h : return_line[0][0].data   = %h", return_line[0][0].tag,return_line[0][0].LRU,return_line[0][0].MESI_bits,return_line[0][0].data);
     case (internal_line[0][0].MESI_bits)
         M: begin
             $display("Modified", $time);
@@ -128,8 +128,7 @@ end
     // Combinational logic block for determining outputs based on the current state and input
     always_comb begin: Output_Logic
  // Copy internal_line to return_line
-        return_line[0][0] = internal_line[0][0];
-
+        return_line[0][0].tag = internal_line[0][0].tag;
         // Update mesi_bits based on nextstate
         return_line[0][0].MESI_bits = nextstate;
 	return_line[0][0].LRU = 0;

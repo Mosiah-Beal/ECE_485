@@ -96,7 +96,7 @@ always_comb begin
         default: begin
             // Choose the LRU line if no valid way is found
             for(int i = 0; i < 4; i++) begin
-                if(current_line_i[instruction.address.set_index][i].LRU == 0) begin
+                if(current_line_i[0][i].LRU == 0) begin
                   i_select = i;
                   break;
 		end
@@ -129,7 +129,7 @@ always_comb begin
         default: begin
             // Choose the LRU line if no valid way is found
             for(int i = 0; i < 8; i++) begin
-                if(current_line_d[instruction.address.set_index][i].LRU == 0) begin
+                if(current_line_d[0][i].LRU == 0) begin
                     d_select = i;
                     break;
 		end
@@ -140,39 +140,38 @@ always_comb begin
     endcase
 end
 
-always_ff@(posedge clk) begin 
-$display("time = %t : instruction = %p\n", $time, instruction);
-$display("current_line_d = %p\n", current_line_d);
+always_comb begin 
+$display(" current_line_i[0][i_select].tag = %h\n : current_line_i[0][i_select].LRU = %h \n current_line_i[0][i_select].MESI_bits = %h\n : current_line_i[0][i_select].data = %h", current_line_i[0][i_select].tag,current_line_i[0][i_select].LRU,current_line_i[0][i_select].MESI_bits,current_line_i[0][i_select].data); 
+$display(" return_line_i[0][i_select].tag = %h \n : return_line_i[0][i_select].LRU = %h \n return_line_i[0][i_select].MESI_bits = %h\n : return_line_i[0][i_select].data = %h", return_line_i[0][i_select].tag,return_line_i[0][i_select].LRU,return_line_i[0][i_select].MESI_bits,return_line_i[0][i_select].data);
 
-
-$display("time = %t : instruction = %p\n", $time, instruction);
-$display("current_line_i = %p\n", current_line_d);
+$display(" current_line_d[0][d_select].tag = %h\n : current_line_d[0][d_select].LRU = %h \n current_line_d[instruction.address.set_index][d_select].MESI_bits = %h\n : current_line_d[instruction.address.set_index][d_select].data = %h", current_line_d[0][d_select].tag,current_line_d[0][d_select].LRU,current_line_d[0][d_select].MESI_bits,current_line_d[0][d_select].data); 
+$display(" return_line_d[0][d_select].tag = %h \n : return_line_d[0][d_select].LRU = %h \n return_line_d[0][d_select].MESI_bits = %h\n : return_line_d[0][d_select].data = %h", return_line_d[0][d_select].tag,return_line_d[0][d_select].LRU,return_line_d[0][d_select].MESI_bits,return_line_d[0][d_select].data);
 
 $display("d_select = %d\n", d_select);
 $display("i_select = %d\n", i_select);
             case(instruction.n)
                 0, 1: begin
 		    $display("Read/Write data cache");
-                    block_out[0][0] <= current_line_d[instruction.address.set_index][d_select];
-		    block_out[0][0].tag <= instruction.address.tag;
-		    return_line_d[instruction.address.set_index][d_select] <= block_in[0][0];
+                    block_out[0][0] = current_line_d[0][d_select];
+		    block_out[0][0].tag = instruction.address.tag;
+		    return_line_d[0][d_select] <= block_in[0][0];
                 end
                 2: begin
 		    $display("Read instruction cache");
-                    block_out[0][0] <= current_line_i[instruction.address.set_index][i_select];
-		    block_out[0][0].tag <= instruction.address.tag;
-	            return_line_i[instruction.address.set_index][i_select] <= block_in[0][0];
+                    block_out[0][0] = current_line_i[0][i_select];
+		    block_out[0][0].tag = instruction.address.tag;
+	            return_line_i[0][i_select] <= block_in[0][0];
 		    
                 end
                 3: begin 
-                    block_out[0][0] <= current_line_d[instruction.address.set_index][d_select];
-		    block_out[0][0].tag <= instruction.address.tag;
-		    return_line_d[instruction.address.set_index][d_select] <= block_in[0][0];
+                    block_out[0][0] = current_line_d[0][d_select];
+		    block_out[0][0].tag = instruction.address.tag;
+		    return_line_d[0][d_select] <= block_in[0][0];
                 end
                 4: begin
-                    block_out[0][0] <= current_line_d[instruction.address.set_index][d_select];
-		    block_out[0][0].tag <= instruction.address.tag;
-		    return_line_d[instruction.address.set_index][d_select] <= block_in[0][0];                
+                    block_out[0][0] = current_line_d[0][d_select];
+		    block_out[0][0].tag = instruction.address.tag;
+		    return_line_d[0][d_select] <= block_in[0][0];                
 		end
                 8, 9: begin
                     // Do nothing or add specific functionality based on your design

@@ -5,12 +5,12 @@ module top;
     logic clk;
     logic rst;
     my_struct_package::command_t instruction;
-    my_struct_package::cache_line_t cache_in_i[1][4];
-    my_struct_package::cache_line_t cache_out_i[1][4];
-    my_struct_package::cache_line_t cache_in_d[1][8];
-    my_struct_package::cache_line_t cache_out_d[1][8];
-    my_struct_package::cache_line_t in_line[1][1];
-    my_struct_package::cache_line_t out_line[1][1];
+    my_struct_package::cache_line_t cache_input_i[1][4];
+    my_struct_package::cache_line_t cache_output_i[1][4];
+    my_struct_package::cache_line_t cache_input_d[1][8];
+    my_struct_package::cache_line_t cache_output_d[1][8];
+    my_struct_package::cache_line_t fsm_input_line[1][1];
+    my_struct_package::cache_line_t fsm_output_line[1][1];
     logic hit;
     logic hitM;
 
@@ -28,34 +28,34 @@ import my_struct_package::*;
 cache #(.sets(16384), .ways(8)) data_cache (
         .clk(clk),
         .instruction(instruction),
-	.cache_in(cache_in_d),
-        .cache_out(cache_out_d)
+	.cache_in(cache_input_d),
+        .cache_out(cache_output_d)
     );
 
  // Instantiate the instruction cache with sets = 16384 and ways = 4
 cache #(.sets(16384), .ways(4)) instruction_cache (
         .clk(clk),
         .instruction(instruction),
-	.cache_in(cache_in_i),
-        .cache_out(cache_out_i)
+	.cache_in(cache_input_i),
+        .cache_out(cache_output_i)
     );
 
 processor processor(
 .clk(clk),
 .instruction(instruction),
-.current_line_i(cache_out_i),
-.current_line_d(cache_out_d),
-.return_line_i(cache_in_i),
-.return_line_d(cache_in_d),
-.block_in(in_line),
-.block_out(out_line));
+.current_line_i(cache_output_i),
+.current_line_d(cache_output_d),
+.return_line_i(cache_input_i),
+.return_line_d(cache_input_d),
+.block_in(fsm_input_line),
+.block_out(fsm_output_line));
 
 mesi_fsm fsm(
 .clk(clk), 
 .rst(rst), 
 .instruction(instruction),
-.internal_line(out_line), 
-.return_line(in_line), 
+.internal_line(fsm_output_line), 
+.return_line(fsm_input_line), 
 .hit(hit),
 .hitM(hitM));
 
@@ -75,10 +75,10 @@ mesi_fsm fsm(
 	  for(int i = 0; i < sets; i++) begin
             // Initialize each way
             for(int j = 0; j < 4; j++) begin
-                cache_in_i[0][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-                cache_in_i[0][j].MESI_bits = I; // Initialize MESI bits to Invalid
-                cache_in_i[0][j].tag = 12'b0;        // Initialize tag to 0
-                cache_in_i[0][j].data = 32'b0;     // Initialize mem to 0
+                cache_input_i[0][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
+                cache_input_i[0][j].MESI_bits = I; // Initialize MESI bits to Invalid
+                cache_input_i[0][j].tag = 12'b0;        // Initialize tag to 0
+                cache_input_i[0][j].data = 32'b0;     // Initialize mem to 0
             end
          end
 
@@ -86,10 +86,10 @@ mesi_fsm fsm(
 	  for(int i = 0; i < sets; i++) begin
             // Initialize each way
             for(int j = 0; j < 8; j++) begin
-                cache_in_d[0][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-                cache_in_d[0][j].MESI_bits = I; // Initialize MESI bits to Invalid
-                cache_in_d[0][j].tag = 12'b0;        // Initialize tag to 0
-                cache_in_d[0][j].data = 32'b0;     // Initialize mem to 0
+                cache_input_d[0][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
+                cache_input_d[0][j].MESI_bits = I; // Initialize MESI bits to Invalid
+                cache_input_d[0][j].tag = 12'b0;        // Initialize tag to 0
+                cache_input_d[0][j].data = 32'b0;     // Initialize mem to 0
             end
          end
         // Wait for some time
