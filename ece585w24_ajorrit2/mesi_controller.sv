@@ -53,18 +53,12 @@ assign {p0_i_ways,
 always_comb begin
 case(p0_i_ways) 
 
-4'b1000: p0_i_select = 2'b00;
-4'b0100: p0_i_select = 2'b01;
-4'b0010: p0_i_select = 2'b10;
-4'b0001: p0_i_select = 2'b11;
-4'bz000: p0_i_select = 2'b00;
-4'b0z00: p0_i_select = 2'b01;
-4'b00z0: p0_i_select = 2'b10;
-4'b000z: p0_i_select = 2'b11;
-4'bx000: p0_i_select = 2'b00;
-4'b0x00: p0_i_select = 2'b01;
-4'b00x0: p0_i_select = 2'b10;
-4'b000x: p0_i_select = 2'b11;
+case(p0_i_ways)
+    4'b1000, 4'bz000, 4'bx000: p0_i_select = 2'b00;
+    4'b0100, 4'b0z00, 4'b0x00: p0_i_select = 2'b01;
+    4'b0010, 4'b00z0, 4'b00x0: p0_i_select = 2'b10;
+    4'b0001, 4'b000z, 4'b000x: p0_i_select = 2'b11;
+
 
 default: begin
 for(int i = 0; i < 4; i++) begin
@@ -80,42 +74,25 @@ endcase
 end
 
 always_comb begin
-case(p0_d_ways) 
+    case(p0_d_ways)
+        8'b1000_0000, 8'bz000_0000, 8'bx000_0000: p0_d_select = 3'b000;
+        8'b0100_0000, 8'b0z00_0000, 8'b0x00_0000: p0_d_select = 3'b001;
+        8'b0010_0000, 8'b00z0_0000, 8'b00x0_0000: p0_d_select = 3'b010;
+        8'b0001_0000, 8'b000z_0000, 8'b000x_0000: p0_d_select = 3'b011;
+        8'b0000_1000, 8'b0000_z000, 8'b0000_x000: p0_d_select = 3'b100;
+        8'b0000_0100, 8'b0000_0z00, 8'b0000_0x00: p0_d_select = 3'b101;
+        8'b0000_0010, 8'b0000_00z0, 8'b0000_00x0: p0_d_select = 3'b110;
+        8'b0000_0001, 8'b0000_000z, 8'b0000_000x: p0_d_select = 3'b111;
 
-8'b1000_0000: p0_d_select = 3'b000;
-8'b0100_0000: p0_d_select = 3'b001;
-8'b0010_0000: p0_d_select = 3'b010;
-8'b0001_0000: p0_d_select = 3'b011;
-8'b0000_1000: p0_d_select = 3'b100;
-8'b0000_0100: p0_d_select = 3'b101;
-8'b0000_0010: p0_d_select = 3'b110;
-8'b0000_0001: p0_d_select = 3'b111;
-8'bz000_0000: p0_d_select = 3'b000;
-8'b0z00_0000: p0_d_select = 3'b001;
-8'b00z0_0000: p0_d_select = 3'b010;
-8'b000z_0000: p0_d_select = 3'b011;
-8'b0000_z000: p0_d_select = 3'b100;
-8'b0000_0z00: p0_d_select = 3'b101;
-8'b0000_00z0: p0_d_select = 3'b110;
-8'b0000_000z: p0_d_select = 3'b111;
-8'bx000_0000: p0_d_select = 3'b000;
-8'b0x00_0000: p0_d_select = 3'b001;
-8'b00x0_0000: p0_d_select = 3'b010;
-8'b000x_0000: p0_d_select = 3'b011;
-8'b0000_x000: p0_d_select = 3'b100;
-8'b0000_0x00: p0_d_select = 3'b101;
-8'b0000_00x0: p0_d_select = 3'b110;
-8'b0000_000x: p0_d_select = 3'b111;
-
-default: begin
-for(int i = 0; i < 8; i++) begin
-	if(p0current_line_d[instruction.address.set_index][i].LRU == 0)begin
-		p0_d_select = p0current_line_d[instruction.address.set_index][i];
-	break;
-	end
-end
-end
-endcase
+    default: begin
+        for(int i = 0; i < 8; i++) begin
+            if(p0current_line_d[instruction.address.set_index][i].LRU == 0)begin
+                p0_d_select = p0current_line_d[instruction.address.set_index][i];
+                break;
+                end
+            end
+        end
+    endcase
 end
 
 always_comb begin
