@@ -24,5 +24,13 @@ typedef struct packed {
 	reg [31:0] data;        // 512 bits for data
 } cache_line_t;
 
+// define MESI states
+typedef enum logic [1:0] {
+	I = 2'b00, // Invalid
+	S = 2'b01, // Shared
+	E = 2'b10, // Exclusive
+	M = 2'b11  // Modified
+} MESI_t;
+
 endpackage
 

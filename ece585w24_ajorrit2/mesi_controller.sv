@@ -41,48 +41,47 @@ logic [2:0] p2_d_select;
 
 //part select hit bus
 assign {p0_i_ways,
-	p0_d_ways,
-	p1_i_ways,
-	p1_d_ways,
-	p2_i_ways,
-	p2_d_ways} = hit_bus;
+        p0_d_ways,
+        p1_i_ways,
+        p1_d_ways,
+        p2_i_ways,
+        p2_d_ways} = hit_bus;
 
 //encode to select column of cache
 //for p0 instruction cache a hit at msb will correspond
 //to way/column 0 
+
+// Encode to select column of cache for p0 instruction cache
 always_comb begin
-case(p0_i_ways) 
-
-case(p0_i_ways)
-    4'b1000, 4'bz000, 4'bx000: p0_i_select = 2'b00;
-    4'b0100, 4'b0z00, 4'b0x00: p0_i_select = 2'b01;
-    4'b0010, 4'b00z0, 4'b00x0: p0_i_select = 2'b10;
-    4'b0001, 4'b000z, 4'b000x: p0_i_select = 2'b11;
+    case(p0_i_ways)
+        4'b1000, 4'bz000, 4'bx000: p0_i_select = 2'b11;
+        4'b0100, 4'b0z00, 4'b0x00: p0_i_select = 2'b10;
+        4'b0010, 4'b00z0, 4'b00x0: p0_i_select = 2'b01;
+        4'b0001, 4'b000z, 4'b000x: p0_i_select = 2'b00;
 
 
-default: begin
-for(int i = 0; i < 4; i++) begin
-	if(p0current_line_i[instruction.address.set_index][i].LRU == 0)begin
-		p0_i_select = p0current_line_i[instruction.address.set_index][i];
-	break;
-	end
-end
-end
-
-
-endcase
+    default: begin
+        for(int i = 0; i < 4; i++) begin
+            if(p0current_line_i[instruction.address.set_index][i].LRU == 0)begin
+                p0_i_select = p0current_line_i[instruction.address.set_index][i];
+                break;
+                end
+            end
+        end
+    endcase
 end
 
+// Encode to select column of cache for p0 data cache
 always_comb begin
     case(p0_d_ways)
-        8'b1000_0000, 8'bz000_0000, 8'bx000_0000: p0_d_select = 3'b000;
-        8'b0100_0000, 8'b0z00_0000, 8'b0x00_0000: p0_d_select = 3'b001;
-        8'b0010_0000, 8'b00z0_0000, 8'b00x0_0000: p0_d_select = 3'b010;
-        8'b0001_0000, 8'b000z_0000, 8'b000x_0000: p0_d_select = 3'b011;
-        8'b0000_1000, 8'b0000_z000, 8'b0000_x000: p0_d_select = 3'b100;
-        8'b0000_0100, 8'b0000_0z00, 8'b0000_0x00: p0_d_select = 3'b101;
-        8'b0000_0010, 8'b0000_00z0, 8'b0000_00x0: p0_d_select = 3'b110;
-        8'b0000_0001, 8'b0000_000z, 8'b0000_000x: p0_d_select = 3'b111;
+        8'b1000_0000, 8'bz000_0000, 8'bx000_0000: p0_d_select = 3'b111;
+        8'b0100_0000, 8'b0z00_0000, 8'b0x00_0000: p0_d_select = 3'b110;
+        8'b0010_0000, 8'b00z0_0000, 8'b00x0_0000: p0_d_select = 3'b101;
+        8'b0001_0000, 8'b000z_0000, 8'b000x_0000: p0_d_select = 3'b100;
+        8'b0000_1000, 8'b0000_z000, 8'b0000_x000: p0_d_select = 3'b011;
+        8'b0000_0100, 8'b0000_0z00, 8'b0000_0x00: p0_d_select = 3'b010;
+        8'b0000_0010, 8'b0000_00z0, 8'b0000_00x0: p0_d_select = 3'b001;
+        8'b0000_0001, 8'b0000_000z, 8'b0000_000x: p0_d_select = 3'b000;
 
     default: begin
         for(int i = 0; i < 8; i++) begin
@@ -95,131 +94,86 @@ always_comb begin
     endcase
 end
 
+// Encode to select column of cache for p1 instruction cache
 always_comb begin
-case(p1_i_ways) 
+    case(p1_i_ways) 
+        4'b1000, 4'bz000, 4'bx000: p1_i_select = 2'b11;
+        4'b0100, 4'b0z00, 4'b0x00: p1_i_select = 2'b10;
+        4'b0010, 4'b00z0, 4'b00x0: p1_i_select = 2'b01;
+        4'b0001, 4'b000z, 4'b000x: p1_i_select = 2'b00;
 
-4'b1000: p1_i_select = 2'b00;
-4'b0100: p1_i_select = 2'b01;
-4'b0010: p1_i_select = 2'b10;
-4'b0001: p1_i_select = 2'b11;
-4'bz000: p1_i_select = 2'b00;
-4'b0z00: p1_i_select = 2'b01;
-4'b00z0: p1_i_select = 2'b10;
-4'b000z: p1_i_select = 2'b11;
-4'bx000: p1_i_select = 2'b00;
-4'b0x00: p1_i_select = 2'b01;
-4'b00x0: p1_i_select = 2'b10;
-4'b000x: p1_i_select = 2'b11;
-
-default: begin
-for(int i = 0; i < 4; i++) begin
-	if(p1current_line_i[instruction.address.set_index][i].LRU == 0)begin
-		p1_i_select = p1current_line_i[instruction.address.set_index][i];
-	break;
-	end
-end
-end
-endcase
-end
-
-always_comb begin
-    case(p1_d_ways) 
-        8'b1000_0000: p1_d_select = 4'b000;
-        8'b0100_0000: p1_d_select = 4'b001;
-        8'b0010_0000: p1_d_select = 4'b010;
-        8'b0001_0000: p1_d_select = 4'b011;
-        8'b0000_1000: p1_d_select = 4'b100;
-        8'b0000_0100: p1_d_select = 4'b101;
-        8'b0000_0010: p1_d_select = 4'b110;
-        8'b0000_0001: p1_d_select = 4'b111;
-        8'bz000_0000: p1_d_select = 4'b000;
-        8'b0z00_0000: p1_d_select = 4'b001;
-        8'b00z0_0000: p1_d_select = 4'b010;
-        8'b000z_0000: p1_d_select = 4'b011;
-        8'b0000_z000: p1_d_select = 4'b100;
-        8'b0000_0z00: p1_d_select = 4'b101;
-        8'b0000_00z0: p1_d_select = 4'b110;
-        8'b0000_000z: p1_d_select = 4'b111;
-        8'bx000_0000: p1_d_select = 4'b000;
-        8'b0x00_0000: p1_d_select = 4'b001;
-        8'b00x0_0000: p1_d_select = 4'b010;
-        8'b000x_0000: p1_d_select = 4'b011;
-        8'b0000_x000: p1_d_select = 4'b100;
-        8'b0000_0x00: p1_d_select = 4'b101;
-        8'b0000_00x0: p1_d_select = 4'b110;
-        8'b0000_000x: p1_d_select = 4'b111;
-        default: begin
-	for(int i = 0; i < 8; i++) begin
-	if(p1current_line_d[instruction.address.set_index][i].LRU == 0)begin
-		p1_d_select = p1current_line_d[instruction.address.set_index][i];
-	break;
-	end
-end
-end
+    default: begin
+        for(int i = 0; i < 4; i++) begin
+            if(p1current_line_i[instruction.address.set_index][i].LRU == 0)begin
+                p1_i_select = p1current_line_i[instruction.address.set_index][i];
+                break;
+                end
+            end
+        end
     endcase
 end
 
+// Encode to select column of cache for p1 data cache
 always_comb begin
-case(p2_i_ways) 
-
-4'b1000: p2_i_select = 2'b00;
-4'b0100: p2_i_select = 2'b01;
-4'b0010: p2_i_select = 2'b10;
-4'b0001: p2_i_select = 2'b11;
-4'bz000: p2_i_select = 2'b00;
-4'b0z00: p2_i_select = 2'b01;
-4'b00z0: p2_i_select = 2'b10;
-4'b000z: p2_i_select = 2'b11;
-4'bx000: p2_i_select = 2'b00;
-4'b0x00: p2_i_select = 2'b01;
-4'b00x0: p2_i_select = 2'b10;
-4'b000x: p2_i_select = 2'b11;
-
-default: begin
-for(int i = 0; i < 4; i++) begin
-	if(p2current_line_i[instruction.address.set_index][i].LRU == 0)begin
-		p2_i_select = p2current_line_i[instruction.address.set_index][i];
-	break;
-	end
-end
-end
-endcase
+    case(p1_d_ways) 
+        8'b1000_0000, 8'bz000_0000, 8'bx000_0000: p1_d_select = 4'b111;
+        8'b0100_0000, 8'b0z00_0000, 8'b0x00_0000: p1_d_select = 4'b110;
+        8'b0010_0000, 8'b00z0_0000, 8'b00x0_0000: p1_d_select = 4'b101;
+        8'b0001_0000, 8'b000z_0000, 8'b000x_0000: p1_d_select = 4'b100;
+        8'b0000_1000, 8'b0000_z000, 8'b0000_x000: p1_d_select = 4'b011;
+        8'b0000_0100, 8'b0000_0z00, 8'b0000_0x00: p1_d_select = 4'b010;
+        8'b0000_0010, 8'b0000_00z0, 8'b0000_00x0: p1_d_select = 4'b001;
+        8'b0000_0001, 8'b0000_000z, 8'b0000_000x: p1_d_select = 4'b000;
+    default: begin
+        for(int i = 0; i < 8; i++) begin
+            if(p1current_line_d[instruction.address.set_index][i].LRU == 0)begin
+                p1_d_select = p1current_line_d[instruction.address.set_index][i];
+                break;
+                end
+            end
+        end
+    endcase
 end
 
+// Encode to select column of cache for p2 instruction cache
+always_comb begin
+    case(p2_i_ways) 
+    4'b1000, 4'bz000, 4'bx000: p2_i_select = 2'b11;
+    4'b0100, 4'b0z00, 4'b0x00: p2_i_select = 2'b10;
+    4'b0010, 4'b00z0, 4'b00x0: p2_i_select = 2'b01;
+    4'b0001, 4'b000z, 4'b000x: p2_i_select = 2'b00;
+
+    default: begin
+        for(int i = 0; i < 4; i++) begin
+            if(p2current_line_i[instruction.address.set_index][i].LRU == 0)begin
+                p2_i_select = p2current_line_i[instruction.address.set_index][i];
+                break;
+                end
+            end
+        end
+    endcase
+end
+
+// Encode to select column of cache for p2 data cache
 always_comb begin
     case(p2_d_ways) 
-        8'b1000_0000: p2_d_select = 4'b000;
-        8'b0100_0000: p2_d_select = 4'b001;
-        8'b0010_0000: p2_d_select = 4'b010;
-        8'b0001_0000: p2_d_select = 4'b011;
-        8'b0000_1000: p2_d_select = 4'b100;
-        8'b0000_0100: p2_d_select = 4'b101;
-        8'b0000_0010: p2_d_select = 4'b110;
-        8'b0000_0001: p2_d_select = 4'b111;
-        8'bz000_0000: p2_d_select = 4'b000;
-        8'b0z00_0000: p2_d_select = 4'b001;
-        8'b00z0_0000: p2_d_select = 4'b010;
-        8'b000z_0000: p2_d_select = 4'b011;
-        8'b0000_z000: p2_d_select = 4'b100;
-        8'b0000_0z00: p2_d_select = 4'b101;
-        8'b0000_00z0: p2_d_select = 4'b110;
-        8'b0000_000z: p2_d_select = 4'b111;
-        8'bx000_0000: p2_d_select = 4'b000;
-        8'b0x00_0000: p2_d_select = 4'b001;
-        8'b00x0_0000: p2_d_select = 4'b010;
-        8'b000x_0000: p2_d_select = 4'b011;
-        8'b0000_x000: p2_d_select = 4'b100;
-        8'b0000_0x00: p2_d_select = 4'b101;
-        8'b0000_00x0: p2_d_select = 4'b110;
-        8'b0000_000x: p2_d_select = 4'b111;
-        default: begin
-	for(int i = 0; i < 4; i++) begin
-	if(p2current_line_d[instruction.address.set_index][i].LRU == 0)begin
-		p2_d_select = p2current_line_d[instruction.address.set_index][i];
-	break;
-	end
-  	end
-end
+        8'b1000_0000, 8'bz000_0000, 8'bx000_0000: p2_d_select = 4'b111;
+        8'b0100_0000, 8'b0z00_0000, 8'b0x00_0000: p2_d_select = 4'b110;
+        8'b0010_0000, 8'b00z0_0000, 8'b00x0_0000: p2_d_select = 4'b101;
+        8'b0001_0000, 8'b000z_0000, 8'b000x_0000: p2_d_select = 4'b100;
+        8'b0000_1000, 8'b0000_z000, 8'b0000_x000: p2_d_select = 4'b011;
+        8'b0000_0100, 8'b0000_0z00, 8'b0000_0x00: p2_d_select = 4'b010;
+        8'b0000_0010, 8'b0000_00z0, 8'b0000_00x0: p2_d_select = 4'b001;
+        8'b0000_0001, 8'b0000_000z, 8'b0000_000x: p2_d_select = 4'b000;
+
+    default: begin
+        for(int i = 0; i < 4; i++) begin
+            if(p2current_line_d[instruction.address.set_index][i].LRU == 0)begin
+                p2_d_select = p2current_line_d[instruction.address.set_index][i];
+                break;
+                end
+            end
+        end
     endcase
 end
 
@@ -293,7 +247,6 @@ always_comb begin
         end
     endcase
 end
-
 
 
 endmodule
