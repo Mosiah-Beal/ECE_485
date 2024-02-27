@@ -1,4 +1,4 @@
-`include "my_struct_package.sv"
+//`include "my_struct_package.sv"
 
 import my_struct_package::*;
 
@@ -11,8 +11,8 @@ module top;
     cache_line_t cache_output_i[1][4];
     cache_line_t cache_input_d[1][8];
     cache_line_t cache_output_d[1][8];
-    cache_line_t fsm_input_line[1][1];
-    cache_line_t fsm_output_line[1][1];
+    cache_line_t fsm_input_line;
+    cache_line_t fsm_output_line;
     logic hit;
     logic hitM;
 

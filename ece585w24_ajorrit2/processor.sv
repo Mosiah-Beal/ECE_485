@@ -6,10 +6,10 @@ module processor(
     input  cache_line_t current_line_i[1][4],
     input  cache_line_t current_line_d[1][8],
     input  command_t instruction,
-    input  cache_line_t block_in[1][1],
+    input  cache_line_t block_in,
     output cache_line_t return_line_i[1][4],
     output cache_line_t return_line_d[1][8],
-    output cache_line_t block_out[1][1]
+    output cache_line_t block_out
     //add cache line output for fsm
 );
 
@@ -138,25 +138,25 @@ module processor(
         case(instruction.n)
             0, 1: begin
                 $display("Read/Write data cache");
-                block_out[0][0] = current_line_d[0][d_select];
-                block_out[0][0].tag = instruction.address.tag;
-                return_line_d[0][d_select] <= block_in[0][0];
+                block_out = current_line_d[0][d_select];
+                block_out.tag = instruction.address.tag;
+                return_line_d[0][d_select] <= block_in;
                 end
             2: begin
                 $display("Read instruction cache");
-                block_out[0][0] = current_line_i[0][i_select];
-                block_out[0][0].tag = instruction.address.tag;
-                return_line_i[0][i_select] <= block_in[0][0];	    
+                block_out = current_line_i[0][i_select];
+                block_out.tag = instruction.address.tag;
+                return_line_i[0][i_select] <= block_in;	    
                 end
             3: begin 
-                block_out[0][0] = current_line_d[0][d_select];
-                block_out[0][0].tag = instruction.address.tag;
-                return_line_d[0][d_select] <= block_in[0][0];
+                block_out = current_line_d[0][d_select];
+                block_out.tag = instruction.address.tag;
+                return_line_d[0][d_select] <= block_in;
                 end
             4: begin
-                block_out[0][0] = current_line_d[0][d_select];
-                block_out[0][0].tag = instruction.address.tag;
-                return_line_d[0][d_select] <= block_in[0][0];                
+                block_out = current_line_d[0][d_select];
+                block_out.tag = instruction.address.tag;
+                return_line_d[0][d_select] <= block_in;                
                 end
             8, 9: begin
                 // Do nothing or add specific functionality based on your design

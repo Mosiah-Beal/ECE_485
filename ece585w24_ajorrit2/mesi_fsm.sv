@@ -5,10 +5,10 @@ module mesi_fsm(
     input logic clk,
     input logic rst,
     input command_t instruction,
-    input cache_line_t internal_line[1][1],  
+    input cache_line_t internal_line,  
     input logic hit, 
     input logic hitM, 
-    output cache_line_t return_line[1][1]
+    output cache_line_t return_line
 );
 
     // Declare state variables
@@ -18,16 +18,16 @@ module mesi_fsm(
     // Sequential logic block for state transition
     always_ff@(posedge clk) begin: Sequential_Logic
         if (rst)
-	        internal_line[0][0].MESI_bits <= E;
+	    internal_line.MESI_bits <= E;
         else
-            internal_line[0][0].MESI_bits <= nextstate;
+            internal_line.MESI_bits <= nextstate;
     end
 
     // Combinational logic block for determining the next state based on the current state and input
     always_comb begin: Next_State_Logic
-        $display(" internal_line[0][0].tag = %h     : internal_line[0][0].LRU = %h \n internal_line[0][0].MESI_bits = %h : internal_line[0][0].data = %h", internal_line[0][0].tag,internal_line[0][0].LRU,internal_line[0][0].MESI_bits,internal_line[0][0].data); 
-        $display(" return_line[0][0].tag   = %h     : return_line.LRU[0][0]   = %h \n return_line[0][0].MESI_bits   = %h : return_line[0][0].data   = %h", return_line[0][0].tag,return_line[0][0].LRU,return_line[0][0].MESI_bits,return_line[0][0].data);
-        case (internal_line[0][0].MESI_bits)
+        $display(" internal_line[0][0].tag = %h     : internal_line[0][0].LRU = %h \n internal_line[0][0].MESI_bits = %h : internal_line[0][0].data = %h", internal_line.tag, internal_line.LRU, internal_line.MESI_bits, internal_line.data); 
+        $display(" return_line[0][0].tag   = %h     : return_line.LRU[0][0]   = %h \n return_line[0][0].MESI_bits   = %h : return_line[0][0].data   = %h", return_line.tag,return_line.LRU,return_line.MESI_bits,return_line.data);
+        case (internal_line.MESI_bits)
             M: begin
                 $display("Modified", $time);
                 case (instruction.n)
@@ -126,10 +126,12 @@ module mesi_fsm(
     // Combinational logic block for determining outputs based on the current state and input
     always_comb begin: Output_Logic
         // Copy internal_line to return_line
-        return_line[0][0].tag = internal_line[0][0].tag;
+        return_line.tag = internal_line.tag;
+        
         // Update mesi_bits based on nextstate
-        return_line[0][0].MESI_bits = nextstate;
-	    return_line[0][0].LRU = 0;
+        return_line.MESI_bits = nextstate;
+	return_line.LRU = 0;
+        
     end
 
 endmodule 
