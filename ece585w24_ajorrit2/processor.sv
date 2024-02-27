@@ -3,12 +3,12 @@ import my_struct_package::*;
 
 module processor(
     input  clk,
-    input  cache_line_t current_line_i[1][4],
-    input  cache_line_t current_line_d[1][8],
+    input  cache_line_t current_line_i[4],
+    input  cache_line_t current_line_d[8],
     input  command_t instruction,
     input  cache_line_t block_in,
-    output cache_line_t return_line_i[1][4],
-    output cache_line_t return_line_d[1][8],
+    output cache_line_t return_line_i[4],
+    output cache_line_t return_line_d[8],
     output cache_line_t block_out
     //add cache line output for fsm
 );
@@ -19,8 +19,8 @@ module processor(
     int j = 0;
     logic [7:0] data_read_bus;
     logic [3:0] instruction_read_bus;
-    cache_line_t dummy_d[1][8];
-    cache_line_t dummy_i[1][4];
+    cache_line_t dummy_d[8];
+    cache_line_t dummy_i[4];
 
     // Loop through the ways to check for hits
     always_comb begin : check_hits
@@ -29,7 +29,7 @@ module processor(
             data_read_bus[i] = 0;    // Assume this cache has no hit        
 
             // check if there is a match in the way, using the set index passed in (updates read_bus)
-            if (instruction.address.tag == current_line_d[0][i].tag) begin
+            if (instruction.address.tag == current_line_d[i].tag) begin
                 case (instruction.n)  // which instruction is this?
                     0: begin // data read
                         data_read_bus[i] = 1;   // if read instruction -> hit;
@@ -57,7 +57,7 @@ module processor(
             instruction_read_bus[j] = 0;    // Assume this cache has no hit
 
             // check if there is a match in the way, using the set index passed in (updates read_bus)
-            if (instruction.address.tag == current_line_i[0][j].tag) begin
+            if (instruction.address.tag == current_line_i[j].tag) begin
                 case (instruction.n)  // which instruction is this?
                     0: begin // data read
                         instruction_read_bus[j] = 1;   // if read instruction -> hit;
@@ -94,14 +94,14 @@ module processor(
             cache_line_t way_line_i;
             // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
             for(int i = 0; i < 4; i++) begin
-                way_line_i = current_line_i[0][i];
+                way_line_i = current_line_i[i];
                 // update way_select if the current way has a lower LRU value
-                if(way_line_i.LRU < current_line_i[0][way_select_i].LRU) begin
+                if(way_line_i.LRU < current_line_i[way_select_i].LRU) begin
                     way_select_i = i;
                 end
                 
                 // update invalid_select if the current way is invalid and has a lower LRU value
-                if(way_line_i.MESI_bits == 0 && way_line_i.LRU < current_line_i[0][invalid_select_i].LRU) begin
+                if(way_line_i.MESI_bits == 0 && way_line_i.LRU < current_line_i[invalid_select_i].LRU) begin
                     invalid_select_i = i;
                 end
 
@@ -144,13 +144,13 @@ module processor(
             cache_line_t way_line_d;
             // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
             for(int i = 0; i < 8; i++) begin
-                way_line_d = current_line_i[0][i];
+                way_line_d = current_line_i[i];
                 // update way_select if the current way has a lower LRU value
-                if(way_line_d.LRU < current_line_i[0][way_select_d].LRU) begin
+                if(way_line_d.LRU < current_line_i[way_select_d].LRU) begin
                     way_select_d = i;
                 end
                 // update invalid_select if the current way is invalid and has a lower LRU value
-                if(way_line_d.MESI_bits == 0 && way_line_d.LRU < current_line_i[0][invalid_select_d].LRU) begin
+                if(way_line_d.MESI_bits == 0 && way_line_d.LRU < current_line_i[invalid_select_d].LRU) begin
                     invalid_select_d = i;
                 end
 
@@ -172,37 +172,37 @@ module processor(
         $display("d_select = %d\n", d_select);
         $display("i_select = %d\n", i_select);
 
-        $display(" current_line_i[0][i_select].tag = %h\t : current_line_i[0][i_select].LRU = %h \t current_line_i[0][i_select].MESI_bits = %h\t : current_line_i[0][i_select].data = %h\n", current_line_i[0][i_select].tag,current_line_i[0][i_select].LRU,current_line_i[0][i_select].MESI_bits,current_line_i[0][i_select].data); 
-        $display(" return_line_i[0][i_select].tag = %h \t : return_line_i[0][i_select].LRU = %h \t return_line_i[0][i_select].MESI_bits = %h\t : return_line_i[0][i_select].data = %h\n", return_line_i[0][i_select].tag,return_line_i[0][i_select].LRU,return_line_i[0][i_select].MESI_bits,return_line_i[0][i_select].data);
+        $display(" current_line_i.tag = %h\t : current_line_i.LRU = %h \t current_line_i.MESI_bits = %h\t : current_line_i.data = %h\n", current_line_i[i_select].tag,current_line_i[i_select].LRU,current_line_i[i_select].MESI_bits,current_line_i[i_select].data); 
+        $display(" return_line_i.tag = %h \t : return_line_i.LRU = %h \t return_line_i.MESI_bits = %h\t : return_line_i.data = %h\n", return_line_i[i_select].tag,return_line_i[i_select].LRU,return_line_i[i_select].MESI_bits,return_line_i[i_select].data);
 
-        $display(" current_line_d[0][d_select].tag = %h\t : current_line_d[0][d_select].LRU = %h \t current_line_d[instruction.address.set_index][d_select].MESI_bits = %h\t : current_line_d[instruction.address.set_index][d_select].data = %h\n", current_line_d[0][d_select].tag,current_line_d[0][d_select].LRU,current_line_d[0][d_select].MESI_bits,current_line_d[0][d_select].data); 
-        $display(" return_line_d[0][d_select].tag = %h \t : return_line_d[0][d_select].LRU = %h \t return_line_d[0][d_select].MESI_bits = %h\t : return_line_d[0][d_select].data = %h\n", return_line_d[0][d_select].tag,return_line_d[0][d_select].LRU,return_line_d[0][d_select].MESI_bits,return_line_d[0][d_select].data);
+        $display(" current_line_d.tag = %h\t : current_line_d.LRU = %h \t current_line_d.MESI_bits = %h\t : current_line_d.data = %h\n", current_line_d[d_select].tag,current_line_d[d_select].LRU,current_line_d[d_select].MESI_bits,current_line_d[d_select].data); 
+        $display(" return_line_d.tag = %h \t : return_line_d.LRU = %h \t return_line_d.MESI_bits = %h\t : return_line_d.data = %h\n", return_line_d[d_select].tag,return_line_d[d_select].LRU,return_line_d[d_select].MESI_bits,return_line_d[d_select].data);
 
         case(instruction.n)
             0, 1: begin
                 $display("Read/Write data cache");
-                block_out = current_line_d[0][d_select];
+                block_out = current_line_d[d_select];
                 block_out.tag = instruction.address.tag;
 
 		dummy_d = current_line_d;
-		dummy_d[0][d_select] = block_in;
+		dummy_d[d_select] = block_in;
                 return_line_d = dummy_d;
                 end
             2: begin
                 $display("Read instruction cache");
-                block_out = current_line_i[0][i_select];
+                block_out = current_line_i[i_select];
                 block_out.tag = instruction.address.tag;
-                return_line_i[0][i_select] = block_in;	    
+                return_line_i[i_select] = block_in;	    
                 end
             3: begin 
-                block_out = current_line_d[0][d_select];
+                block_out = current_line_d[d_select];
                 block_out.tag = instruction.address.tag;
-                return_line_d[0][d_select] = block_in;
+                return_line_d[d_select] = block_in;
                 end
             4: begin
-                block_out = current_line_d[0][d_select];
+                block_out = current_line_d[d_select];
                 block_out.tag = instruction.address.tag;
-                return_line_d[0][d_select] = block_in;                
+                return_line_d[d_select] = block_in;                
                 end
             8, 9: begin
                 // Do nothing or add specific functionality based on your design

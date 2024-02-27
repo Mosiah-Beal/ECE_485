@@ -1,17 +1,16 @@
 
-`include "my_struct_package.sv"
-
+import my_struct_package::*; // import structs
 module cache #(parameter sets = 16384, parameter ways = 8)(
 	input  clk,  
-	input  my_struct_package::command_t instruction,
+	input  command_t instruction,
 	input  write_enable,
 	input  read_enable,
-	input  my_struct_package::cache_line_t cache_in[1][ways],
-	output my_struct_package::cache_line_t cache_out[1][ways]
+	input  cache_line_t cache_in[ways],
+	output cache_line_t cache_out[ways]
 );
 
 
-import my_struct_package::*; // import structs
+
 
 // cache module
     /** Initialize data cache as a 2D array of cache lines
@@ -29,7 +28,7 @@ if(read_enable) begin
   case (instruction.n)
         0, 1, 2, 3, 4: begin // Read or write instructions
 	    
-            cache_out[0][i] <= cache[instruction.address.set_index][i];
+            cache_out[i] <= cache[instruction.address.set_index][i];
         end
         8: begin // Reset cache
             for (int j = 0; j < sets;j++) begin
@@ -51,7 +50,7 @@ end
 else if(write_enable) begin
 case (instruction.n)
         0, 1, 2, 3, 4: begin // Read or write instructions   
-            cache[instruction.address.set_index][i] <= cache_in[0][i];
+            cache[instruction.address.set_index][i] <= cache_in[i];
         end
         8: begin // Reset cache
             for (int j = 0; j < sets;j++) begin
