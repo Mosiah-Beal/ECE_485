@@ -19,6 +19,8 @@ module processor(
     int j = 0;
     logic [7:0] data_read_bus;
     logic [3:0] instruction_read_bus;
+    cache_line_t dummy_d[1][8];
+    cache_line_t dummy_i[1][4];
 
     // Loop through the ways to check for hits
     always_comb begin : check_hits
@@ -181,23 +183,26 @@ module processor(
                 $display("Read/Write data cache");
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag;
-                return_line_d[0][d_select] <= block_in;
+
+		dummy_d = current_line_d;
+		dummy_d[0][d_select] = block_in;
+                return_line_d = dummy_d;
                 end
             2: begin
                 $display("Read instruction cache");
                 block_out = current_line_i[0][i_select];
                 block_out.tag = instruction.address.tag;
-                return_line_i[0][i_select] <= block_in;	    
+                return_line_i[0][i_select] = block_in;	    
                 end
             3: begin 
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag;
-                return_line_d[0][d_select] <= block_in;
+                return_line_d[0][d_select] = block_in;
                 end
             4: begin
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag;
-                return_line_d[0][d_select] <= block_in;                
+                return_line_d[0][d_select] = block_in;                
                 end
             8, 9: begin
                 // Do nothing or add specific functionality based on your design

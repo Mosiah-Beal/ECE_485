@@ -15,6 +15,8 @@ module top;
     cache_line_t fsm_output_line;
     logic hit;
     logic hitM;
+    logic write_enable;
+    logic read_enable;
 
 // Parameters
 parameter sets = 16384;
@@ -26,7 +28,9 @@ cache #(.sets(16384), .ways(8)) data_cache (
         .clk(clk),
         .instruction(instruction),
 	    .cache_in(cache_input_d),
-        .cache_out(cache_output_d)
+        .cache_out(cache_output_d),
+	.write_enable(write_enable),
+	.read_enable(read_enable)
     );
 
  // Instantiate the instruction cache with sets = 16384 and ways = 4
@@ -34,7 +38,9 @@ cache #(.sets(16384), .ways(4)) instruction_cache (
         .clk(clk),
         .instruction(instruction),
 	    .cache_in(cache_input_i),
-        .cache_out(cache_output_i)
+        .cache_out(cache_output_i),
+	.write_enable(write_enable),
+	.read_enable(read_enable)
     );
 
 processor processor(
@@ -64,46 +70,56 @@ initial begin
     // Initialize inputs
     clk = 0;
     rst = 1;
-    instruction = {4'b0,32'b0,3'b0,2'b0};
+    instruction = {4'b1000,32'b0,3'b0,2'b0};
     hit = 0;
     hitM = 0;
+    write_enable = 1; 
+    
 
-
-
-    for(int i = 0; i < sets; i++) begin
-        // Initialize each way
-        for(int j = 0; j < 4; j++) begin
-            cache_input_i[0][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-            cache_input_i[0][j].MESI_bits = I; // Initialize MESI bits to Invalid
-            cache_input_i[0][j].tag = 12'b0;        // Initialize tag to 0
-            cache_input_i[0][j].data = 32'b0;     // Initialize mem to 0
-        end
-    end
-
-
-    for(int i = 0; i < sets; i++) begin
-        // Initialize each way
-        for(int j = 0; j < 8; j++) begin
-            cache_input_d[0][j].LRU = j;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-            cache_input_d[0][j].MESI_bits = I; // Initialize MESI bits to Invalid
-            cache_input_d[0][j].tag = 12'b0;        // Initialize tag to 0
-            cache_input_d[0][j].data = 32'b0;     // Initialize mem to 0
-        end
-    end
-        
-    // Wait for some time
-    #10;
+    
+    #90;
 
     // De-assert reset
     rst = 0;
-
+    write_enable = 0;
+    read_enable = 1;
     // Apply test vectors
     // You can modify the test vectors as per your requirements
     // For example, you can change the instructions, block_in values, etc.
 
     // Test case 1
     $display("Test Case 1:");
-    
+
+//0 984DE132
+ instruction = {4'b0,32'h984DE132,3'b0,2'b0};
+#10;
+//0 116DE12F
+ instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
+#10;
+//0 100DE130
+ instruction = {4'b0,32'h100DE130,3'b0,2'b0};
+#10;
+//0 999DE12E
+ instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
+#10;
+//0 645DE10A
+ instruction = {4'b0,32'h645DE10A,3'b0,2'b0};
+#10;
+//0 846DE107
+ instruction = {4'b0,32'h846DE107,3'b0,2'b0};
+#10;
+//0 211DE128
+ instruction = {4'b0,32'h211DE128,3'b0,2'b0};
+#10;
+//0 777DE133
+ instruction = {4'b0,32'h777DE133,3'b0,2'b0};
+#10;
+
+
+
+
+
+    $display("Test Case 2:");    
     // Set instruction, block_in, hit, hitM values accordingly
     instruction = {4'b1,32'h8FA2B7C4,3'b0,2'b0};
     
