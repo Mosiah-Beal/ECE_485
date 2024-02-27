@@ -30,7 +30,7 @@ typedef enum logic [1:0] {
 	S = 2'b01, // Shared
 	E = 2'b10, // Exclusive
 	M = 2'b11  // Modified
-} MESI_t;
+} states_t;
 
 endpackage
 

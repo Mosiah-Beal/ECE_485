@@ -1,13 +1,12 @@
 `include "my_struct_package.sv"
+ // Import the struct package
+import my_struct_package::*;
 
 module processor_tb;
 
     // Parameters
     localparam CLK_PERIOD = 10; // Clock period in time units
-
-    // Import the struct package
-    import my_struct_package::*;
-
+   
     // Declare signals
     logic clk = 0;
     logic [31:0] instr_address = 0;
@@ -47,15 +46,15 @@ module processor_tb;
 	return_line_d[0][0].tag        = instruction.address.tag;
 	return_line_d[0][0].LRU        = 3'b0;
 	return_line_d[0][0].MESI_bits  = 2'b11;
-       	return_line_d[0][0].data       = 32'hABCD_EF01;
+	return_line_d[0][0].data       = 32'hABCD_EF01;
 #10;	 
         //read operation
 	n  = 0;
 	instr_address = 32'hABCD_EF01;
-       	return_line_d[0][0].tag        = instruction.address.tag;
+	return_line_d[0][0].tag        = instruction.address.tag;
 	return_line_d[0][0].LRU        = 3'b0;
 	return_line_d[0][0].MESI_bits  = 2'b11;
-       	return_line_d[0][0].data       = 32'hABCD_EF01; 
+	return_line_d[0][0].data       = 32'hABCD_EF01; 
 #10;
 	// Write operation
 	n  = 1;
@@ -138,7 +137,7 @@ module processor_tb;
 	return_line_d[0][0].tag        = instruction.address.tag;
 	return_line_d[0][0].LRU        = 3'b0;
 	return_line_d[0][0].MESI_bits  = 2'b11;
-       	return_line_d[0][0].data = 32'hABCD_EF01; 
+	return_line_d[0][0].data = 32'hABCD_EF01; 
 
 #10;
 	// Write operation
@@ -214,13 +213,14 @@ module processor_tb;
 	 
 
 	// Monitor p_bus
-         $monitor("Time = %0t: p_bus = %b data cache = %p instr cache = %p",
-         $time, p_bus, current_line_d, current_line_i);
+	$monitor("Time = %0t: p_bus = %b data cache = %p instr cache = %p",
+			$time, p_bus, current_line_d, current_line_i);
 
-        // Run simulation for a certain period
-        #1000;
+	// Run simulation for a certain period
+	#1000;
 	$stop;
-        // Add more simulation time as needed
+	
+	// Add more simulation time as needed
     end
 
 endmodule
