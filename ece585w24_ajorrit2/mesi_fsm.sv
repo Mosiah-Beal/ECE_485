@@ -25,8 +25,8 @@ module mesi_fsm(
 
     // Combinational logic block for determining the next state based on the current state and input
     always_comb begin: Next_State_Logic
-        $display(" internal_line[0][0].tag = %h     : internal_line[0][0].LRU = %h \n internal_line[0][0].MESI_bits = %h : internal_line[0][0].data = %h", internal_line.tag, internal_line.LRU, internal_line.MESI_bits, internal_line.data); 
-        $display(" return_line[0][0].tag   = %h     : return_line.LRU[0][0]   = %h \n return_line[0][0].MESI_bits   = %h : return_line[0][0].data   = %h", return_line.tag,return_line.LRU,return_line.MESI_bits,return_line.data);
+        $display(" internal_line.tag = %h     : internal_line.LRU = %h \n internal_line.MESI_bits = %h : internal_line.data = %h", internal_line.tag, internal_line.LRU, internal_line.MESI_bits, internal_line.data); 
+        $display(" return_line.tag   = %h     : return_line.LRU   = %h \n return_line.MESI_bits   = %h : return_line.data   = %h", return_line.tag,return_line.LRU,return_line.MESI_bits,return_line.data);
         case (internal_line.MESI_bits)
             M: begin
                 $display("Modified", $time);
