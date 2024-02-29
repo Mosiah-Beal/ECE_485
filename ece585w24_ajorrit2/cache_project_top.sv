@@ -2,8 +2,50 @@
 
 import my_struct_package::*;
 
+interface global_signals_if(
+    logic clk,
+    logic rst,
+    command_t instruction,
+   
+    logic hit,
+    logic hitM,
+    logic write_enable,
+    logic read_enable
+);
+
+    modport d_cache_port (
+        input clk,
+        input instruction,
+        input write_enable,
+        input read_enable
+    );
+
+    modport i_cache_port (
+        input clk,
+        input instruction,
+        input write_enable,
+        input read_enable
+    );
+
+    modport processor_port (
+        input clk,
+        input instruction
+    );
+
+    modport fsm_port (
+        input clk,
+        input rst,
+        input instruction,
+        input hit,
+        input hitM
+    );
+
+
+
+endinterface
+
 module top;
-    
+
     logic clk;
     logic rst;
     command_t instruction;
@@ -18,6 +60,17 @@ module top;
     logic write_enable;
     logic read_enable;
 
+    global_signals_if global_signals(
+        .clk(clk),
+        .rst(rst),
+        .instruction(instruction),
+        .hit(hit),
+        .hitM(hitM),
+        .write_enable(write_enable),
+        .read_enable(read_enable)
+    );
+
+
 // Parameters
 parameter sets = 16384;
 parameter ways = 8;
@@ -25,43 +78,34 @@ parameter ways = 8;
  
 // Instantiate the data cache with sets = 16384 and ways = 8
 cache #(.sets(16384), .ways(8)) data_cache (
-        .clk(clk),
-        .instruction(instruction),
+        global_signals.d_cache_port,
 	    .cache_in(cache_input_d),
         .cache_out(cache_output_d),
-	.write_enable(write_enable),
-	.read_enable(read_enable)
     );
 
  // Instantiate the instruction cache with sets = 16384 and ways = 4
 cache #(.sets(16384), .ways(4)) instruction_cache (
-        .clk(clk),
-        .instruction(instruction),
-	    .cache_in(cache_input_i),
-        .cache_out(cache_output_i),
-	.write_enable(write_enable),
-	.read_enable(read_enable)
+        global_signals.i_cache_port,
+        .cache_in(cache_input_i),
+        .cache_out(cache_output_i)
     );
 
 processor processor(
-        .clk(clk),
-        .instruction(instruction),
+        global_signals.processor_port,
         .current_line_i(cache_output_i),
         .current_line_d(cache_output_d),
         .return_line_i(cache_input_i),
         .return_line_d(cache_input_d),
-        .block_in(fsm_input_line),
-        .block_out(fsm_output_line));
+        .block_in(fsm_output_line),
+        .block_out(fsm_input_line)
+    );
 
 
 mesi_fsm fsm(
-        .clk(clk), 
-        .rst(rst), 
-        .instruction(instruction),
-        .internal_line(fsm_output_line), 
-        .return_line(fsm_input_line), 
-        .hit(hit),
-        .hitM(hitM));
+        global_signals.fsm_port,
+        .block_in(fsm_input_line),
+        .block_out(fsm_output_line)
+    );
 
 // Clock generation
 always #5 clk = ~clk;

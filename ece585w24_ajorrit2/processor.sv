@@ -89,8 +89,8 @@ module processor(
             
         default: begin
             // Choose the LRU line if no valid way is found
-            static int way_select_i = 0; // default to way 0, keeps track of lowest LRU way
-            static int invalid_select_i = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
+            automatic int way_select_i = 0; // default to way 0, keeps track of lowest LRU way
+            automatic int invalid_select_i = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
             cache_line_t way_line_i;
             // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
             for(int i = 0; i < 4; i++) begin
@@ -118,13 +118,6 @@ module processor(
         endcase
     end
 
-     
-
-
-
-
-
-
     // Encode to select column of cache for data cache
     always_comb begin
         case(data_read_bus) 
@@ -139,8 +132,8 @@ module processor(
 
         default: begin
             // Choose the LRU line if no valid way is found
-            static int way_select_d = 0; // default to way 0, keeps track of lowest LRU way
-            static int invalid_select_d = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
+            automatic int way_select_d = 0; // default to way 0, keeps track of lowest LRU way
+            automatic int invalid_select_d = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
             cache_line_t way_line_d;
             // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
             for(int i = 0; i < 8; i++) begin
