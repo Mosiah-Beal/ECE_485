@@ -27,9 +27,8 @@ for (int i = 0; i < ways; i++) begin
     
 if(read_enable) begin
   case (instruction.n)
-        0, 1, 2, 3, 4: begin // Read or write instructions
-	    
-            cache_out[0][i] <= cache[instruction.address.set_index][i];
+        0, 1, 2, 3, 4: begin // Read or write instructions    
+	 cache_out[0][i] <= cache[instruction.address.set_index][i];
         end
         8: begin // Reset cache
             for (int j = 0; j < sets;j++) begin

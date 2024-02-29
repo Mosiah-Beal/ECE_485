@@ -6,7 +6,8 @@ module processor(
     input  cache_line_t current_line_i[1][4],
     input  cache_line_t current_line_d[1][8],
     input  command_t instruction,
-    input  cache_line_t block_in,
+    input  cache_line_t block_in, 
+    input logic [2:0] count,
     output cache_line_t return_line_i[1][4],
     output cache_line_t return_line_d[1][8],
     output cache_line_t block_out
@@ -21,6 +22,10 @@ module processor(
     logic [3:0] instruction_read_bus;
     cache_line_t dummy_d[1][8];
     cache_line_t dummy_i[1][4];
+ 
+ 
+
+
 
     // Loop through the ways to check for hits
     always_comb begin : check_hits
@@ -89,7 +94,7 @@ module processor(
             
         default: begin
             // Choose the LRU line if no valid way is found
-            static int way_select_i = 0; // default to way 0, keeps track of lowest LRU way
+            static int way_select_i = 2; // default to way 0, keeps track of lowest LRU way
             static int invalid_select_i = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
             cache_line_t way_line_i;
             // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
@@ -138,32 +143,10 @@ module processor(
             8'b0000_0001, 8'b0000_000z: d_select = 3'b000;
 
         default: begin
-            // Choose the LRU line if no valid way is found
-            static int way_select_d = 0; // default to way 0, keeps track of lowest LRU way
-            static int invalid_select_d = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
-            cache_line_t way_line_d;
-            // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
-            for(int i = 0; i < 8; i++) begin
-                way_line_d = current_line_i[0][i];
-                // update way_select if the current way has a lower LRU value
-                if(way_line_d.LRU < current_line_i[0][way_select_d].LRU) begin
-                    way_select_d = i;
-                end
-                // update invalid_select if the current way is invalid and has a lower LRU value
-                if(way_line_d.MESI_bits == 0 && way_line_d.LRU < current_line_i[0][invalid_select_d].LRU) begin
-                    invalid_select_d = i;
-                end
-
-                // if the invalid_select is still the impossible value, use the way_select
-                if(invalid_select_d == -1) begin
-                    d_select = way_select_d;
-                end
-                // otherwise, use the invalid_select
-                else begin
-                    d_select = invalid_select_d;
-                end
-            end
-            end
+ 	$display("COUNT = %b", count); 
+	d_select = count;
+	
+	end 
         endcase
     end
 
@@ -172,13 +155,10 @@ module processor(
         $display("d_select = %d\n", d_select);
         $display("i_select = %d\n", i_select);
 
-        $display(" current_line_i[0][i_select].tag = %h\t : current_line_i[0][i_select].LRU = %h \t current_line_i[0][i_select].MESI_bits = %h\t : current_line_i[0][i_select].data = %h\n", current_line_i[0][i_select].tag,current_line_i[0][i_select].LRU,current_line_i[0][i_select].MESI_bits,current_line_i[0][i_select].data); 
-        $display(" return_line_i[0][i_select].tag = %h \t : return_line_i[0][i_select].LRU = %h \t return_line_i[0][i_select].MESI_bits = %h\t : return_line_i[0][i_select].data = %h\n", return_line_i[0][i_select].tag,return_line_i[0][i_select].LRU,return_line_i[0][i_select].MESI_bits,return_line_i[0][i_select].data);
+ 	$display("d_bus = %b\n", data_read_bus);
+        $display("i_bus = %b\n", instruction_read_bus);
 
-        $display(" current_line_d[0][d_select].tag = %h\t : current_line_d[0][d_select].LRU = %h \t current_line_d[instruction.address.set_index][d_select].MESI_bits = %h\t : current_line_d[instruction.address.set_index][d_select].data = %h\n", current_line_d[0][d_select].tag,current_line_d[0][d_select].LRU,current_line_d[0][d_select].MESI_bits,current_line_d[0][d_select].data); 
-        $display(" return_line_d[0][d_select].tag = %h \t : return_line_d[0][d_select].LRU = %h \t return_line_d[0][d_select].MESI_bits = %h\t : return_line_d[0][d_select].data = %h\n", return_line_d[0][d_select].tag,return_line_d[0][d_select].LRU,return_line_d[0][d_select].MESI_bits,return_line_d[0][d_select].data);
-
-        case(instruction.n)
+          case(instruction.n)
             0, 1: begin
                 $display("Read/Write data cache");
                 block_out = current_line_d[0][d_select];

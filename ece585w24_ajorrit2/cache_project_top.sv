@@ -17,6 +17,8 @@ module top;
     logic hitM;
     logic write_enable;
     logic read_enable;
+    logic start;
+    logic [2:0] sum;
 
 // Parameters
 parameter sets = 16384;
@@ -51,7 +53,8 @@ processor processor(
         .return_line_i(cache_input_i),
         .return_line_d(cache_input_d),
         .block_in(fsm_input_line),
-        .block_out(fsm_output_line));
+        .block_out(fsm_output_line),
+	.count(sum));
 
 
 mesi_fsm fsm(
@@ -62,6 +65,10 @@ mesi_fsm fsm(
         .return_line(fsm_input_line), 
         .hit(hit),
         .hitM(hitM));
+
+
+
+count LRU(.start(start),.rst(rst), .sum(sum));
 
 // Clock generation
 always #5 clk = ~clk;
@@ -74,6 +81,7 @@ initial begin
     hit = 0;
     hitM = 0;
     write_enable = 1; 
+    start = 1; 
     
 
     
@@ -83,39 +91,63 @@ initial begin
     rst = 0;
     write_enable = 0;
     read_enable = 1;
+    start = 1;
+#5; 
     // Apply test vectors
     // You can modify the test vectors as per your requirements
     // For example, you can change the instructions, block_in values, etc.
-
+rst = 0;
+    write_enable = 0;
+    read_enable = 1;
+    start = 0;
     // Test case 1
-    $display("Test Case 1:");
-
+#5; 
+$display("Test Case 1:");
+start = 1;
+ write_enable = 1;
+    read_enable = 0;
 //0 984DE132
  instruction = {4'b0,32'h984DE132,3'b0,2'b0};
 #10;
+start = 0;
+write_enable = 0;
+    read_enable = 1;
 //0 116DE12F
  instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
 #10;
+start = 1;
+write_enable = 1;
+    read_enable = 0;
 //0 100DE130
  instruction = {4'b0,32'h100DE130,3'b0,2'b0};
 #10;
+start = 0;
+write_enable = 0;
+    read_enable = 1;
 //0 999DE12E
  instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
 #10;
+start = 1;
+write_enable = 1;
+    read_enable = 0;
 //0 645DE10A
  instruction = {4'b0,32'h645DE10A,3'b0,2'b0};
 #10;
+start = 0;
 //0 846DE107
  instruction = {4'b0,32'h846DE107,3'b0,2'b0};
 #10;
+start = 1;
 //0 211DE128
  instruction = {4'b0,32'h211DE128,3'b0,2'b0};
 #10;
+start = 0;
 //0 777DE133
  instruction = {4'b0,32'h777DE133,3'b0,2'b0};
 #10;
 
-
+instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
+#10;
 
 
 
