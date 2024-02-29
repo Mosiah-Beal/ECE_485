@@ -163,7 +163,6 @@ module processor(
                 $display("Read/Write data cache");
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag;
-
 		dummy_d = current_line_d;
 		dummy_d[0][d_select] = block_in;
                 return_line_d = dummy_d;
@@ -172,20 +171,26 @@ module processor(
                 $display("Read instruction cache");
                 block_out = current_line_i[0][i_select];
                 block_out.tag = instruction.address.tag;
-                return_line_i[0][i_select] = block_in;	    
+                dummy_i = current_line_i;
+		dummy_i[0][i_select] = block_in;
+                return_line_i = dummy_i;	    
                 end
             3: begin 
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag;
-                return_line_d[0][d_select] = block_in;
+		dummy_d = current_line_d;
+		dummy_d[0][d_select] = block_in;
+                return_line_d = dummy_d;
                 end
             4: begin
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag;
-                return_line_d[0][d_select] = block_in;                
+		dummy_d = current_line_d;
+		dummy_d[0][d_select] = block_in;
+                return_line_d = dummy_d;              
                 end
             8, 9: begin
-                // Do nothing or add specific functionality based on your design
+                // Do nothing 
                 end
         endcase
     end       
