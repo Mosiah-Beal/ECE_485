@@ -21,14 +21,14 @@ import my_struct_package::*; // import structs
 // Declare the cache as an array of cache lines
 cache_line_t cache[sets-1:0][ways-1:0];   // L1 cache
 
-always_ff@(posedge clk) begin
+always_comb begin
 
 for (int i = 0; i < ways; i++) begin
     
 if(read_enable) begin
   case (instruction.n)
         0, 1, 2, 3, 4: begin // Read or write instructions    
-	 cache_out[0][i] <= cache[instruction.address.set_index][i];
+	 cache_out[0][i] = cache[instruction.address.set_index][i];
         end
 
         8: begin // Reset cache
@@ -51,7 +51,7 @@ end
 else if(write_enable) begin
 case (instruction.n)
         0, 1, 2, 3, 4: begin // Read or write instructions   
-            cache[instruction.address.set_index][i] <= cache_in[0][i];
+            cache[instruction.address.set_index][i] = cache_in[0][i];
         end
         8: begin // Reset cache
             for (int j = 0; j < sets;j++) begin
