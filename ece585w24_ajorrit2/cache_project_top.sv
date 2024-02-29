@@ -98,6 +98,10 @@ initial begin
     // Test case 1
     start = 0;
     $display("Test Case 1:");
+    
+    // write changes in the cache
+    write_enable = 1;
+    read_enable = 0;
     start = 1;
 
     //0 984DE132
@@ -107,11 +111,21 @@ initial begin
     #10;
     start = 1;
 
+    // read changes in the cache
+    write_enable = 0;
+    read_enable = 1;
+    #10;
+
     //0 116DE12F
     instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
     #10;
     start = 0;
     #10;
+    start = 1;
+
+    // write changes in the cache
+    write_enable = 1;
+    read_enable = 0;
     start = 1;
 
     //0 100DE130
@@ -121,11 +135,21 @@ initial begin
     #10;
     start = 1;
 
+    // read changes in the cache
+    write_enable = 0;
+    read_enable = 1;
+    #10;
+
     //0 999DE12E
     instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
     #10;
     start = 0;
     #10;
+    start = 1;
+
+    // write changes in the cache
+    write_enable = 1;
+    read_enable = 0;
     start = 1;
 
     //0 645DE10A
@@ -135,11 +159,21 @@ initial begin
     #10;
     start = 1;
 
+    // read changes in the cache
+    write_enable = 0;
+    read_enable = 1;
+    #10;
+
     //0 846DE107
     instruction = {4'b0,32'h846DE107,3'b0,2'b0};
     #10;
     start = 0;
     #10;
+    start = 1;
+
+    // write changes in the cache
+    write_enable = 1;
+    read_enable = 0;
     start = 1;
 
     //0 211DE128
@@ -149,6 +183,11 @@ initial begin
     #10;
     start = 1;
 
+    // read changes in the cache
+    write_enable = 0;
+    read_enable = 1;
+    #10;
+
     //0 777DE133
     instruction = {4'b0,32'h777DE133,3'b0,2'b0};
     #10;
@@ -156,6 +195,9 @@ initial begin
     #10;
     start = 1;
 
+    // write changes in the cache
+    write_enable = 1;
+    read_enable = 0;
 
 
 
