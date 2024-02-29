@@ -80,32 +80,40 @@ initial begin
     instruction = {4'b1000,32'b0,3'b0,2'b0};
     hit = 0;
     hitM = 0;
-    write_enable = 1; 
-    start = 1; 
-    
+    write_enable = 0; 
+    start = 1;
+    read_enable = 1; 
+for(int i = 0; i<8; i++)begin
+	cache_input_d[0][i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
+	cache_input_d[0][i].MESI_bits = I;     // Initialize MESI bits to Invalid
+	cache_input_d[0][i].tag = 12'b0;        // Initialize tag to 0
+	cache_input_d[0][i].data = 32'b0;       // Initialize mem to 0
+end
+    #10;
+instruction = {4'b0000,32'b0,3'b0,2'b0};
 
-    
-    #90;
+
 
     // De-assert reset
     rst = 0;
     write_enable = 0;
     read_enable = 1;
     start = 1;
-#5; 
+    
+    #5; 
     // Apply test vectors
     // You can modify the test vectors as per your requirements
     // For example, you can change the instructions, block_in values, etc.
-rst = 0;
+    rst = 0;
     write_enable = 0;
     read_enable = 1;
     start = 0;
     // Test case 1
-#5; 
-$display("Test Case 1:");
-start = 1;
- write_enable = 1;
-    read_enable = 0;
+    #5; 
+ $display("Test Case 1:");
+  start = 1;
+  write_enable = 1;
+  read_enable = 0;
 //0 984DE132
  instruction = {4'b0,32'h984DE132,3'b0,2'b0};
 #10;

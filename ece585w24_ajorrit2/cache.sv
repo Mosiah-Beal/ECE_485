@@ -30,6 +30,7 @@ if(read_enable) begin
         0, 1, 2, 3, 4: begin // Read or write instructions    
 	 cache_out[0][i] <= cache[instruction.address.set_index][i];
         end
+
         8: begin // Reset cache
             for (int j = 0; j < sets;j++) begin
                 cache[j][i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
