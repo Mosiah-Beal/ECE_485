@@ -9,7 +9,9 @@ module processor(
     input  cache_line_t block_in,
     output cache_line_t return_line_i[4],
     output cache_line_t return_line_d[8],
-    output cache_line_t block_out
+    output cache_line_t block_out,
+
+    input logic [2:0] count
     //add cache line output for fsm
 );
 
@@ -131,32 +133,9 @@ module processor(
             8'b0000_0001, 8'b0000_000z: d_select = 3'b000;
 
         default: begin
-            // Choose the LRU line if no valid way is found
-            automatic int way_select_d = 0; // default to way 0, keeps track of lowest LRU way
-            automatic int invalid_select_d = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
-            cache_line_t way_line_d;
-            // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
-            for(int i = 0; i < 8; i++) begin
-                way_line_d = current_line_i[i];
-                // update way_select if the current way has a lower LRU value
-                if(way_line_d.LRU < current_line_i[way_select_d].LRU) begin
-                    way_select_d = i;
-                end
-                // update invalid_select if the current way is invalid and has a lower LRU value
-                if(way_line_d.MESI_bits == 0 && way_line_d.LRU < current_line_i[invalid_select_d].LRU) begin
-                    invalid_select_d = i;
-                end
-
-                // if the invalid_select is still the impossible value, use the way_select
-                if(invalid_select_d == -1) begin
-                    d_select = way_select_d;
-                end
-                // otherwise, use the invalid_select
-                else begin
-                    d_select = invalid_select_d;
-                end
-            end
-            end
+            $display("COUNT = %b", count); 
+            d_select = count;
+        end
         endcase
     end
 

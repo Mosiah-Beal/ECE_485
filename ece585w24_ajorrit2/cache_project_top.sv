@@ -2,50 +2,8 @@
 
 import my_struct_package::*;
 
-interface global_signals_if(
-    logic clk,
-    logic rst,
-    command_t instruction,
-   
-    logic hit,
-    logic hitM,
-    logic write_enable,
-    logic read_enable
-);
-
-    modport d_cache_port (
-        input clk,
-        input instruction,
-        input write_enable,
-        input read_enable
-    );
-
-    modport i_cache_port (
-        input clk,
-        input instruction,
-        input write_enable,
-        input read_enable
-    );
-
-    modport processor_port (
-        input clk,
-        input instruction
-    );
-
-    modport fsm_port (
-        input clk,
-        input rst,
-        input instruction,
-        input hit,
-        input hitM
-    );
-
-
-
-endinterface
-
 module top;
-
+    
     logic clk;
     logic rst;
     command_t instruction;
@@ -59,17 +17,8 @@ module top;
     logic hitM;
     logic write_enable;
     logic read_enable;
-
-    global_signals_if global_signals(
-        .clk(clk),
-        .rst(rst),
-        .instruction(instruction),
-        .hit(hit),
-        .hitM(hitM),
-        .write_enable(write_enable),
-        .read_enable(read_enable)
-    );
-
+    logic start;
+    logic [2:0] sum;
 
 // Parameters
 parameter sets = 16384;
@@ -78,34 +27,48 @@ parameter ways = 8;
  
 // Instantiate the data cache with sets = 16384 and ways = 8
 cache #(.sets(16384), .ways(8)) data_cache (
-        global_signals.d_cache_port,
+        .clk(clk),
+        .instruction(instruction),
 	    .cache_in(cache_input_d),
         .cache_out(cache_output_d),
+	.write_enable(write_enable),
+	.read_enable(read_enable)
     );
 
  // Instantiate the instruction cache with sets = 16384 and ways = 4
 cache #(.sets(16384), .ways(4)) instruction_cache (
-        global_signals.i_cache_port,
-        .cache_in(cache_input_i),
-        .cache_out(cache_output_i)
+        .clk(clk),
+        .instruction(instruction),
+	    .cache_in(cache_input_i),
+        .cache_out(cache_output_i),
+	    .write_enable(write_enable),
+	    .read_enable(read_enable)
     );
 
 processor processor(
-        global_signals.processor_port,
+        .clk(clk),
+        .instruction(instruction),
         .current_line_i(cache_output_i),
         .current_line_d(cache_output_d),
         .return_line_i(cache_input_i),
         .return_line_d(cache_input_d),
-        .block_in(fsm_output_line),
-        .block_out(fsm_input_line)
-    );
+        .block_in(fsm_input_line),
+        .block_out(fsm_output_line),
+        .count(sum)
+        );
 
 
 mesi_fsm fsm(
-        global_signals.fsm_port,
-        .block_in(fsm_input_line),
-        .block_out(fsm_output_line)
-    );
+        .clk(clk), 
+        .rst(rst), 
+        .instruction(instruction),
+        .internal_line(fsm_output_line), 
+        .return_line(fsm_input_line), 
+        .hit(hit),
+        .hitM(hitM)
+        );
+
+count LRU(.start(start),.rst(rst), .sum(sum));
 
 // Clock generation
 always #5 clk = ~clk;
@@ -118,6 +81,7 @@ initial begin
     hit = 0;
     hitM = 0;
     write_enable = 1; 
+    start = 1; 
     
 
     
@@ -132,33 +96,65 @@ initial begin
     // For example, you can change the instructions, block_in values, etc.
 
     // Test case 1
+    start = 0;
     $display("Test Case 1:");
+    start = 1;
 
-//0 984DE132
- instruction = {4'b0,32'h984DE132,3'b0,2'b0};
-#10;
-//0 116DE12F
- instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
-#10;
-//0 100DE130
- instruction = {4'b0,32'h100DE130,3'b0,2'b0};
-#10;
-//0 999DE12E
- instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
-#10;
-//0 645DE10A
- instruction = {4'b0,32'h645DE10A,3'b0,2'b0};
-#10;
-//0 846DE107
- instruction = {4'b0,32'h846DE107,3'b0,2'b0};
-#10;
-//0 211DE128
- instruction = {4'b0,32'h211DE128,3'b0,2'b0};
-#10;
-//0 777DE133
- instruction = {4'b0,32'h777DE133,3'b0,2'b0};
-#10;
+    //0 984DE132
+    instruction = {4'b0,32'h984DE132,3'b0,2'b0};
+    #10;
+    start = 0;
+    #10;
+    start = 1;
 
+    //0 116DE12F
+    instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
+    #10;
+    start = 0;
+    #10;
+    start = 1;
+
+    //0 100DE130
+    instruction = {4'b0,32'h100DE130,3'b0,2'b0};
+    #10;
+    start = 0;
+    #10;
+    start = 1;
+
+    //0 999DE12E
+    instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
+    #10;
+    start = 0;
+    #10;
+    start = 1;
+
+    //0 645DE10A
+    instruction = {4'b0,32'h645DE10A,3'b0,2'b0};
+    #10;
+    start = 0;
+    #10;
+    start = 1;
+
+    //0 846DE107
+    instruction = {4'b0,32'h846DE107,3'b0,2'b0};
+    #10;
+    start = 0;
+    #10;
+    start = 1;
+
+    //0 211DE128
+    instruction = {4'b0,32'h211DE128,3'b0,2'b0};
+    #10;
+    start = 0;
+    #10;
+    start = 1;
+
+    //0 777DE133
+    instruction = {4'b0,32'h777DE133,3'b0,2'b0};
+    #10;
+    start = 0;
+    #10;
+    start = 1;
 
 
 
