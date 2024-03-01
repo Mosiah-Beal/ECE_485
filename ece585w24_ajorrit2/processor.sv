@@ -20,8 +20,8 @@ module processor(
     int j = 0;
     logic [7:0] data_read_bus;
     logic [3:0] instruction_read_bus;
-    cache_line_t dummy_d[1][8];
-    cache_line_t dummy_i[1][4];
+    cache_line_t internal_d[1][8];
+    cache_line_t internal_i[1][4];
  
  
 
@@ -164,75 +164,75 @@ module processor(
                 $display("Read/Write data cache");
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag; 
-		dummy_d = current_line_d;
+		internal_d = current_line_d;
 		if(|data_read_bus == 1) begin 
 			for(int i = 0; i< d_select; i++) begin
-				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
 			end
 		end
 		else begin
 			for(int i = 0; i<8; i++) begin
-				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
 			end 
 		end
-		dummy_d[0][d_select] = block_in;
-		dummy_d[0][d_select].LRU = 3'b0;
-                return_line_d = dummy_d;
+		internal_d[0][d_select] = block_in;
+		internal_d[0][d_select].LRU = 3'b0;
+                return_line_d = internal_d;
                 end
             2: begin
                 $display("Read instruction cache");
                 block_out = current_line_i[0][i_select];
                 block_out.tag = instruction.address.tag;
-                dummy_i = current_line_i;
+                internal_i = current_line_i;
 		if(|instruction_read_bus == 1) begin 
 			for(int i = 0; i< i_select; i++) begin
-				dummy_i[0][i].LRU = current_line_i[0][i].LRU +1;
+				internal_i[0][i].LRU = current_line_i[0][i].LRU +1;
 			end
 		end
 		else begin
 			for(int i = 0; i<4; i++) begin
-				dummy_i[0][i].LRU = current_line_i[0][i].LRU +1;
+				internal_i[0][i].LRU = current_line_i[0][i].LRU +1;
 			end 
 		end
-		dummy_i[0][i_select] = block_in;
-		dummy_i[0][i_select].LRU = 3'b0;
-                return_line_i = dummy_i;	    
+		internal_i[0][i_select] = block_in;
+		internal_i[0][i_select].LRU = 3'b0;
+                return_line_i = internal_i;	    
                 end
             3: begin 
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag;
-		dummy_d = current_line_d;
+		internal_d = current_line_d;
 		if(|data_read_bus == 1) begin 
 			for(int i = 0; i< d_select; i++) begin
-				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
 			end
 		end
 		else begin
 			for(int i = 0; i<8; i++) begin
-				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
 			end 
 		end
-		dummy_d[0][d_select] = block_in;
-		dummy_d[0][d_select].LRU = 3'b0;
-                return_line_d = dummy_d;
+		internal_d[0][d_select] = block_in;
+		internal_d[0][d_select].LRU = 3'b0;
+                return_line_d = internal_d;
                 end
             4: begin
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag;
-		dummy_d = current_line_d;
+		internal_d = current_line_d;
 		if(|data_read_bus == 1) begin 
 			for(int i = 0; i< d_select; i++) begin
-				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
 			end
 		end
 		else begin
 			for(int i = 0; i<8; i++) begin
-				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
 			end 
 		end
-		dummy_d[0][d_select] = block_in;
-		dummy_d[0][d_select].LRU = 3'b0;
-                return_line_d = dummy_d;              
+		internal_d[0][d_select] = block_in;
+		internal_d[0][d_select].LRU = 3'b0;
+                return_line_d = internal_d;              
                 end
             8, 9: begin
                 // Do nothing 
