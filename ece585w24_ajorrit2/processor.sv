@@ -144,11 +144,25 @@ module processor(
 
         default: begin
  	$display("COUNT = %b", count); 
-	d_select = count;
+	if(d_select === 'x)begin
+	$display("CONDITIONAL TAKEN");
+	d_select = 7;
+	end
+	else begin
+	$display("current_line_d = %p", current_line_d);
+		for(int i = 7; i>=0; i--) begin
 	
-	end 
-        endcase
-    end
+			if(current_line_d[0][i].LRU == 7)begin
+			d_select = i;
+			break;
+			end
+
+	 	end
+	end
+     end 
+   endcase
+ end
+
 
     // Update the cache line
     always_comb begin 
@@ -157,14 +171,26 @@ module processor(
 
  	$display("d_bus = %b\n", data_read_bus);
         $display("i_bus = %b\n", instruction_read_bus);
+	
 
           case(instruction.n)
             0, 1: begin
                 $display("Read/Write data cache");
                 block_out = current_line_d[0][d_select];
-                block_out.tag = instruction.address.tag;
+                block_out.tag = instruction.address.tag; 
 		dummy_d = current_line_d;
+		if(|data_read_bus == 1) begin 
+			for(int i = 0; i< d_select; i++) begin
+				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+			end
+		end
+		else begin
+			for(int i = 0; i<8; i++) begin
+				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+			end 
+		end
 		dummy_d[0][d_select] = block_in;
+		dummy_d[0][d_select].LRU = 3'b0;
                 return_line_d = dummy_d;
                 end
             2: begin
