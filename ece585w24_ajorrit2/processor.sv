@@ -3,14 +3,15 @@ import my_struct_package::*;
 
 module processor(
     input  clk,
-    input  cache_line_t current_line_i[1][4],
-    input  cache_line_t current_line_d[1][8],
+    input  cache_line_t current_line_i[4],
+    input  cache_line_t current_line_d[8],
     input  command_t instruction,
-    input  cache_line_t block_in, 
-    input logic [2:0] count,
-    output cache_line_t return_line_i[1][4],
-    output cache_line_t return_line_d[1][8],
-    output cache_line_t block_out
+    input  cache_line_t block_in,
+    output cache_line_t return_line_i[4],
+    output cache_line_t return_line_d[8],
+    output cache_line_t block_out,
+    input logic [2:0] count
+
     //add cache line output for fsm
 );
 
@@ -20,11 +21,8 @@ module processor(
     int j = 0;
     logic [7:0] data_read_bus;
     logic [3:0] instruction_read_bus;
-    cache_line_t internal_d[1][8];
-    cache_line_t internal_i[1][4];
- 
- 
-
+    cache_line_t internal_d[8];
+    cache_line_t internal_i[4];
 
 
     // Loop through the ways to check for hits
@@ -34,7 +32,7 @@ module processor(
             data_read_bus[i] = 0;    // Assume this cache has no hit        
 
             // check if there is a match in the way, using the set index passed in (updates read_bus)
-            if (instruction.address.tag == current_line_d[0][i].tag) begin
+            if (instruction.address.tag == current_line_d[i].tag) begin
                 case (instruction.n)  // which instruction is this?
                     0: begin // data read
                         data_read_bus[i] = 1;   // if read instruction -> hit;
@@ -62,7 +60,7 @@ module processor(
             instruction_read_bus[j] = 0;    // Assume this cache has no hit
 
             // check if there is a match in the way, using the set index passed in (updates read_bus)
-            if (instruction.address.tag == current_line_i[0][j].tag) begin
+            if (instruction.address.tag == current_line_i[j].tag) begin
                 case (instruction.n)  // which instruction is this?
                     0: begin // data read
                         instruction_read_bus[j] = 1;   // if read instruction -> hit;
@@ -100,7 +98,7 @@ module processor(
 	$display("current_line_d = %p", current_line_d);
 		for(int i = 3; i>=0; i--) begin
 	
-			if(current_line_i[0][i].LRU == 3)begin
+			if(current_line_i[i].LRU == 3)begin
 			i_select = i;
 			break;
 			end
@@ -110,13 +108,6 @@ module processor(
      end
    endcase
  end
-
-     
-
-
-
-
-
 
     // Encode to select column of cache for data cache
     always_comb begin
@@ -130,6 +121,7 @@ module processor(
             8'b0000_0010, 8'b0000_00z0: d_select = 3'b001;
             8'b0000_0001, 8'b0000_000z: d_select = 3'b000;
 
+
         default: begin 
 	if(d_select === 'x)begin
 	d_select = 7;
@@ -138,7 +130,7 @@ module processor(
 	$display("current_line_d = %p", current_line_d);
 		for(int i = 7; i>=0; i--) begin
 	
-			if(current_line_d[0][i].LRU == 7)begin
+			if(current_line_d[i].LRU == 7)begin
 			d_select = i;
 			break;
 			end
@@ -155,84 +147,91 @@ module processor(
         $display("d_select = %d\n", d_select);
         $display("i_select = %d\n", i_select);
 
- 	$display("d_bus = %b\n", data_read_bus);
+ 	      $display("d_bus = %b\n", data_read_bus);
         $display("i_bus = %b\n", instruction_read_bus);
-	
+
 
           case(instruction.n)
             0, 1: begin
                 $display("Read/Write data cache");
-                block_out = current_line_d[0][d_select];
+                block_out = current_line_d[d_select];
                 block_out.tag = instruction.address.tag; 
 		internal_d = current_line_d;
 		if(|data_read_bus == 1) begin 
 			for(int i = 0; i< d_select; i++) begin
-				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[i].LRU = current_line_d[i].LRU +1;
 			end
 		end
 		else begin
 			for(int i = 0; i<8; i++) begin
-				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[i].LRU = current_line_d[i].LRU +1;
 			end 
 		end
-		internal_d[0][d_select] = block_in;
-		internal_d[0][d_select].LRU = 3'b0;
+		internal_d[d_select] = block_in;
+		internal_d[d_select].LRU = 3'b0;
                 return_line_d = internal_d;
+
                 end
             2: begin
                 $display("Read instruction cache");
-                block_out = current_line_i[0][i_select];
+                block_out = current_line_i[i_select];
                 block_out.tag = instruction.address.tag;
+
                 internal_i = current_line_i;
 		if(|instruction_read_bus == 1) begin 
 			for(int i = 0; i< i_select; i++) begin
-				internal_i[0][i].LRU = current_line_i[0][i].LRU +1;
+				internal_i[i].LRU = current_line_i[i].LRU +1;
 			end
 		end
 		else begin
 			for(int i = 0; i<4; i++) begin
-				internal_i[0][i].LRU = current_line_i[0][i].LRU +1;
+				internal_i[i].LRU = current_line_i[i].LRU +1;
 			end 
 		end
-		internal_i[0][i_select] = block_in;
-		internal_i[0][i_select].LRU = 3'b0;
+		internal_i[i_select] = block_in;
+		internal_i[i_select].LRU = 3'b0;
                 return_line_i = internal_i;	    
+
                 end
             3: begin 
-                block_out = current_line_d[0][d_select];
+                block_out = current_line_d[d_select];
                 block_out.tag = instruction.address.tag;
+
 		internal_d = current_line_d;
 		if(|data_read_bus == 1) begin 
 			for(int i = 0; i< d_select; i++) begin
-				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[i].LRU = current_line_d[i].LRU +1;
 			end
 		end
 		else begin
 			for(int i = 0; i<8; i++) begin
-				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[i].LRU = current_line_d[i].LRU +1;
 			end 
 		end
-		internal_d[0][d_select] = block_in;
-		internal_d[0][d_select].LRU = 3'b0;
+		internal_d[d_select] = block_in;
+		internal_d[d_select].LRU = 3'b0;
                 return_line_d = internal_d;
+
                 end
             4: begin
-                block_out = current_line_d[0][d_select];
+                block_out = current_line_d[d_select];
                 block_out.tag = instruction.address.tag;
+
 		internal_d = current_line_d;
 		if(|data_read_bus == 1) begin 
 			for(int i = 0; i< d_select; i++) begin
-				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[i].LRU = current_line_d[i].LRU +1;
 			end
 		end
 		else begin
 			for(int i = 0; i<8; i++) begin
-				internal_d[0][i].LRU = current_line_d[0][i].LRU +1;
+				internal_d[i].LRU = current_line_d[i].LRU +1;
 			end 
 		end
-		internal_d[0][d_select] = block_in;
-		internal_d[0][d_select].LRU = 3'b0;
+		internal_d[d_select] = block_in;
+		internal_d[d_select].LRU = 3'b0;
                 return_line_d = internal_d;              
+
                 end
             8, 9: begin
                 // Do nothing 

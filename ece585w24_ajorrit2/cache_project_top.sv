@@ -7,10 +7,10 @@ module top;
     logic clk;
     logic rst;
     command_t instruction;
-    cache_line_t cache_input_i[1][4];
-    cache_line_t cache_output_i[1][4];
-    cache_line_t cache_input_d[1][8];
-    cache_line_t cache_output_d[1][8];
+    cache_line_t cache_input_i[4];
+    cache_line_t cache_output_i[4];
+    cache_line_t cache_input_d[8];
+    cache_line_t cache_output_d[8];
     cache_line_t fsm_input_line;
     cache_line_t fsm_output_line;
     logic hit;
@@ -41,8 +41,8 @@ cache #(.sets(16384), .ways(4)) instruction_cache (
         .instruction(instruction),
 	    .cache_in(cache_input_i),
         .cache_out(cache_output_i),
-	.write_enable(write_enable),
-	.read_enable(read_enable)
+	    .write_enable(write_enable),
+	    .read_enable(read_enable)
     );
 
 processor processor(
@@ -54,7 +54,8 @@ processor processor(
         .return_line_d(cache_input_d),
         .block_in(fsm_input_line),
         .block_out(fsm_output_line),
-	.count(sum));
+        .count(sum)
+        );
 
 
 mesi_fsm fsm(
@@ -64,7 +65,10 @@ mesi_fsm fsm(
         .internal_line(fsm_output_line), 
         .return_line(fsm_input_line), 
         .hit(hit),
-        .hitM(hitM));
+        .hitM(hitM)
+        );
+
+count LRU(.start(start),.rst(rst), .sum(sum));
 
 
 
@@ -102,6 +106,7 @@ instruction = {4'b0000,32'b0,3'b0,2'b0};
 
 
 
+
     // De-assert reset
     rst = 0;
     write_enable = 0;
@@ -117,6 +122,7 @@ instruction = {4'b0000,32'b0,3'b0,2'b0};
     read_enable = 1;
     start = 0;
     // Test case 1
+
     #5; 
  $display("Test Case 1:");
  start = 0;
@@ -247,6 +253,7 @@ read_enable = 1;
 //0 846DE107
  instruction = {4'b0,32'h846DE107,3'b0,2'b0};
 #5;
+
 
 instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
 #10;

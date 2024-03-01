@@ -1,17 +1,14 @@
 
-`include "my_struct_package.sv"
-
+import my_struct_package::*; // import structs
 module cache #(parameter sets = 16384, parameter ways = 8)(
 	input  clk,  
-	input  my_struct_package::command_t instruction,
+	input  command_t instruction,
 	input  write_enable,
 	input  read_enable,
-	input  my_struct_package::cache_line_t cache_in[1][ways],
-	output my_struct_package::cache_line_t cache_out[1][ways]
+	input  cache_line_t cache_in[ways],
+	output cache_line_t cache_out[ways]
 );
 
-
-import my_struct_package::*; // import structs
 
 // cache module
     /** Initialize data cache as a 2D array of cache lines
@@ -71,6 +68,6 @@ case (instruction.n)
     endcase
 end
 
-end
+    end
 end
 endmodule
