@@ -235,6 +235,21 @@ start = 0;
 instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
 #10;
 
+start = 1;
+write_enable = 1;
+    read_enable = 0;
+//0 846DE107
+ instruction = {4'b0,32'h846DE107,3'b0,2'b0};
+#5;
+start = 0;
+write_enable = 0;
+read_enable = 1;
+//0 846DE107
+ instruction = {4'b0,32'h846DE107,3'b0,2'b0};
+#5;
+
+instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
+#10;
 
 
  /*   $display("Test Case 2:");    

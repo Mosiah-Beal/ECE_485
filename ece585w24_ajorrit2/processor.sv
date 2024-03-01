@@ -93,35 +93,23 @@ module processor(
             4'b0001, 4'b000z: i_select = 2'b00;
             
         default: begin
-            // Choose the LRU line if no valid way is found
-            static int way_select_i = 2; // default to way 0, keeps track of lowest LRU way
-            static int invalid_select_i = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
-            cache_line_t way_line_i;
-            // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
-            for(int i = 0; i < 4; i++) begin
-                way_line_i = current_line_i[0][i];
-                // update way_select if the current way has a lower LRU value
-                if(way_line_i.LRU < current_line_i[0][way_select_i].LRU) begin
-                    way_select_i = i;
-                end
-                
-                // update invalid_select if the current way is invalid and has a lower LRU value
-                if(way_line_i.MESI_bits == 0 && way_line_i.LRU < current_line_i[0][invalid_select_i].LRU) begin
-                    invalid_select_i = i;
-                end
+            if(i_select === 'x)begin
+	i_select = 3;
+	end
+	else begin
+	$display("current_line_d = %p", current_line_d);
+		for(int i = 3; i>=0; i--) begin
+	
+			if(current_line_i[0][i].LRU == 3)begin
+			i_select = i;
+			break;
+			end
 
-                // if the invalid_select is still the impossible value, use the way_select
-                if(invalid_select_i == -1) begin
-                    i_select = way_select_i;
-                end
-                // otherwise, use the invalid_select
-                else begin
-                    i_select = invalid_select_i;
-                end
-            end
-        end
-        endcase
-    end
+	 	end
+	end
+     end
+   endcase
+ end
 
      
 
@@ -142,10 +130,8 @@ module processor(
             8'b0000_0010, 8'b0000_00z0: d_select = 3'b001;
             8'b0000_0001, 8'b0000_000z: d_select = 3'b000;
 
-        default: begin
- 	$display("COUNT = %b", count); 
+        default: begin 
 	if(d_select === 'x)begin
-	$display("CONDITIONAL TAKEN");
 	d_select = 7;
 	end
 	else begin
@@ -198,21 +184,54 @@ module processor(
                 block_out = current_line_i[0][i_select];
                 block_out.tag = instruction.address.tag;
                 dummy_i = current_line_i;
+		if(|instruction_read_bus == 1) begin 
+			for(int i = 0; i< i_select; i++) begin
+				dummy_i[0][i].LRU = current_line_i[0][i].LRU +1;
+			end
+		end
+		else begin
+			for(int i = 0; i<4; i++) begin
+				dummy_i[0][i].LRU = current_line_i[0][i].LRU +1;
+			end 
+		end
 		dummy_i[0][i_select] = block_in;
+		dummy_i[0][i_select].LRU = 3'b0;
                 return_line_i = dummy_i;	    
                 end
             3: begin 
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag;
 		dummy_d = current_line_d;
+		if(|data_read_bus == 1) begin 
+			for(int i = 0; i< d_select; i++) begin
+				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+			end
+		end
+		else begin
+			for(int i = 0; i<8; i++) begin
+				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+			end 
+		end
 		dummy_d[0][d_select] = block_in;
+		dummy_d[0][d_select].LRU = 3'b0;
                 return_line_d = dummy_d;
                 end
             4: begin
                 block_out = current_line_d[0][d_select];
                 block_out.tag = instruction.address.tag;
 		dummy_d = current_line_d;
+		if(|data_read_bus == 1) begin 
+			for(int i = 0; i< d_select; i++) begin
+				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+			end
+		end
+		else begin
+			for(int i = 0; i<8; i++) begin
+				dummy_d[0][i].LRU = current_line_d[0][i].LRU +1;
+			end 
+		end
 		dummy_d[0][d_select] = block_in;
+		dummy_d[0][d_select].LRU = 3'b0;
                 return_line_d = dummy_d;              
                 end
             8, 9: begin
