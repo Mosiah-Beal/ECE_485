@@ -127,10 +127,10 @@ module mesi_fsm(
     always_comb begin: Output_Logic
         // Copy internal_line to return_line
         return_line.tag = internal_line.tag;
-        
+        return_line.LRU = internal_line.LRU;
+	return_line.data = internal_line.data;
         // Update mesi_bits based on nextstate
         return_line.MESI_bits = nextstate;
-	return_line.LRU = 0;
         
     end
 
