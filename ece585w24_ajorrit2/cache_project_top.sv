@@ -71,9 +71,6 @@ mesi_fsm fsm(
 count LRU(.start(start),.rst(rst), .sum(sum));
 
 
-
-count LRU(.start(start),.rst(rst), .sum(sum));
-
 // Clock generation
 always #5 clk = ~clk;
 
