@@ -56,6 +56,7 @@ interface top_if;
     processor_if processor_if;
     mesi_fsm_if mesi_fsm_if;
     count_if count_if;
+    
 
     modport top_mp (inout data_cache_if, inout instruction_cache_if, inout processor_if, inout mesi_fsm_if, inout count_if);
 endinterface
