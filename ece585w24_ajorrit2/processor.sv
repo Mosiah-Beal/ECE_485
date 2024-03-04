@@ -23,8 +23,10 @@ module processor(
     logic [2:0] d_select;
     logic [1:0] i_select;
     
-    int way_select;
-    int invalid_select;
+    int way_select_i;
+    int invalid_select_i;
+    int way_select_d;
+    int invalid_select_d;
     cache_line_t way_line_d;
     cache_line_t way_line_i;
 
@@ -118,8 +120,8 @@ module processor(
                     $display("%p", current_line_d[i]);
                 end
 
-                int way_select_i = 0; // default to way 0, keeps track of lowest LRU way
-                int invalid_select_i = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
+                way_select_i = 0; // default to way 0, keeps track of lowest LRU way
+                invalid_select_i = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
                 // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
                 for(int i = 0; i < 4; i++) begin
                     way_line_d = current_line_i[i];
@@ -142,6 +144,7 @@ module processor(
                     end
                 end
             end
+        end
         endcase
     end
 
@@ -194,6 +197,7 @@ module processor(
                     end
                 end
             end 
+        end
         endcase
     end
 
