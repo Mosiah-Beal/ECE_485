@@ -25,6 +25,7 @@ module processor(
     
     int way_select;
     int invalid_select;
+    cache_line_t way_line;
 
 
     // cache indexing
