@@ -36,7 +36,11 @@ initial begin
     instructions[8] = {4'b0,32'h777DE133,3'b0,2'b0};
     instructions[9] = {4'b1001,32'h777DE133,3'b0,2'b0};
     instructions[10] = {4'b0,32'h846DE107,3'b0,2'b0};
-    instructions[11] = {4'b1001,32'h777DE133,3'b0,2'b0};
+    instructions[11] = {4'b0,32'h846DE107,3'b0,2'b0};
+    instructions[12] = {4'b0,32'h846DE107,3'b0,2'b0};
+    instructions[13] = {4'b1001,32'h777DE133,3'b0,2'b0};
+
+    
 end
 
  
