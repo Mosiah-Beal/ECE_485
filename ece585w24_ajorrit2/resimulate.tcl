@@ -8,7 +8,7 @@ proc main {} {
     # (re)Compile the design
     set files [glob *.sv]
     foreach file $files {
-        vcom -work work -refresh -force_refresh $file
+        vlog -work work $file
     }
     
     # simulate the design
