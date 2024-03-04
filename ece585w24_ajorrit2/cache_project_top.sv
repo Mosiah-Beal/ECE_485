@@ -86,17 +86,17 @@ initial begin
     read_enable = 1;
  
 for(int i = 0; i<8; i++)begin
-	cache_input_d[0][i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-	cache_input_d[0][i].MESI_bits = I;     // Initialize MESI bits to Invalid
-	cache_input_d[0][i].tag = 12'b0;        // Initialize tag to 0
-	cache_input_d[0][i].data = 32'b0;       // Initialize mem to 0
+	cache_input_d[i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
+	cache_input_d[i].MESI_bits = I;     // Initialize MESI bits to Invalid
+	cache_input_d[i].tag = 12'b0;        // Initialize tag to 0
+	cache_input_d[i].data = 32'b0;       // Initialize mem to 0
 end
 
 for(int i = 0; i<4; i++)begin
-	cache_input_i[0][i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-	cache_input_i[0][i].MESI_bits = I;     // Initialize MESI bits to Invalid
-	cache_input_i[0][i].tag = 12'b0;        // Initialize tag to 0
-	cache_input_i[0][i].data = 32'b0;       // Initialize mem to 0
+	cache_input_i[i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
+	cache_input_i[i].MESI_bits = I;     // Initialize MESI bits to Invalid
+	cache_input_i[i].tag = 12'b0;        // Initialize tag to 0
+	cache_input_i[i].data = 32'b0;       // Initialize mem to 0
 end
 
 
