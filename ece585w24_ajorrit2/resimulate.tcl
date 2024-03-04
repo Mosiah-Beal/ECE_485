@@ -1,5 +1,8 @@
 # source resimulate.tcl
 
+# Directory where you want to compile the files (usually the work library)
+set compile_directory "work"
+
 # Main procedure
 proc main {} {
     # End simulation
@@ -36,6 +39,12 @@ proc add_signals {} {
     /top/read_enable \
     /top/start \
     /top/sum
+}
+
+proc recompile {} {
+    foreach file [glob *.sv] {
+    vcom -work $compile_directory $file
+    }
 }
 
 # Execute the main procedure
