@@ -135,7 +135,7 @@ module processor(
 
                     // if the invalid_select is still the impossible value, use the way_select
                     if(invalid_select == -1) begin
-                        i_select = way_select_d;
+                        i_select = way_select;
                     end
                     // otherwise, use the invalid_select
                     else begin
@@ -188,7 +188,7 @@ module processor(
 
                     // if the invalid_select is still the impossible value, use the way_select
                     if(invalid_select == -1) begin
-                        d_select = way_select_i;
+                        d_select = way_select;
                     end
                     // otherwise, use the invalid_select
                     else begin
