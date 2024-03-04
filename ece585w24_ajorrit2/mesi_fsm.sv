@@ -1,14 +1,12 @@
 // Import the struct package
 import my_struct_package::*;
-`include "Interface.sv"
 
 module mesi_fsm(
     /* Signal ports
     * top: clk, rst, instruction, hit, hitM
     * cache: return_line, internal_line
     */
-    ti.mesi_fsm_if.fsm_mp FSM_interface
-    /*
+
     input  logic clk,
     input  logic rst,
     input  command_t instruction,
@@ -16,7 +14,6 @@ module mesi_fsm(
     input  logic hitM,
     input  cache_line_t internal_line,  
     output cache_line_t return_line
-    */
 );
 
     // Declare state variables
