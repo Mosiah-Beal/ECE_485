@@ -106,7 +106,7 @@ module processor(
                 i_select = 3;
             end
             else begin
-                $display("current_line_d = %p", current_line_d);
+                $display("current_line_d = %p\n", current_line_d);
                 for(int i = 3; i>=0; i--) begin
             
                     if(current_line_i[i].LRU == 3)begin
@@ -137,7 +137,7 @@ module processor(
                 d_select = 7;
             end
             else begin
-                $display("current_line_d = %p", current_line_d);
+                $display("current_line_d = %p\n", current_line_d);
                 for(int i = 7; i>=0; i--) begin
             
                     if(current_line_d[i].LRU == 7)begin
@@ -155,11 +155,11 @@ module processor(
     // Update the cache line
     always_comb begin 
         // Display selected ways
-        $display("d_select = %d\n", d_select);
+        $display("d_select = %d", d_select);
         $display("i_select = %d\n", i_select);
 
         // Display the hit buses
- 	    $display("d_bus = %b\n", data_read_bus);
+ 	    $display("d_bus = %b", data_read_bus);
         $display("i_bus = %b\n", instruction_read_bus);
 
 
