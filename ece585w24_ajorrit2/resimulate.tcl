@@ -6,7 +6,10 @@ proc main {} {
     quit -sim
 
     # (re)Compile the design
-    vcom -work work -refresh -force_refresh
+    set files [glob *.sv]
+    foreach file $files {
+        vcom -work work -refresh -force_refresh $file
+    }
     
     # simulate the design
     vsim work.top -suppress 12003
