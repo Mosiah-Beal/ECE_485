@@ -140,7 +140,6 @@ for (int i = 1; i < 12; i = i + 1) begin
     read_enable = 1;
 end
 
-end
 
 /*   $display("Test Case 2:");    
     // Set instruction, block_in, hit, hitM values accordingly
