@@ -24,22 +24,11 @@ proc main {} {
 }
 
 proc add_signals {} {
-    add wave -position insertpoint  \
-    /top/clk \
-    /top/rst \
-    /top/instruction \
-    /top/cache_input_i \
-    /top/cache_output_i \
-    /top/cache_input_d \
-    /top/cache_output_d \
-    /top/fsm_input_line \
-    /top/fsm_output_line \
-    /top/hit \
-    /top/hitM \
-    /top/write_enable \
-    /top/read_enable \
-    /top/start \
-    /top/sum
+    add wave -position insertpoint /top/*
+}
+
+proc add_signals2 {} {
+    add wave -position insertpoint -recursive /top/*
 }
 
 # Execute the main procedure
