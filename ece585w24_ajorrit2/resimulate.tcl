@@ -8,6 +8,7 @@ proc main {} {
     # (re)Compile the design
     set files [glob *.sv]
     foreach file $files {
+        puts "Compiling $file"
         vlog -work work $file
     }
     
