@@ -143,7 +143,13 @@ module processor(
                 d_select = 7;
             end
             else begin
-                $display("current_line_d = %p\n", current_line_d);
+
+                // Display the current line
+                $display("current_line_d = ");
+                for(int i = 0; i < 8; i++) begin
+                    $display("%p\n", current_line_d[i]);
+                end
+                
                 for(int i = 7; i>=0; i--) begin
             
                     if(current_line_d[i].LRU == 7)begin
