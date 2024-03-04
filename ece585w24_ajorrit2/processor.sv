@@ -20,7 +20,8 @@ module processor(
     
 );
     // repeat instructions
-    command_t prev_instruction = 40'b0;
+    command_t prev_instruction;
+    command_t current_instruction;
 
     // way select
     logic [2:0] d_select;
@@ -218,7 +219,8 @@ module processor(
 
     // compare current instruction to previous instruction
     always_ff@(posedge clk) begin: Sequential_Logic
-        prev_instruction <= instruction;
+        prev_instruction <= current_instruction;
+        current_instruction <= instruction;
     end
 
     // Update the cache line
@@ -232,7 +234,9 @@ module processor(
         $display("i_bus = %b\n", instruction_read_bus);
 
         // Update the cache line
-        if(instruction == prev_instruction) begin end
+        if(current_instruction == prev_instruction) begin 
+            $display("Repeat instruction");
+        end
         else begin
             case(instruction.n)
                 0, 1: begin
