@@ -19,10 +19,14 @@ module processor(
     output cache_line_t block_out
     
 );
+    // repeat instructions
+    command_t prev_instruction = 40'b0;
+
     // way select
     logic [2:0] d_select;
     logic [1:0] i_select;
     
+    // Invalid LRU variables
     int way_select_i;
     int invalid_select_i;
     int way_select_d;
@@ -212,6 +216,14 @@ module processor(
     end
 
 
+    // compare current instruction to previous instruction
+    always_ff@(posedge clk) begin: Sequential_Logic
+        if (rst)
+            prev_instruction <= 40'b0;
+        else
+            prev_instruction <= instruction;
+    end
+
     // Update the cache line
     always_comb begin 
         // Display selected ways
@@ -222,106 +234,109 @@ module processor(
  	    $display("d_bus = %b", data_read_bus);
         $display("i_bus = %b\n", instruction_read_bus);
 
-
-        case(instruction.n)
-            0, 1: begin
-                $display("Read/Write data cache");
-                block_out = current_line_d[d_select];
-                block_out.tag = instruction.address.tag; 
-		        internal_d = current_line_d;
-                
-                // Check if there are any hits in the data cache
-                if(|data_read_bus == 1) begin 
-                    for(int i = 0; i< d_select; i++) begin
-                        internal_d[i].LRU = current_line_d[i].LRU +1;
+        // Update the cache line
+        if(instruction == prev_instruction) begin end
+        else begin
+            case(instruction.n)
+                0, 1: begin
+                    $display("Read/Write data cache");
+                    block_out = current_line_d[d_select];
+                    block_out.tag = instruction.address.tag; 
+                    internal_d = current_line_d;
+                    
+                    // Check if there are any hits in the data cache
+                    if(|data_read_bus == 1) begin 
+                        for(int i = 0; i< d_select; i++) begin
+                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                        end
                     end
-                end
-                // If there are no hits, update the LRU
-		        else begin
-			        for(int i = 0; i<8; i++) begin
-				        internal_d[i].LRU = current_line_d[i].LRU +1;
-			        end 
-		        end
-		        
-                internal_d[d_select] = block_in;
-		        internal_d[d_select].LRU = 3'b0;
-                return_line_d = internal_d;
-                
-                end
-            2: begin
-                $display("Read instruction cache");
-                block_out = current_line_i[i_select];
-                block_out.tag = instruction.address.tag;
-                internal_i = current_line_i;
-
-                // Check if there are any hits in the instruction cache
-                if(|instruction_read_bus == 1) begin 
-                    for(int i = 0; i< i_select; i++) begin
-                        internal_i[i].LRU = current_line_i[i].LRU +1;
+                    // If there are no hits, update the LRU
+                    else begin
+                        for(int i = 0; i<8; i++) begin
+                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                        end 
                     end
-                end
-                // If there are no hits, update the LRU
-                else begin
-                    for(int i = 0; i<4; i++) begin
-                        internal_i[i].LRU = current_line_i[i].LRU +1;
-                    end 
-                end
-
-                internal_i[i_select] = block_in;
-                internal_i[i_select].LRU = 3'b0;
-                return_line_i = internal_i;	    
-
-                end
-            3: begin 
-                block_out = current_line_d[d_select];
-                block_out.tag = instruction.address.tag;
-                internal_d = current_line_d;
-
-                // Check if there are any hits in the data cache
-                if(|data_read_bus == 1) begin 
-                    for(int i = 0; i< d_select; i++) begin
-                        internal_d[i].LRU = current_line_d[i].LRU +1;
+                    
+                    internal_d[d_select] = block_in;
+                    internal_d[d_select].LRU = 3'b0;
+                    return_line_d = internal_d;
+                    
                     end
-                end
-                // If there are no hits, update the LRU
-                else begin
-                    for(int i = 0; i<8; i++) begin
-                        internal_d[i].LRU = current_line_d[i].LRU +1;
-                    end 
-                end
+                2: begin
+                    $display("Read instruction cache");
+                    block_out = current_line_i[i_select];
+                    block_out.tag = instruction.address.tag;
+                    internal_i = current_line_i;
 
-                internal_d[d_select] = block_in;
-                internal_d[d_select].LRU = 3'b0;
-                return_line_d = internal_d;
-
-                end
-            4: begin
-                block_out = current_line_d[d_select];
-                block_out.tag = instruction.address.tag;
-                internal_d = current_line_d;
-
-                // Check if there are any hits in the data cache
-                if(|data_read_bus == 1) begin 
-                    for(int i = 0; i< d_select; i++) begin
-                        internal_d[i].LRU = current_line_d[i].LRU +1;
+                    // Check if there are any hits in the instruction cache
+                    if(|instruction_read_bus == 1) begin 
+                        for(int i = 0; i< i_select; i++) begin
+                            internal_i[i].LRU = current_line_i[i].LRU +1;
+                        end
                     end
-                end
-                // If there are no hits, update the LRU
-                else begin
-                    for(int i = 0; i<8; i++) begin
-                        internal_d[i].LRU = current_line_d[i].LRU +1;
-                    end 
-                end
+                    // If there are no hits, update the LRU
+                    else begin
+                        for(int i = 0; i<4; i++) begin
+                            internal_i[i].LRU = current_line_i[i].LRU +1;
+                        end 
+                    end
 
-                internal_d[d_select] = block_in;
-                internal_d[d_select].LRU = 3'b0;
-                return_line_d = internal_d;              
+                    internal_i[i_select] = block_in;
+                    internal_i[i_select].LRU = 3'b0;
+                    return_line_i = internal_i;	    
 
-                end
-            8, 9: begin
-                // Do nothing 
-                end
-        endcase
+                    end
+                3: begin 
+                    block_out = current_line_d[d_select];
+                    block_out.tag = instruction.address.tag;
+                    internal_d = current_line_d;
+
+                    // Check if there are any hits in the data cache
+                    if(|data_read_bus == 1) begin 
+                        for(int i = 0; i< d_select; i++) begin
+                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                        end
+                    end
+                    // If there are no hits, update the LRU
+                    else begin
+                        for(int i = 0; i<8; i++) begin
+                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                        end 
+                    end
+
+                    internal_d[d_select] = block_in;
+                    internal_d[d_select].LRU = 3'b0;
+                    return_line_d = internal_d;
+
+                    end
+                4: begin
+                    block_out = current_line_d[d_select];
+                    block_out.tag = instruction.address.tag;
+                    internal_d = current_line_d;
+
+                    // Check if there are any hits in the data cache
+                    if(|data_read_bus == 1) begin 
+                        for(int i = 0; i< d_select; i++) begin
+                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                        end
+                    end
+                    // If there are no hits, update the LRU
+                    else begin
+                        for(int i = 0; i<8; i++) begin
+                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                        end 
+                    end
+
+                    internal_d[d_select] = block_in;
+                    internal_d[d_select].LRU = 3'b0;
+                    return_line_d = internal_d;              
+
+                    end
+                8, 9: begin
+                    // Do nothing 
+                    end
+            endcase
+        end
     end       
 
 endmodule
