@@ -22,6 +22,7 @@ module processor(
     // way select
     logic [2:0] d_select;
     logic [1:0] i_select;
+    int way_select;
 
     // cache indexing
     int i = 0; 
@@ -113,11 +114,27 @@ module processor(
                     $display("%p", current_line_d[i]);
                 end
 
-                for(int i = 3; i>=0; i--) begin
-            
-                    if(current_line_i[i].LRU == 3)begin
-                        i_select = i;
-                    break;
+                way_select = 0; // default to way 0, keeps track of lowest LRU way
+                invalid_select = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
+                // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
+                for(int i = 0; i < ways; i++) begin
+                    way_line = current_line_i[i];
+                    // update way_select if the current way has a lower LRU value
+                    if(way_line.LRU < current_line_i[way_select].LRU) begin
+                        way_select = i;
+                    end
+                    // update invalid_select if the current way is invalid and has a lower LRU value
+                    if(way_line.MESI_bits == 0 && way_line.LRU < current_line_i[invalid_select].LRU) begin
+                        invalid_select = i;
+                    end
+
+                    // if the invalid_select is still the impossible value, use the way_select
+                    if(invalid_select == -1) begin
+                        i_select = way_select;
+                    end
+                    // otherwise, use the invalid_select
+                    else begin
+                        i_select = invalid_select;
                     end
                 end
             end
@@ -150,13 +167,28 @@ module processor(
                     $display("%p", current_line_d[i]);
                 end
                 
-                for(int i = 7; i>=0; i--) begin
-            
-                    if(current_line_d[i].LRU == 7)begin
-                        d_select = i;
-                        break;
+                way_select = 0; // default to way 0, keeps track of lowest LRU way
+                invalid_select = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
+                // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
+                for(int i = 0; i < ways; i++) begin
+                    way_line = current_line_d[i];
+                    // update way_select if the current way has a lower LRU value
+                    if(way_line.LRU < current_line_d[way_select].LRU) begin
+                        way_select = i;
+                    end
+                    // update invalid_select if the current way is invalid and has a lower LRU value
+                    if(way_line.MESI_bits == 0 && way_line.LRU < current_line_d[invalid_select].LRU) begin
+                        invalid_select = i;
                     end
 
+                    // if the invalid_select is still the impossible value, use the way_select
+                    if(invalid_select == -1) begin
+                        d_select = way_select;
+                    end
+                    // otherwise, use the invalid_select
+                    else begin
+                        d_select = invalid_select;
+                    end
                 end
             end
         end 

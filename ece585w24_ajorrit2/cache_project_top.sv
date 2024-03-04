@@ -97,161 +97,40 @@ for(int i = 0; i<4; i++)begin
 end
 
 
+// Define an array of instructions
+reg [39:0] instructions [20];
+initial begin
+    instructions[0] = {4'b0,32'h984DE132,3'b0,2'b0};
+    instructions[1] = {4'b0,32'h116DE12F,3'b0,2'b0};
+    instructions[2] = {4'b0,32'h100DE130,3'b0,2'b0};
+    instructions[3] = {4'b0,32'h999DE12E,3'b0,2'b0};
+    instructions[4] = {4'b0,32'h645DE10A,3'b0,2'b0};
+    instructions[5] = {4'b0,32'h846DE107,3'b0,2'b0};
+    instructions[6] = {4'b0,32'h211DE128,3'b0,2'b0};
+    instructions[7] = {4'b0,32'h777DE133,3'b0,2'b0};
+    instructions[8] = {4'b1001,32'h777DE133,3'b0,2'b0};
+    instructions[9] = {4'b0,32'h846DE107,3'b0,2'b0};
+    instructions[10] = {4'b1001,32'h777DE133,3'b0,2'b0};
 
-#10;
-    instruction = {4'b0000,32'b0,3'b0,2'b0};
-    // De-assert reset
-    rst = 0;
-    write_enable = 0;
-    read_enable = 1;
-    start = 1;
-    
-#5; 
-    // Apply test vectors
-    // You can modify the test vectors as per your requirements
-    // For example, you can change the instructions, block_in values, etc.
-    rst = 0;
-    write_enable = 0;
-    read_enable = 1;
-    start = 0;
-    // Test case 1
+    // Loop over the instructions
+    integer i;
+    for (i = 0; i < 11; i = i + 1) begin
+        // read
+        #5;
+        start = 1;
+        write_enable = 1;
+        read_enable = 0;
+        
+        // apply instruction
+        instruction = instructions[i];
 
-#5; 
-    $display("Test Case 1:");
-    start = 0;
-    write_enable = 1;
-    read_enable = 0;
-    //0 984DE132
-    instruction = {4'b0,32'h984DE132,3'b0,2'b0};
-
-#5;
-    start = 0;
-    write_enable = 0;
-    read_enable = 1;
-    //0 984DE132
-    instruction = {4'b0,32'h984DE132,3'b0,2'b0};
-#5;
-    start = 1;
-    write_enable = 1;
-    read_enable = 0;
-    //0 116DE12F
-    instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
-
-#5;
-    start = 0;
-    write_enable = 0;
-    read_enable = 1;
-    //0 116DE12F
-    instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
-
-#5;
-
-    start = 1;
-    write_enable = 1;
-    read_enable = 0;
-    //0 100DE130
-    instruction = {4'b0,32'h100DE130,3'b0,2'b0};
-
-#5;
-
-    start = 0;
-    write_enable = 0;
-    read_enable = 1;
-    //0 100DE130
-    instruction = {4'b0,32'h100DE130,3'b0,2'b0};
-
-#5;
-
-    start = 1;
-    write_enable = 1;
-    read_enable = 0;
-    //0 999DE12E
-    instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
-
-#5;
-    start = 0;
-    write_enable = 0;
-    read_enable = 1;
-    //0 999DE12E
-    instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
-
-#5;
-    start = 1;
-    write_enable = 1;
-    read_enable = 0;
-    //0 645DE10A
-    instruction = {4'b0,32'h645DE10A,3'b0,2'b0};
-
-#5;
-    start = 0;
-    write_enable = 0;
-    read_enable = 1;
-    //0 645DE10A
-    instruction = {4'b0,32'h645DE10A,3'b0,2'b0};
-
-#5;
-    start = 1;
-    write_enable = 1;
-    read_enable = 0;
-    //0 846DE107
-    instruction = {4'b0,32'h846DE107,3'b0,2'b0};
-
-#5;
-    start = 0;
-    write_enable = 0;
-    read_enable = 1;
-    //0 846DE107
-    instruction = {4'b0,32'h846DE107,3'b0,2'b0};
-
-#5;
-    start = 1;
-    write_enable = 1;
-    read_enable = 0;
-    //0 211DE128
-    instruction = {4'b0,32'h211DE128,3'b0,2'b0};
-
-#5;
-    start = 0;
-    write_enable = 0;
-    read_enable = 1;
-    //0 211DE128
-    instruction = {4'b0,32'h211DE128,3'b0,2'b0};
-
-#5;
-    write_enable = 1;
-    read_enable = 0;
-    start = 1;
-    //0 777DE133
-    instruction = {4'b0,32'h777DE133,3'b0,2'b0};
-
-#5;
-    write_enable = 0;
-    read_enable = 1;
-    start = 0;
-    //0 777DE133
-    instruction = {4'b0,32'h777DE133,3'b0,2'b0};
-
-#5;
-    instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
-
-#10;
-    start = 1;
-    write_enable = 1;
-    read_enable = 0;
-    //0 846DE107
-    instruction = {4'b0,32'h846DE107,3'b0,2'b0};
-
-#5;
-    start = 0;
-    write_enable = 0;
-    read_enable = 1;
-    //0 846DE107
-    instruction = {4'b0,32'h846DE107,3'b0,2'b0};
-
-#5;
-    instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
-
-#10;
+        // write
+        #5;
+        start = 0;
+        write_enable = 0;
+        read_enable = 1;
+    end
+end
 
 /*   $display("Test Case 2:");    
     // Set instruction, block_in, hit, hitM values accordingly
