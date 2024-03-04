@@ -106,7 +106,13 @@ module processor(
                 i_select = 3;
             end
             else begin
-                $display("current_line_d = %p\n", current_line_d);
+
+                // Display the current line
+                $display("current_line_i = ");
+                for(int i = 0; i < 4; i++) begin
+                    $display("%p\n", current_line_d[i]);
+                end
+
                 for(int i = 3; i>=0; i--) begin
             
                     if(current_line_i[i].LRU == 3)begin
