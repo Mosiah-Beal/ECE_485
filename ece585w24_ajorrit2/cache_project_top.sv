@@ -74,7 +74,7 @@ processor processor(
         .block_in(fsm_input_line),
         .block_out(fsm_output_line),
         .count(sum),
-        .re(read_enable)
+        .read_enable(read_enable)
         );
 
 
