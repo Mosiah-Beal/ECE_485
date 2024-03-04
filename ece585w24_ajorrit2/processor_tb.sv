@@ -12,10 +12,10 @@ module processor_tb;
     logic [31:0] instr_address = 0;
     logic [3:0] n;
     command_t instruction;
-    cache_line_t current_line_i[1][4];
-    cache_line_t current_line_d[1][8];
-    cache_line_t return_line_i[1][4];
-    cache_line_t return_line_d[1][8];
+    cache_line_t current_line_i[4];
+    cache_line_t current_line_d[8];
+    cache_line_t return_line_i[4];
+    cache_line_t return_line_d[8];
     logic [11:0] p_bus;
 
     // Instantiate the processor module
@@ -43,173 +43,173 @@ module processor_tb;
 	//write operation
 	n  = 1;
 	instr_address = 32'hABCD_EF01;
-	return_line_d[0][0].tag        = instruction.address.tag;
-	return_line_d[0][0].LRU        = 3'b0;
-	return_line_d[0][0].MESI_bits  = 2'b11;
-	return_line_d[0][0].data       = 32'hABCD_EF01;
+	return_line_d[0].tag        = instruction.address.tag;
+	return_line_d[0].LRU        = 3'b0;
+	return_line_d[0].MESI_bits  = 2'b11;
+	return_line_d[0].data       = 32'hABCD_EF01;
 #10;	 
         //read operation
 	n  = 0;
 	instr_address = 32'hABCD_EF01;
-	return_line_d[0][0].tag        = instruction.address.tag;
-	return_line_d[0][0].LRU        = 3'b0;
-	return_line_d[0][0].MESI_bits  = 2'b11;
-	return_line_d[0][0].data       = 32'hABCD_EF01; 
+	return_line_d[0].tag        = instruction.address.tag;
+	return_line_d[0].LRU        = 3'b0;
+	return_line_d[0].MESI_bits  = 2'b11;
+	return_line_d[0].data       = 32'hABCD_EF01; 
 #10;
 	// Write operation
 	n  = 1;
 	instr_address = 32'h1234_5678;
-	return_line_d[0][1].tag        = instruction.address.tag;
-	return_line_d[0][1].LRU        = 3'b0;
-	return_line_d[0][1].MESI_bits  = 2'b11;
-	return_line_d[0][1].data = 32'h1234_5678;
+	return_line_d[1].tag        = instruction.address.tag;
+	return_line_d[1].LRU        = 3'b0;
+	return_line_d[1].MESI_bits  = 2'b11;
+	return_line_d[1].data = 32'h1234_5678;
 #10;
 	// Read operation	
 	n  = 0;
 	instr_address = 32'h1234_5678;
-	return_line_d[0][1].tag        = instruction.address.tag;
-	return_line_d[0][1].LRU        = 3'b0;
-	return_line_d[0][1].MESI_bits  = 2'b11;
-	return_line_d[0][1].data = 32'h1234_5678;
+	return_line_d[1].tag        = instruction.address.tag;
+	return_line_d[1].LRU        = 3'b0;
+	return_line_d[1].MESI_bits  = 2'b11;
+	return_line_d[1].data = 32'h1234_5678;
 #10;
 	// Write operation
 	n  = 1;
 	instr_address = 32'h8765_4321;
-	return_line_d[0][2].tag        = instruction.address.tag;
-	return_line_d[0][2].LRU        = 3'b0;
-	return_line_d[0][2].MESI_bits  = 2'b11;
-	return_line_d[0][2].data = 32'h8765_4321;
+	return_line_d[2].tag        = instruction.address.tag;
+	return_line_d[2].LRU        = 3'b0;
+	return_line_d[2].MESI_bits  = 2'b11;
+	return_line_d[2].data = 32'h8765_4321;
 #10;
 	// Read operation
 	n  = 0;
 	instr_address = 32'h8765_4321;
-	return_line_d[0][2].tag        = instruction.address.tag;
-	return_line_d[0][2].LRU        = 3'b0;
-	return_line_d[0][2].MESI_bits  = 2'b11;
-	return_line_d[0][2].data = 32'h8765_4321;
+	return_line_d[2].tag        = instruction.address.tag;
+	return_line_d[2].LRU        = 3'b0;
+	return_line_d[2].MESI_bits  = 2'b11;
+	return_line_d[2].data = 32'h8765_4321;
 #10;
 	// Write operation
 	n  = 1;
 	instr_address = 32'h2468_ACE0;
-	return_line_d[0][3].tag        = instruction.address.tag;
-	return_line_d[0][3].LRU        = 3'b0;
-	return_line_d[0][3].MESI_bits  = 2'b11;
-	return_line_d[0][3].data = 32'h2468_ACE0;
+	return_line_d[3].tag        = instruction.address.tag;
+	return_line_d[3].LRU        = 3'b0;
+	return_line_d[3].MESI_bits  = 2'b11;
+	return_line_d[3].data = 32'h2468_ACE0;
 #10;
 	// Read operation
 	n  = 0;
 	instr_address = 32'h2468_ACE0;
-	return_line_d[0][3].tag        = instruction.address.tag;
-	return_line_d[0][3].LRU        = 3'b0;
-	return_line_d[0][3].MESI_bits  = 2'b11;
-	return_line_d[0][3].data = 32'h2468_ACE0;
+	return_line_d[3].tag        = instruction.address.tag;
+	return_line_d[3].LRU        = 3'b0;
+	return_line_d[3].MESI_bits  = 2'b11;
+	return_line_d[3].data = 32'h2468_ACE0;
 #10;
 	// Write operation
 	n  = 1;
 	instr_address = 32'hABC0_9876;
-	return_line_d[0][4].tag        = instruction.address.tag;
-	return_line_d[0][4].LRU        = 3'b0;
-	return_line_d[0][4].MESI_bits  = 2'b11;
-	return_line_d[0][4].data = 32'hABC0_9876;
+	return_line_d[4].tag        = instruction.address.tag;
+	return_line_d[4].LRU        = 3'b0;
+	return_line_d[4].MESI_bits  = 2'b11;
+	return_line_d[4].data = 32'hABC0_9876;
 #10;
 	// Read operation
 	n  = 0;
 	instr_address = 32'hABC0_9876;
-	return_line_d[0][4].tag        = instruction.address.tag;
-	return_line_d[0][4].LRU        = 3'b0;
-	return_line_d[0][4].MESI_bits  = 2'b11;
-	return_line_d[0][4].data = 32'hABC0_9876;
+	return_line_d[4].tag        = instruction.address.tag;
+	return_line_d[4].LRU        = 3'b0;
+	return_line_d[4].MESI_bits  = 2'b11;
+	return_line_d[4].data = 32'hABC0_9876;
 
 #10;
        
 	// Write operation
 	n  = 1;
 	instr_address = 32'hABCD_EF01;
-	return_line_d[0][0].tag        = instruction.address.tag;
-	return_line_d[0][0].LRU        = 3'b0;
-	return_line_d[0][0].MESI_bits  = 2'b11;
-	return_line_d[0][0].data = 32'hABC0_9876;
+	return_line_d[0].tag        = instruction.address.tag;
+	return_line_d[0].LRU        = 3'b0;
+	return_line_d[0].MESI_bits  = 2'b11;
+	return_line_d[0].data = 32'hABC0_9876;
 
 #10;
 	//read operation
 	n  = 0;
 	instr_address = 32'hABCD_EF01;
-	return_line_d[0][0].tag        = instruction.address.tag;
-	return_line_d[0][0].LRU        = 3'b0;
-	return_line_d[0][0].MESI_bits  = 2'b11;
-	return_line_d[0][0].data = 32'hABCD_EF01; 
+	return_line_d[0].tag        = instruction.address.tag;
+	return_line_d[0].LRU        = 3'b0;
+	return_line_d[0].MESI_bits  = 2'b11;
+	return_line_d[0].data = 32'hABCD_EF01; 
 
 #10;
 	// Write operation
 	n  = 1;
 	instr_address = 32'h1234_5678;
-	return_line_d[0][1].tag        = instruction.address.tag;
-	return_line_d[0][1].LRU        = 3'b0;
-	return_line_d[0][1].MESI_bits  = 2'b11;
-	return_line_d[0][1].data = 32'h1234_5678;
+	return_line_d[1].tag        = instruction.address.tag;
+	return_line_d[1].LRU        = 3'b0;
+	return_line_d[1].MESI_bits  = 2'b11;
+	return_line_d[1].data = 32'h1234_5678;
 
 #10;
 	// Read operation	
 	n  = 0;
 	instr_address = 32'h1234_5678;
-	return_line_d[0][1].tag        = instruction.address.tag;
-	return_line_d[0][1].LRU        = 3'b0;
-	return_line_d[0][1].MESI_bits  = 2'b11;
-	return_line_d[0][1].data = 32'h1234_5678;
+	return_line_d[1].tag        = instruction.address.tag;
+	return_line_d[1].LRU        = 3'b0;
+	return_line_d[1].MESI_bits  = 2'b11;
+	return_line_d[1].data = 32'h1234_5678;
 
 #10;
 	// Write operation
 	n  = 1;
 	instr_address = 32'h8765_4321;
-	return_line_d[0][2].tag        = instruction.address.tag;
-	return_line_d[0][2].LRU        = 3'b0;
-	return_line_d[0][2].MESI_bits  = 2'b11;
-	return_line_d[0][2].data = 32'h8765_4321;
+	return_line_d[2].tag        = instruction.address.tag;
+	return_line_d[2].LRU        = 3'b0;
+	return_line_d[2].MESI_bits  = 2'b11;
+	return_line_d[2].data = 32'h8765_4321;
 
 #10;
 	// Read operation
 	n  = 0;
 	instr_address = 32'h8765_4321;
-	return_line_d[0][2].tag        = instruction.address.tag;
-	return_line_d[0][2].LRU        = 3'b0;
-	return_line_d[0][2].MESI_bits  = 2'b11;
-	return_line_d[0][2].data = 32'h8765_4321;
+	return_line_d[2].tag        = instruction.address.tag;
+	return_line_d[2].LRU        = 3'b0;
+	return_line_d[2].MESI_bits  = 2'b11;
+	return_line_d[2].data = 32'h8765_4321;
 
 #10;
 	// Write operation
 	n  = 1;
 	instr_address = 32'h2468_ACE0;
-	return_line_d[0][3].tag        = instruction.address.tag;
-	return_line_d[0][3].LRU        = 3'b0;
-	return_line_d[0][3].MESI_bits  = 2'b11;
-	return_line_d[0][3].data = 32'h2468_ACE0;
+	return_line_d[3].tag        = instruction.address.tag;
+	return_line_d[3].LRU        = 3'b0;
+	return_line_d[3].MESI_bits  = 2'b11;
+	return_line_d[3].data = 32'h2468_ACE0;
 
 #10;
 	// Read operation
 	n  = 0;
 	instr_address = 32'h2468_ACE0;
-	return_line_d[0][3].tag        = instruction.address.tag;
-	return_line_d[0][3].LRU        = 3'b0;
-	return_line_d[0][3].MESI_bits  = 2'b11;
-	return_line_d[0][3].data = 32'h2468_ACE0;
+	return_line_d[3].tag        = instruction.address.tag;
+	return_line_d[3].LRU        = 3'b0;
+	return_line_d[3].MESI_bits  = 2'b11;
+	return_line_d[3].data = 32'h2468_ACE0;
 
 #10;
 	// Write operation
 	n  = 1;
 	instr_address = 32'hABC0_9876;
-	return_line_d[0][4].tag        = instruction.address.tag;
-	return_line_d[0][4].LRU        = 3'b0;
-	return_line_d[0][4].MESI_bits  = 2'b11;
-	return_line_d[0][4].data = 32'hABC0_9876;
+	return_line_d[4].tag        = instruction.address.tag;
+	return_line_d[4].LRU        = 3'b0;
+	return_line_d[4].MESI_bits  = 2'b11;
+	return_line_d[4].data = 32'hABC0_9876;
 
 #10;
 	// Read operation
 	n  = 0;
 	instr_address = 32'hABC0_9876;
-	return_line_d[0][4].tag        = instruction.address.tag;
-	return_line_d[0][4].LRU        = 3'b0;
-	return_line_d[0][4].MESI_bits  = 2'b11;
-	return_line_d[0][4].data = 32'hABC0_9876;
+	return_line_d[4].tag        = instruction.address.tag;
+	return_line_d[4].LRU        = 3'b0;
+	return_line_d[4].MESI_bits  = 2'b11;
+	return_line_d[4].data = 32'hABC0_9876;
 	 
 
 	// Monitor p_bus

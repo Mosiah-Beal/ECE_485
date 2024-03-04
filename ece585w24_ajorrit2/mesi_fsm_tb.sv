@@ -13,8 +13,8 @@ module mesi_fsm_tb;
     logic [31:0] address;
     logic [2:0] n;
     command_t instruction;
-    cache_line_t internal_line [1][1];
-    cache_line_t return_line [1][1];
+    cache_line_t internal_line;
+    cache_line_t return_line;
 
 
 
@@ -31,7 +31,7 @@ module mesi_fsm_tb;
 
     // Clock generation
     always #((CLK_PERIOD) / 2) clk = ~clk;
-    assign internal_line[0][0].tag = instruction.address.tag;
+    assign internal_line.tag = instruction.address.tag;
     assign instruction = {n,address,3'b0,2'b0};// Initializations
     initial begin
         // Initialize inputs

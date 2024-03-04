@@ -38,7 +38,7 @@ always_comb begin
                     $display("reset");
                 end
                 
-                9: begin // Display cache line
+                9: begin // Display cache line(currently, doesn't have a gap between instruction and data lines)
                     $display("Time = %t : Cache Line[%h] = %p", $time, instruction.address.set_index, cache[instruction.address.set_index][i]);
                 end
                 
