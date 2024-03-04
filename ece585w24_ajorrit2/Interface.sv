@@ -51,8 +51,8 @@ endinterface
 
 // Define the top-level interface that includes all the sub-interfaces
 interface top_if;
-    cache_if #(WAYS = 8) data_cache_if;
-    cache_if #(WAYS = 4) instruction_cache_if;
+    cache_if #(8) data_cache_if;
+    cache_if #(4) instruction_cache_if;
     processor_if processor_if;
     mesi_fsm_if mesi_fsm_if;
     count_if count_if;
