@@ -1,9 +1,16 @@
-//`include "my_struct_package.sv"
-
 import my_struct_package::*;
+`include "Interface.sv"
+
 
 module top;
-    
+    /* Signals
+     * global: clk, rst, instruction
+     * cache: cache_input, cache_output, read, write
+     * fsm: fsm_input, fsm_output, hit, hitM
+     * processor: current_line, return_line
+     * count: sum, start
+     */
+
     logic clk;
     logic rst;
     command_t instruction;
@@ -22,9 +29,18 @@ module top;
 
 // Parameters
 parameter sets = 16384;
-parameter ways = 8;
 
- 
+// Interfaces
+top_if ti();
+
+// Connect the interface to the modules
+  cache #(.sets(16384), .ways(8)) data_cache (ti.data_cache_if.cache_mp);
+  cache #(.sets(16384), .ways(4)) instruction_cache (ti.instruction_cache_if.cache_mp);
+  processor processor (ti.processor_if.processor_mp);
+  mesi_fsm fsm (ti.mesi_fsm_if.fsm_mp);
+  count LRU (ti.count_if.count_mp);
+  
+/*
 // Instantiate the data cache with sets = 16384 and ways = 8
 cache #(.sets(16384), .ways(8)) data_cache (
         .clk(clk),
@@ -69,6 +85,7 @@ mesi_fsm fsm(
         );
 
 count LRU(.start(start),.rst(rst), .sum(sum));
+*/
 
 
 // Clock generation
