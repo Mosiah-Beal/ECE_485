@@ -21,22 +21,23 @@ module top;
 parameter sets = 16384;
 parameter ways = 8;
 
+
 // Define an array of instructions
 reg [39:0] instructions [20];
-
-
 initial begin
-    instructions[0] = {4'b0,32'h984DE132,3'b0,2'b0};
-    instructions[1] = {4'b0,32'h116DE12F,3'b0,2'b0};
-    instructions[2] = {4'b0,32'h100DE130,3'b0,2'b0};
-    instructions[3] = {4'b0,32'h999DE12E,3'b0,2'b0};
-    instructions[4] = {4'b0,32'h645DE10A,3'b0,2'b0};
-    instructions[5] = {4'b0,32'h846DE107,3'b0,2'b0};
-    instructions[6] = {4'b0,32'h211DE128,3'b0,2'b0};
-    instructions[7] = {4'b0,32'h777DE133,3'b0,2'b0};
-    instructions[8] = {4'b1001,32'h777DE133,3'b0,2'b0};
-    instructions[9] = {4'b0,32'h846DE107,3'b0,2'b0};
-    instructions[10] = {4'b1001,32'h777DE133,3'b0,2'b0};
+    instructions[0] = 40'b0; // New instruction at the front
+    instructions[1] = {4'b0,32'h984DE132,3'b0,2'b0};
+    instructions[2] = {4'b0,32'h116DE12F,3'b0,2'b0};
+    instructions[3] = {4'b0,32'h100DE130,3'b0,2'b0};
+    instructions[4] = {4'b0,32'h999DE12E,3'b0,2'b0};
+    instructions[5] = {4'b0,32'h645DE10A,3'b0,2'b0};
+    instructions[6] = {4'b0,32'h846DE107,3'b0,2'b0};
+    instructions[7] = {4'b0,32'h211DE128,3'b0,2'b0};
+    instructions[8] = {4'b0,32'h777DE133,3'b0,2'b0};
+    instructions[9] = {4'b1001,32'h777DE133,3'b0,2'b0};
+    instructions[10] = {4'b0,32'h846DE107,3'b0,2'b0};
+    instructions[11] = {4'b1001,32'h777DE133,3'b0,2'b0};
+}
 end
 
  
@@ -119,10 +120,11 @@ end
 start = 0;
 write_enable = 0;
 read_enable = 1;
+instruction = instructions[0];
+
 
 // Loop over the instructions
-integer i;
-for (i = 0; i < 11; i = i + 1) begin
+for (int i = 1; i < 12; i = i + 1) begin
     // write
     #5;
     start = 1;
