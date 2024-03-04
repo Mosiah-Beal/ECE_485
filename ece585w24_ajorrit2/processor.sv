@@ -110,7 +110,7 @@ module processor(
                 // Display the current line
                 $display("current_line_i = ");
                 for(int i = 0; i < 4; i++) begin
-                    $display("%p\n", current_line_d[i]);
+                    $display("%p", current_line_d[i]);
                 end
 
                 for(int i = 3; i>=0; i--) begin
@@ -147,7 +147,7 @@ module processor(
                 // Display the current line
                 $display("current_line_d = ");
                 for(int i = 0; i < 8; i++) begin
-                    $display("%p\n", current_line_d[i]);
+                    $display("%p", current_line_d[i]);
                 end
                 
                 for(int i = 7; i>=0; i--) begin
