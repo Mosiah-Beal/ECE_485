@@ -29,6 +29,8 @@ module processor(
     int invalid_select_d;
     cache_line_t way_line_d;
     cache_line_t way_line_i;
+    int invalid_LRU_i;
+    int invalid_LRU_d;
 
 
     // cache indexing
@@ -122,6 +124,8 @@ module processor(
 
                 way_select_i = 0; // default to way 0, keeps track of lowest LRU way
                 invalid_select_i = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
+                invalid_select_i = 0; // default to most recent LRU value
+                invalid_LRU_i = 0; // default to most recent LRU value
                 // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
                 for(int i = 0; i < 4; i++) begin
                     way_line_i = current_line_i[i];
@@ -130,8 +134,9 @@ module processor(
                         way_select_i = i;
                     end
                     // update invalid_select_i if the current way is invalid and has a lower LRU value
-                    if(way_line_i.MESI_bits == 0 && way_line.LRU < current_line_i[invalid_select_i].LRU) begin
+                    if(way_line_i.MESI_bits == 0 && way_line_i.LRU > invalid_LRU_i) begin
                         invalid_select_i = i;
+                        invalid_LRU_i = way_line_i.LRU;
                     end
 
                     // if the invalid_select_i is still the impossible value, use the way_select_i
@@ -175,6 +180,7 @@ module processor(
                 
                 way_select_d = 0; // default to way 0, keeps track of lowest LRU way
                 invalid_select_d = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
+                invalid_LRU_d = 0; // default to most recent LRU value
                 // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
                 for(int i = 0; i < 8; i++) begin
                     way_line_d = current_line_d[i];
@@ -183,8 +189,9 @@ module processor(
                         way_select_d = i;
                     end
                     // update invalid_select_d if the current way is invalid and has a lower LRU value
-                    if(way_line_d.MESI_bits == 0 && way_line.LRU < current_line_d[invalid_select_d].LRU) begin
+                    if(way_line_d.MESI_bits == 0 && way_line_d.LRU > invalid_LRU_d) begin
                         invalid_select_d = i;
+                        invalid_LRU_d = way_line_d.LRU;
                     end
 
                     // if the invalid_select_d is still the impossible value, use the way_select_d
