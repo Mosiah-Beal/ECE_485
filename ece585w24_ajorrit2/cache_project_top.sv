@@ -1,24 +1,7 @@
-//`include "my_struct_package.sv"
-
 import my_struct_package::*;
 
 module top;
-    
-    logic clk;
-    logic rst;
-    command_t instruction;
-    cache_line_t cache_input_i[4];
-    cache_line_t cache_output_i[4];
-    cache_line_t cache_input_d[8];
-    cache_line_t cache_output_d[8];
-    cache_line_t fsm_input_line;
-    cache_line_t fsm_output_line;
-    logic hit;
-    logic hitM;
-    logic write_enable;
-    logic read_enable;
-    logic start;
-    logic [2:0] sum;
+
 
 // Parameters
 parameter sets = 16384;
