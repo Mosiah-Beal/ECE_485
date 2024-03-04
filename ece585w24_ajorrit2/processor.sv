@@ -112,7 +112,6 @@ module processor(
                 i_select = 3;
             end
             else begin
-
                 // Display the current line
                 $display("current_line_i = ");
                 for(int i = 0; i < 4; i++) begin
@@ -141,10 +140,8 @@ module processor(
                     else begin
                         i_select = invalid_select_i;
                     end
-                    end
                 end
             end
-        end
         endcase
     end
 
