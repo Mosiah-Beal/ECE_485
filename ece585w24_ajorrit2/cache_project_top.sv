@@ -73,7 +73,8 @@ processor processor(
         .return_line_d(cache_input_d),
         .block_in(fsm_input_line),
         .block_out(fsm_output_line),
-        .count(sum)
+        .count(sum),
+        .re(read_enable)
         );
 
 

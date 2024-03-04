@@ -9,6 +9,7 @@ module processor(
     */
 
     input  clk,
+    input  read_enable,
     input  command_t instruction,
     input  logic [2:0] count,
     input  cache_line_t current_line_i[4],
