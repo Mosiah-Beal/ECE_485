@@ -22,7 +22,10 @@ module processor(
     // way select
     logic [2:0] d_select;
     logic [1:0] i_select;
+    
     int way_select;
+    int invalid_select;
+
 
     // cache indexing
     int i = 0; 
@@ -117,7 +120,7 @@ module processor(
                 way_select = 0; // default to way 0, keeps track of lowest LRU way
                 invalid_select = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
                 // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
-                for(int i = 0; i < ways; i++) begin
+                for(int i = 0; i < 4; i++) begin
                     way_line = current_line_i[i];
                     // update way_select if the current way has a lower LRU value
                     if(way_line.LRU < current_line_i[way_select].LRU) begin
@@ -170,7 +173,7 @@ module processor(
                 way_select = 0; // default to way 0, keeps track of lowest LRU way
                 invalid_select = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
                 // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
-                for(int i = 0; i < ways; i++) begin
+                for(int i = 0; i < 8; i++) begin
                     way_line = current_line_d[i];
                     // update way_select if the current way has a lower LRU value
                     if(way_line.LRU < current_line_d[way_select].LRU) begin
