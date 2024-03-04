@@ -21,6 +21,24 @@ module top;
 parameter sets = 16384;
 parameter ways = 8;
 
+// Define an array of instructions
+reg [39:0] instructions [20];
+
+
+initial begin
+    instructions[0] = {4'b0,32'h984DE132,3'b0,2'b0};
+    instructions[1] = {4'b0,32'h116DE12F,3'b0,2'b0};
+    instructions[2] = {4'b0,32'h100DE130,3'b0,2'b0};
+    instructions[3] = {4'b0,32'h999DE12E,3'b0,2'b0};
+    instructions[4] = {4'b0,32'h645DE10A,3'b0,2'b0};
+    instructions[5] = {4'b0,32'h846DE107,3'b0,2'b0};
+    instructions[6] = {4'b0,32'h211DE128,3'b0,2'b0};
+    instructions[7] = {4'b0,32'h777DE133,3'b0,2'b0};
+    instructions[8] = {4'b1001,32'h777DE133,3'b0,2'b0};
+    instructions[9] = {4'b0,32'h846DE107,3'b0,2'b0};
+    instructions[10] = {4'b1001,32'h777DE133,3'b0,2'b0};
+end
+
  
 // Instantiate the data cache with sets = 16384 and ways = 8
 cache #(.sets(16384), .ways(8)) data_cache (
@@ -96,40 +114,31 @@ for(int i = 0; i<4; i++)begin
 	cache_input_i[i].data = 32'b0;       // Initialize mem to 0
 end
 
+// read
+#5;
+start = 0;
+write_enable = 0;
+read_enable = 1;
 
-// Define an array of instructions
-reg [39:0] instructions [20];
-initial begin
-    instructions[0] = {4'b0,32'h984DE132,3'b0,2'b0};
-    instructions[1] = {4'b0,32'h116DE12F,3'b0,2'b0};
-    instructions[2] = {4'b0,32'h100DE130,3'b0,2'b0};
-    instructions[3] = {4'b0,32'h999DE12E,3'b0,2'b0};
-    instructions[4] = {4'b0,32'h645DE10A,3'b0,2'b0};
-    instructions[5] = {4'b0,32'h846DE107,3'b0,2'b0};
-    instructions[6] = {4'b0,32'h211DE128,3'b0,2'b0};
-    instructions[7] = {4'b0,32'h777DE133,3'b0,2'b0};
-    instructions[8] = {4'b1001,32'h777DE133,3'b0,2'b0};
-    instructions[9] = {4'b0,32'h846DE107,3'b0,2'b0};
-    instructions[10] = {4'b1001,32'h777DE133,3'b0,2'b0};
+// Loop over the instructions
+integer i;
+for (i = 0; i < 11; i = i + 1) begin
+    // write
+    #5;
+    start = 1;
+    write_enable = 1;
+    read_enable = 0;
+    
+    // apply instruction
+    instruction = instructions[i];
 
-    // Loop over the instructions
-    integer i;
-    for (i = 0; i < 11; i = i + 1) begin
-        // read
-        #5;
-        start = 1;
-        write_enable = 1;
-        read_enable = 0;
-        
-        // apply instruction
-        instruction = instructions[i];
+    // read
+    #5;
+    start = 0;
+    write_enable = 0;
+    read_enable = 1;
+end
 
-        // write
-        #5;
-        start = 0;
-        write_enable = 0;
-        read_enable = 1;
-    end
 end
 
 /*   $display("Test Case 2:");    
