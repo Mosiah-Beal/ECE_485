@@ -1,3 +1,5 @@
+import my_struct_package::*;
+
 // Define the interface for the cache module
 interface cache_if #(parameter WAYS = 8);
     logic clk;
