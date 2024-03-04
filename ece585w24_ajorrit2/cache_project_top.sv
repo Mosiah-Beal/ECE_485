@@ -100,6 +100,7 @@ for(int i = 0; i<4; i++)begin
 end
 
 
+
 #10;
     instruction = {4'b0000,32'b0,3'b0,2'b0};
     // De-assert reset
