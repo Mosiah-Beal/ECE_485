@@ -2,25 +2,36 @@
 import my_struct_package::*;
 
 module processor(
+    /* Signal ports
+    * top: clk, instruction, current_line, return_line
+    * count: count
+    * FSM: block_in, block_out
+    */
+
     input  clk,
+    input  command_t instruction,
+    input  logic [2:0] count,
     input  cache_line_t current_line_i[4],
     input  cache_line_t current_line_d[8],
-    input  command_t instruction,
     input  cache_line_t block_in,
     output cache_line_t return_line_i[4],
     output cache_line_t return_line_d[8],
-    output cache_line_t block_out,
-    input logic [2:0] count
-
-    //add cache line output for fsm
+    output cache_line_t block_out
+    
 );
-
+    // way select
     logic [2:0] d_select;
     logic [1:0] i_select;
+
+    // cache indexing
     int i = 0; 
     int j = 0;
+    
+    // hit buses
     logic [7:0] data_read_bus;
     logic [3:0] instruction_read_bus;
+    
+    // internal cache lines
     cache_line_t internal_d[8];
     cache_line_t internal_i[4];
 
@@ -92,22 +103,21 @@ module processor(
             
         default: begin
             if(i_select === 'x)begin
-	i_select = 3;
-	end
-	else begin
-	$display("current_line_d = %p", current_line_d);
-		for(int i = 3; i>=0; i--) begin
-	
-			if(current_line_i[i].LRU == 3)begin
-			i_select = i;
-			break;
-			end
-
-	 	end
-	end
-     end
-   endcase
- end
+                i_select = 3;
+            end
+            else begin
+                $display("current_line_d = %p", current_line_d);
+                for(int i = 3; i>=0; i--) begin
+            
+                    if(current_line_i[i].LRU == 3)begin
+                        i_select = i;
+                    break;
+                    end
+                end
+            end
+        end
+        endcase
+    end
 
     // Encode to select column of cache for data cache
     always_comb begin
@@ -123,113 +133,128 @@ module processor(
 
 
         default: begin 
-	if(d_select === 'x)begin
-	d_select = 7;
-	end
-	else begin
-	$display("current_line_d = %p", current_line_d);
-		for(int i = 7; i>=0; i--) begin
-	
-			if(current_line_d[i].LRU == 7)begin
-			d_select = i;
-			break;
-			end
+            if(d_select === 'x)begin
+                d_select = 7;
+            end
+            else begin
+                $display("current_line_d = %p", current_line_d);
+                for(int i = 7; i>=0; i--) begin
+            
+                    if(current_line_d[i].LRU == 7)begin
+                        d_select = i;
+                        break;
+                    end
 
-	 	end
-	end
-     end 
-   endcase
- end
+                end
+            end
+        end 
+        endcase
+    end
 
 
     // Update the cache line
     always_comb begin 
+        // Display selected ways
         $display("d_select = %d\n", d_select);
         $display("i_select = %d\n", i_select);
 
- 	      $display("d_bus = %b\n", data_read_bus);
+        // Display the hit buses
+ 	    $display("d_bus = %b\n", data_read_bus);
         $display("i_bus = %b\n", instruction_read_bus);
 
 
-          case(instruction.n)
+        case(instruction.n)
             0, 1: begin
                 $display("Read/Write data cache");
                 block_out = current_line_d[d_select];
                 block_out.tag = instruction.address.tag; 
-		internal_d = current_line_d;
-		if(|data_read_bus == 1) begin 
-			for(int i = 0; i< d_select; i++) begin
-				internal_d[i].LRU = current_line_d[i].LRU +1;
-			end
-		end
-		else begin
-			for(int i = 0; i<8; i++) begin
-				internal_d[i].LRU = current_line_d[i].LRU +1;
-			end 
-		end
-		internal_d[d_select] = block_in;
-		internal_d[d_select].LRU = 3'b0;
+		        internal_d = current_line_d;
+                
+                // Check if there are any hits in the data cache
+                if(|data_read_bus == 1) begin 
+                    for(int i = 0; i< d_select; i++) begin
+                        internal_d[i].LRU = current_line_d[i].LRU +1;
+                    end
+                end
+                // If there are no hits, update the LRU
+		        else begin
+			        for(int i = 0; i<8; i++) begin
+				        internal_d[i].LRU = current_line_d[i].LRU +1;
+			        end 
+		        end
+		        
+                internal_d[d_select] = block_in;
+		        internal_d[d_select].LRU = 3'b0;
                 return_line_d = internal_d;
-
+                
                 end
             2: begin
                 $display("Read instruction cache");
                 block_out = current_line_i[i_select];
                 block_out.tag = instruction.address.tag;
-
                 internal_i = current_line_i;
-		if(|instruction_read_bus == 1) begin 
-			for(int i = 0; i< i_select; i++) begin
-				internal_i[i].LRU = current_line_i[i].LRU +1;
-			end
-		end
-		else begin
-			for(int i = 0; i<4; i++) begin
-				internal_i[i].LRU = current_line_i[i].LRU +1;
-			end 
-		end
-		internal_i[i_select] = block_in;
-		internal_i[i_select].LRU = 3'b0;
+
+                // Check if there are any hits in the instruction cache
+                if(|instruction_read_bus == 1) begin 
+                    for(int i = 0; i< i_select; i++) begin
+                        internal_i[i].LRU = current_line_i[i].LRU +1;
+                    end
+                end
+                // If there are no hits, update the LRU
+                else begin
+                    for(int i = 0; i<4; i++) begin
+                        internal_i[i].LRU = current_line_i[i].LRU +1;
+                    end 
+                end
+
+                internal_i[i_select] = block_in;
+                internal_i[i_select].LRU = 3'b0;
                 return_line_i = internal_i;	    
 
                 end
             3: begin 
                 block_out = current_line_d[d_select];
                 block_out.tag = instruction.address.tag;
+                internal_d = current_line_d;
 
-		internal_d = current_line_d;
-		if(|data_read_bus == 1) begin 
-			for(int i = 0; i< d_select; i++) begin
-				internal_d[i].LRU = current_line_d[i].LRU +1;
-			end
-		end
-		else begin
-			for(int i = 0; i<8; i++) begin
-				internal_d[i].LRU = current_line_d[i].LRU +1;
-			end 
-		end
-		internal_d[d_select] = block_in;
-		internal_d[d_select].LRU = 3'b0;
+                // Check if there are any hits in the data cache
+                if(|data_read_bus == 1) begin 
+                    for(int i = 0; i< d_select; i++) begin
+                        internal_d[i].LRU = current_line_d[i].LRU +1;
+                    end
+                end
+                // If there are no hits, update the LRU
+                else begin
+                    for(int i = 0; i<8; i++) begin
+                        internal_d[i].LRU = current_line_d[i].LRU +1;
+                    end 
+                end
+
+                internal_d[d_select] = block_in;
+                internal_d[d_select].LRU = 3'b0;
                 return_line_d = internal_d;
 
                 end
             4: begin
                 block_out = current_line_d[d_select];
                 block_out.tag = instruction.address.tag;
+                internal_d = current_line_d;
 
-		internal_d = current_line_d;
-		if(|data_read_bus == 1) begin 
-			for(int i = 0; i< d_select; i++) begin
-				internal_d[i].LRU = current_line_d[i].LRU +1;
-			end
-		end
-		else begin
-			for(int i = 0; i<8; i++) begin
-				internal_d[i].LRU = current_line_d[i].LRU +1;
-			end 
-		end
-		internal_d[d_select] = block_in;
-		internal_d[d_select].LRU = 3'b0;
+                // Check if there are any hits in the data cache
+                if(|data_read_bus == 1) begin 
+                    for(int i = 0; i< d_select; i++) begin
+                        internal_d[i].LRU = current_line_d[i].LRU +1;
+                    end
+                end
+                // If there are no hits, update the LRU
+                else begin
+                    for(int i = 0; i<8; i++) begin
+                        internal_d[i].LRU = current_line_d[i].LRU +1;
+                    end 
+                end
+
+                internal_d[d_select] = block_in;
+                internal_d[d_select].LRU = 3'b0;
                 return_line_d = internal_d;              
 
                 end

@@ -31,8 +31,8 @@ cache #(.sets(16384), .ways(8)) data_cache (
         .instruction(instruction),
 	    .cache_in(cache_input_d),
         .cache_out(cache_output_d),
-	.write_enable(write_enable),
-	.read_enable(read_enable)
+	    .write_enable(write_enable),
+	    .read_enable(read_enable)
     );
 
  // Instantiate the instruction cache with sets = 16384 and ways = 4
@@ -98,19 +98,17 @@ for(int i = 0; i<4; i++)begin
 	cache_input_i[0][i].tag = 12'b0;        // Initialize tag to 0
 	cache_input_i[0][i].data = 32'b0;       // Initialize mem to 0
 end
-    #10;
-instruction = {4'b0000,32'b0,3'b0,2'b0};
 
 
-
-
+#10;
+    instruction = {4'b0000,32'b0,3'b0,2'b0};
     // De-assert reset
     rst = 0;
     write_enable = 0;
     read_enable = 1;
     start = 1;
     
-    #5; 
+#5; 
     // Apply test vectors
     // You can modify the test vectors as per your requirements
     // For example, you can change the instructions, block_in values, etc.
@@ -120,143 +118,144 @@ instruction = {4'b0000,32'b0,3'b0,2'b0};
     start = 0;
     // Test case 1
 
-    #5; 
- $display("Test Case 1:");
- start = 0;
- write_enable = 1;
- read_enable = 0;
-//0 984DE132
- instruction = {4'b0,32'h984DE132,3'b0,2'b0};
-#5;
-
- start = 0;
- write_enable = 0;
- read_enable = 1;
-//0 984DE132
- instruction = {4'b0,32'h984DE132,3'b0,2'b0};
-#5;
-
-
-start = 1;
-write_enable = 1;
+#5; 
+    $display("Test Case 1:");
+    start = 0;
+    write_enable = 1;
     read_enable = 0;
-//0 116DE12F
- instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
+    //0 984DE132
+    instruction = {4'b0,32'h984DE132,3'b0,2'b0};
+
 #5;
-start = 0;
-write_enable = 0;
+    start = 0;
+    write_enable = 0;
     read_enable = 1;
-//0 116DE12F
- instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
+    //0 984DE132
+    instruction = {4'b0,32'h984DE132,3'b0,2'b0};
 #5;
-
-start = 1;
-write_enable = 1;
+    start = 1;
+    write_enable = 1;
     read_enable = 0;
-//0 100DE130
- instruction = {4'b0,32'h100DE130,3'b0,2'b0};
-#5;
+    //0 116DE12F
+    instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
 
-start = 0;
-write_enable = 0;
+#5;
+    start = 0;
+    write_enable = 0;
     read_enable = 1;
-//0 100DE130
- instruction = {4'b0,32'h100DE130,3'b0,2'b0};
+    //0 116DE12F
+    instruction = {4'b0,32'h116DE12F,3'b0,2'b0};
+
 #5;
 
-
-start = 1;
-write_enable = 1;
+    start = 1;
+    write_enable = 1;
     read_enable = 0;
-//0 999DE12E
- instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
+    //0 100DE130
+    instruction = {4'b0,32'h100DE130,3'b0,2'b0};
+
 #5;
 
-start = 0;
-write_enable = 0;
+    start = 0;
+    write_enable = 0;
     read_enable = 1;
-//0 999DE12E
- instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
+    //0 100DE130
+    instruction = {4'b0,32'h100DE130,3'b0,2'b0};
+
 #5;
 
-
-start = 1;
-write_enable = 1;
+    start = 1;
+    write_enable = 1;
     read_enable = 0;
-//0 645DE10A
- instruction = {4'b0,32'h645DE10A,3'b0,2'b0};
-#5;
+    //0 999DE12E
+    instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
 
-start = 0;
-write_enable = 0;
+#5;
+    start = 0;
+    write_enable = 0;
     read_enable = 1;
-//0 645DE10A
- instruction = {4'b0,32'h645DE10A,3'b0,2'b0};
+    //0 999DE12E
+    instruction = {4'b0,32'h999DE12E,3'b0,2'b0};
+
 #5;
-
-
-start = 1;
-write_enable = 1;
+    start = 1;
+    write_enable = 1;
     read_enable = 0;
-//0 846DE107
- instruction = {4'b0,32'h846DE107,3'b0,2'b0};
-#5;
-start = 0;
-write_enable = 0;
-read_enable = 1;
-//0 846DE107
- instruction = {4'b0,32'h846DE107,3'b0,2'b0};
+    //0 645DE10A
+    instruction = {4'b0,32'h645DE10A,3'b0,2'b0};
 
 #5;
-start = 1;
-write_enable = 1;
-    read_enable = 0;
-//0 211DE128
- instruction = {4'b0,32'h211DE128,3'b0,2'b0};
-
-#5;
-start = 0;
-write_enable = 0;
+    start = 0;
+    write_enable = 0;
     read_enable = 1;
-//0 211DE128
- instruction = {4'b0,32'h211DE128,3'b0,2'b0};
+    //0 645DE10A
+    instruction = {4'b0,32'h645DE10A,3'b0,2'b0};
 
 #5;
-write_enable = 1;
+    start = 1;
+    write_enable = 1;
     read_enable = 0;
-start = 1;
-//0 777DE133
- instruction = {4'b0,32'h777DE133,3'b0,2'b0};
-#5;
-write_enable = 0;
-    read_enable = 1;
-start = 0;
-//0 777DE133
- instruction = {4'b0,32'h777DE133,3'b0,2'b0};
-#5;
+    //0 846DE107
+    instruction = {4'b0,32'h846DE107,3'b0,2'b0};
 
-instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
+#5;
+    start = 0;
+    write_enable = 0;
+    read_enable = 1;
+    //0 846DE107
+    instruction = {4'b0,32'h846DE107,3'b0,2'b0};
+
+#5;
+    start = 1;
+    write_enable = 1;
+    read_enable = 0;
+    //0 211DE128
+    instruction = {4'b0,32'h211DE128,3'b0,2'b0};
+
+#5;
+    start = 0;
+    write_enable = 0;
+    read_enable = 1;
+    //0 211DE128
+    instruction = {4'b0,32'h211DE128,3'b0,2'b0};
+
+#5;
+    write_enable = 1;
+    read_enable = 0;
+    start = 1;
+    //0 777DE133
+    instruction = {4'b0,32'h777DE133,3'b0,2'b0};
+
+#5;
+    write_enable = 0;
+    read_enable = 1;
+    start = 0;
+    //0 777DE133
+    instruction = {4'b0,32'h777DE133,3'b0,2'b0};
+
+#5;
+    instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
+
+#10;
+    start = 1;
+    write_enable = 1;
+    read_enable = 0;
+    //0 846DE107
+    instruction = {4'b0,32'h846DE107,3'b0,2'b0};
+
+#5;
+    start = 0;
+    write_enable = 0;
+    read_enable = 1;
+    //0 846DE107
+    instruction = {4'b0,32'h846DE107,3'b0,2'b0};
+
+#5;
+    instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
+
 #10;
 
-start = 1;
-write_enable = 1;
-    read_enable = 0;
-//0 846DE107
- instruction = {4'b0,32'h846DE107,3'b0,2'b0};
-#5;
-start = 0;
-write_enable = 0;
-read_enable = 1;
-//0 846DE107
- instruction = {4'b0,32'h846DE107,3'b0,2'b0};
-#5;
-
-
-instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
-#10;
-
-
- /*   $display("Test Case 2:");    
+/*   $display("Test Case 2:");    
     // Set instruction, block_in, hit, hitM values accordingly
     instruction = {4'b1,32'h8FA2B7C4,3'b0,2'b0};
     
@@ -306,11 +305,12 @@ instruction = {4'b1001,32'h777DE133,3'b0,2'b0};
     #10;
 
 	instruction = {4'b0,32'h8FA2B7C4,3'b0,2'b0};
-	#10; */ 
+	#10; 
+*/ 
 
 
- $finish;
-    end
+$finish;
+end
 
 
 endmodule

@@ -2,12 +2,17 @@
 import my_struct_package::*;
 
 module mesi_fsm(
-    input logic clk,
-    input logic rst,
-    input command_t instruction,
-    input cache_line_t internal_line,  
-    input logic hit, 
-    input logic hitM, 
+    /* Signal ports
+    * top: clk, rst, instruction, hit, hitM
+    * cache: return_line, internal_line
+    */
+
+    input  logic clk,
+    input  logic rst,
+    input  command_t instruction,
+    input  logic hit, 
+    input  logic hitM,
+    input  cache_line_t internal_line,  
     output cache_line_t return_line
 );
 
@@ -18,7 +23,7 @@ module mesi_fsm(
     // Sequential logic block for state transition
     always_ff@(posedge clk) begin: Sequential_Logic
         if (rst)
-	    internal_line.MESI_bits <= E;
+	        internal_line.MESI_bits <= I;
         else
             internal_line.MESI_bits <= nextstate;
     end
@@ -119,7 +124,7 @@ module mesi_fsm(
                 endcase
             end
 
-            default: nextstate <= E;
+            default: nextstate <= I;
         endcase
     end
 
@@ -128,10 +133,10 @@ module mesi_fsm(
         // Copy internal_line to return_line
         return_line.tag = internal_line.tag;
         return_line.LRU = internal_line.LRU;
-	return_line.data = internal_line.data;
-        // Update mesi_bits based on nextstate
-        return_line.MESI_bits = nextstate;
+	    return_line.data = internal_line.data;
         
+        // Update mesi_bits based on nextstate
+        return_line.MESI_bits = nextstate;   
     end
 
 endmodule 
