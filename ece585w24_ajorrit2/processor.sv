@@ -218,10 +218,7 @@ module processor(
 
     // compare current instruction to previous instruction
     always_ff@(posedge clk) begin: Sequential_Logic
-        if (rst)
-            prev_instruction <= 40'b0;
-        else
-            prev_instruction <= instruction;
+        prev_instruction <= instruction;
     end
 
     // Update the cache line
