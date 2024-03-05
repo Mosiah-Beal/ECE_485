@@ -1,0 +1,6 @@
+{
+    "diffEditor.hideUnchangedRegions.enabled": true,
+    "diffEditor.experimental.showMoves": true,
+    "git.closeDiffOnOperation": true,
+    "githubPullRequests.quickDiff": true
+}
