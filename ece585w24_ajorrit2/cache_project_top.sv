@@ -119,6 +119,8 @@ for(int i = 0; i<4; i++)begin
 	cache_input_i[i].data = 32'b0;       // Initialize mem to 0
 end
 
+rst = 0;
+
 // read
 #5;
 start = 0;
