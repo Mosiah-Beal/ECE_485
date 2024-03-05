@@ -3,8 +3,6 @@ import my_struct_package::*; // import structs
 module cache #(parameter sets = 16384, parameter ways = 8)(
 	input  clk,  
 	input  command_t instruction,
-	input  write_enable,
-	input  read_enable,
 	input  cache_line_t cache_in[ways],
 	output cache_line_t cache_out[ways]
 );

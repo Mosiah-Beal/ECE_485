@@ -49,9 +49,7 @@ cache #(.sets(16384), .ways(8)) data_cache (
         .clk(clk),
         .instruction(instruction),
 	    .cache_in(cache_input_d),
-        .cache_out(cache_output_d),
-	    .write_enable(write_enable),
-	    .read_enable(read_enable)
+        .cache_out(cache_output_d)
     );
 
  // Instantiate the instruction cache with sets = 16384 and ways = 4
@@ -59,9 +57,7 @@ cache #(.sets(16384), .ways(4)) instruction_cache (
         .clk(clk),
         .instruction(instruction),
 	    .cache_in(cache_input_i),
-        .cache_out(cache_output_i),
-	    .write_enable(write_enable),
-	    .read_enable(read_enable)
+        .cache_out(cache_output_i)
     );
 
 processor processor(
