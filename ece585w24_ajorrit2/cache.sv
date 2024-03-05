@@ -22,7 +22,7 @@ always_comb begin
 
     for (int i = 0; i < ways; i++) begin
         
-        if(read_enable) begin
+        if(!clk) begin
             case (instruction.n)
                 0, 1, 2, 3, 4: begin // Read or write instructions    
                     cache_out[i] = cache[instruction.address.set_index][i];
@@ -47,7 +47,7 @@ always_comb begin
                 end
             endcase
         end
-        else if(write_enable) begin
+        else if(clk) begin
             case (instruction.n)
                 0, 1, 2, 3, 4: begin // Read or write instructions   
                     cache[instruction.address.set_index][i] = cache_in[i];

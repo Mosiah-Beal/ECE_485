@@ -231,7 +231,7 @@ module processor(
 
 
     // compare current instruction to previous instruction
-    always_ff@(posedge read_enable) begin: Sequential_Logic
+    always_ff@(posedge clk) begin: Sequential_Logic
         prev_instruction <= current_instruction;
         current_instruction <= instruction;
     end
