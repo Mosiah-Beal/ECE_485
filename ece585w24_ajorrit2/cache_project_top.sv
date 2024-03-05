@@ -97,9 +97,6 @@ initial begin
     instruction = {4'b1000,32'b0,3'b0,2'b0};
     hit = 0;
     hitM = 0;
-    write_enable = 0; 
-    start = 1;
-    read_enable = 1;
  
 for(int i = 0; i<8; i++)begin
 	cache_input_d[i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
@@ -118,30 +115,24 @@ end
 // reset
 rst = 0;
 
-// read
-#5;
-start = 0;
-write_enable = 0;
-read_enable = 1;
-instruction = instructions[0];
-
 
 // Loop over the instructions
-for (int i = 1; i < 12; i = i + 1) begin
-    // write
-    #5;
-    start = 1;
-    write_enable = 1;
-    read_enable = 0;
-    
-    // apply instruction
-    instruction = instructions[i];
+for (int i = 0; i < 20; i = i + 1) begin
 
+    if($isunknown(instructions[i])) begin
+        $display("Invalid / last instruction reached. Exiting simulation.");
+        break;
+    end
+
+    
     // read
     #5;
-    start = 0;
-    write_enable = 0;
-    read_enable = 1;
+
+    instruction = instructions[i];    
+    
+    // write
+    #5;
+
 end
 
 

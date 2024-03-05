@@ -19,7 +19,7 @@ cache_line_t cache[sets-1:0][ways-1:0];   // L1 cache
 always_comb begin
 
     for (int i = 0; i < ways; i++) begin
-        
+        // read
         if(!clk) begin
             case (instruction.n)
                 0, 1, 2, 3, 4: begin // Read or write instructions    
@@ -45,6 +45,7 @@ always_comb begin
                 end
             endcase
         end
+        //write
         else if(clk) begin
             case (instruction.n)
                 0, 1, 2, 3, 4: begin // Read or write instructions   
