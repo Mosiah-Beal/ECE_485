@@ -27,7 +27,10 @@ proc main {} {
     vsim work.top -suppress 12003
 
     # Add signals to the wave window
-    add_signals3
+    add_cache_signals
+
+    # Set the width of the signal names
+    configure wave -signalnamewidth 1
 
     view wave
     # Run the simulation
@@ -64,14 +67,19 @@ proc add_signals3 {} {
     /top/fsm_output_line \
     /top/hit \
     /top/hitM \
-    /top/write_enable \
-    /top/read_enable \
-    /top/start \
     /top/sum \
     /top/instructions
 
      # press h
     configure wave -signalnamewidth 1
+}
+
+proc add_cache_signals {} {
+    add wave -position insertpoint  \
+    /top/clk \
+    /top/instruction \
+    /top/cache_input_d \
+    /top/cache_output_d \
 }
 
 # Execute the main procedure
