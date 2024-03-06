@@ -107,8 +107,10 @@ for(int i = 0; i<4; i++)begin
 end
 
 // end reset
+#TIME_DURATION;
 rst = 0;
-#2*TIME_DURATION;
+
+//#TIME_DURATION;
 
 
 // Loop over the instructions
@@ -124,10 +126,13 @@ for (int i = 0; i < 20; i = i + 1) begin
     // read
     #5;
 
+    $display("Time = %t : Instruction = %p", $time, instruction);
     instruction = instructions[i];    
     
     // write
     #5;
+    // Display output cache line
+    $display("Time = %t : Cache Line = %p", $time, cache_output_d);
 
 end
 
