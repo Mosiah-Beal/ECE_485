@@ -96,20 +96,20 @@ initial begin
     hitM = 0;
  
 for(int i = 0; i<8; i++)begin
-	cache_input_d[i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-	cache_input_d[i].MESI_bits = I;     // Initialize MESI bits to Invalid
-	cache_input_d[i].tag = 12'b0;        // Initialize tag to 0
-	cache_input_d[i].data = 32'b0;       // Initialize mem to 0
+	cache_input_d[i].LRU = i;               // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
+	cache_input_d[i].MESI_bits = I;         // Initialize MESI bits to Invalid
+	cache_input_d[i].tag = 12'b0;           // Initialize tag to 0
+	cache_input_d[i].data = 32'b0;          // Initialize mem to 0
 end
 
 for(int i = 0; i<4; i++)begin
-	cache_input_i[i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-	cache_input_i[i].MESI_bits = I;     // Initialize MESI bits to Invalid
-	cache_input_i[i].tag = 12'b0;        // Initialize tag to 0
-	cache_input_i[i].data = 32'b0;       // Initialize mem to 0
+	cache_input_i[i].LRU = i;               // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
+    cache_input_i[i].MESI_bits = I;         // Initialize MESI bits to Invalid
+	cache_input_i[i].tag = 12'b0;           // Initialize tag to 0
+	cache_input_i[i].data = 32'b0;          // Initialize mem to 0
 end
 
-// reset
+// end reset
 rst = 0;
 
 
@@ -132,61 +132,6 @@ for (int i = 0; i < 20; i = i + 1) begin
     #5;
 
 end
-
-
-/*   $display("Test Case 2:");    
-    // Set instruction, block_in, hit, hitM values accordingly
-    instruction = {4'b1,32'h8FA2B7C4,3'b0,2'b0};
-    
-
-    // Apply some clock cycles
-    #10;
-
-    // Print outputs
-    instruction = {4'b1,32'h8FA2B7C4,3'b0,2'b0};
-
-    // Apply some clock cycles
-    #10;
-
-    // Print outputs
-    instruction = {4'b1,32'h3C8D4EAF,3'b0,2'b0};
-
-    // Continue with more test cases if needed
-
-    // End simulation after test cases
-    #10;
-	
-	instruction = {4'b1,32'h8FA2B7C4,3'b0,2'b0};
-	
-	#10; 
-
-	// Test case 1
-    $display("Test Case 2:");
-    // Set instruction, block_in, hit, hitM values accordingly
-    instruction = {4'b0,32'h8FA2B7C4,3'b0,2'b0};
-    
-
-    // Apply some clock cycles
-    #10;
-
-    // Print outputs
-    instruction = {4'b0,32'h8FA2B7C4,3'b0,2'b0};
-
-    // Apply some clock cycles
-    #10;
-
-    // Print outputs
-    instruction = {4'b0,32'h3C8D4EAF,3'b0,2'b0};
-
-    // Continue with more test cases if needed
-
-    // End simulation after test cases
-    #10;
-
-	instruction = {4'b0,32'h8FA2B7C4,3'b0,2'b0};
-	#10; 
-*/ 
-
 
 $finish;
 end
