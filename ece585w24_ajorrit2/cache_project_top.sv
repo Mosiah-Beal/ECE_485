@@ -12,9 +12,6 @@ module top;
     cache_line_t fsm_output_line;
     logic hit;
     logic hitM;
-    logic write_enable;
-    logic read_enable;
-    logic start;
     logic [2:0] sum;
 
 // Parameters
@@ -84,7 +81,7 @@ mesi_fsm fsm(
         .hitM(hitM)
         );
 
-count LRU(.start(start),.rst(rst), .sum(sum));
+count LRU(.rst(rst), .sum(sum));
 
 
 // Clock generation

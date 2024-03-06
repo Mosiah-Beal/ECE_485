@@ -10,7 +10,7 @@ proc main {} {
     noview source
 
     # refresh the library
-    vlog -work work -refresh -force_refresh
+    // vlog -work work -refresh -force_refresh
 
     # (re)Compile the design
     set files [glob *.sv]
@@ -40,19 +40,10 @@ proc main {} {
 
 proc add_signals {} {
     add wave -position insertpoint /top/*
-
-     # press h
-    configure wave -signalnamewidth 1
-}
-
-proc add_signals2 {} {
     add wave -position insertpoint -recursive /top/*
-
-     # press h
-    configure wave -signalnamewidth 1
 }
 
-proc add_signals3 {} {
+proc add_manual {} {
     add wave -position insertpoint  \
     /top/sets \
     /top/ways \
@@ -69,9 +60,6 @@ proc add_signals3 {} {
     /top/hitM \
     /top/sum \
     /top/instructions
-
-     # press h
-    configure wave -signalnamewidth 1
 }
 
 proc add_cache_signals {} {
