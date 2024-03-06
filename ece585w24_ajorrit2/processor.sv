@@ -123,10 +123,10 @@ module processor(
             end
             else begin
                 // Display the current line
-                $display("current_line_i = ");
-                for(int i = 0; i < 4; i++) begin
-                    $display("%p", current_line_i[i]);
-                end
+                // $display("current_line_i = ");
+                // for(int i = 0; i < 4; i++) begin
+                //     $display("%p", current_line_i[i]);
+                // end
 
                 // Initialize housekeeping variables    (highest = oldest value)
                 way_select_i = 0;       // Holds the index of the way with the current oldest LRU way
@@ -186,10 +186,10 @@ module processor(
             else begin
 
                 // Display the current line
-                $display("current_line_d = ");
-                for(int i = 0; i < 8; i++) begin
-                    $display("%p", current_line_d[i]);
-                end
+                // $display("current_line_d = ");
+                // for(int i = 0; i < 8; i++) begin
+                //     $display("%p", current_line_d[i]);
+                // end
                 
                 // Initialize housekeeping variables    (highest = oldest value)
                 way_select_d = 0;       // Holds the index of the way with the current oldest LRU way
@@ -239,12 +239,12 @@ module processor(
     // Update the cache line
     always_comb begin 
         // Display selected ways
-        $display("d_select = %d", d_select);
-        $display("i_select = %d\n", i_select);
+        // $display("d_select = %d", d_select);
+        // $display("i_select = %d\n", i_select);
 
-        // Display the hit buses
- 	    $display("d_bus = %b", data_read_bus);
-        $display("i_bus = %b\n", instruction_read_bus);
+        // // Display the hit buses
+ 	    // $display("d_bus = %b", data_read_bus);
+        // $display("i_bus = %b\n", instruction_read_bus);
 
         // Update the cache line
         // Check if the instruction has changed (may be comparing pointers)
