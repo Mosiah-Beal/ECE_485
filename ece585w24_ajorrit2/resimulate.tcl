@@ -9,12 +9,19 @@ proc main {} {
     # Hide window
     noview source
 
+    // refresh the library
+    vlog -work work -refresh -force_refresh
+
     # (re)Compile the design
     set files [glob *.sv]
     foreach file $files {
         puts "Compiling $file"
         vlog -work work $file
     }
+
+    # refresh the library (again, just to be sure)
+    vlog -work work -refresh -force_refresh
+
 
     # simulate the design
     vsim work.top -suppress 12003
