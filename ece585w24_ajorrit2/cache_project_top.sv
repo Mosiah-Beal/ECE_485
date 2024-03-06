@@ -21,11 +21,13 @@ parameter TIME_DURATION = 5;
 
 
 // Define an array of instructions
-reg [39:0] instructions [20];
+//4+32+3+2 = 41
+reg [40:0] instructions [20];   // n, address, PID, cache_num
 initial begin
-    instructions[0] = 40'b0; // New instruction at the front
-    instructions[1] = {4'b0,32'h984DE132,3'b0,2'b0};
-    instructions[2] = {4'b0,32'h116DE12F,3'b0,2'b0};
+    instructions[0] = {4'b1000, 32'b0, 3'b0, 2'b0};         // time = 10
+    //instructions[0] = {40'b0};                              // time = 10
+    instructions[1] = {4'b0,32'h984DE132,3'b0,2'b0};        // time = 20
+    instructions[2] = {4'b0,32'h116DE12F,3'b0,2'b0};        // time = 30
     instructions[3] = {4'b0,32'h100DE130,3'b0,2'b0};
     instructions[4] = {4'b0,32'h999DE12E,3'b0,2'b0};
     instructions[5] = {4'b0,32'h645DE10A,3'b0,2'b0};
@@ -92,23 +94,9 @@ initial begin
     hit = 0;
     hitM = 0;
  
-for(int i = 0; i<8; i++)begin
-	cache_input_d[i].LRU = i;               // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-	cache_input_d[i].MESI_bits = I;         // Initialize MESI bits to Invalid
-	cache_input_d[i].tag = 12'b0;           // Initialize tag to 0
-	cache_input_d[i].data = 32'b0;          // Initialize mem to 0
-end
-
-for(int i = 0; i<4; i++)begin
-	cache_input_i[i].LRU = i;               // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-    cache_input_i[i].MESI_bits = I;         // Initialize MESI bits to Invalid
-	cache_input_i[i].tag = 12'b0;           // Initialize tag to 0
-	cache_input_i[i].data = 32'b0;          // Initialize mem to 0
-end
-
-// end reset
-#TIME_DURATION;
-rst = 0;
+    // Give a clock pulse to end reset
+    #TIME_DURATION;
+    rst = 0;
 
 //#TIME_DURATION;
 
@@ -131,9 +119,9 @@ for (int i = 0; i < 20; i = i + 1) begin
     
     // write
     #5;
-    // Display output cache line
-    $display("Time = %t : Cache Line = %p", $time, cache_output_d);
 
+    // Display output cache line LRU bits
+    $display("Time = %t : Cache Line LRU = %p %p %p %p %p %p %p %p", $time, cache_output_d[0].LRU, cache_output_d[1].LRU, cache_output_d[2].LRU, cache_output_d[3].LRU, cache_output_d[4].LRU, cache_output_d[5].LRU, cache_output_d[6].LRU, cache_output_d[7].LRU);
 end
 
 $finish;

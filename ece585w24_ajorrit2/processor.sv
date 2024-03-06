@@ -249,24 +249,14 @@ module processor(
         // Update the cache line
         // Check if the instruction has changed (may be comparing pointers)
         if(current_instruction == prev_instruction) begin 
-            $display("Repeat instruction");
+            $display("Repeat instruction 1");
         end
-
-        // Check if the contents of the instructions are the same (should be more accurate)
-        else if((current_instruction.n == prev_instruction.n) && 
-                (current_instruction.address == prev_instruction.address) && 
-                (current_instruction.PID == prev_instruction.PID) && 
-                (current_instruction.cache_num == prev_instruction.cache_num)) 
-        begin    
-            $display("Repeat instruction");
-        end                
-
 
         // Otherwise, this is a new instruction
         else begin
             case(instruction.n)
                 0, 1: begin
-                    $display("Read/Write data cache");
+                    //$display("Read/Write data cache");
                     block_out = current_line_d[d_select];
                     block_out.tag = instruction.address.tag; 
                     internal_d = current_line_d;
