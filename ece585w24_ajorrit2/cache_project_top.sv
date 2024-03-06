@@ -17,6 +17,7 @@ module top;
 // Parameters
 parameter sets = 16384;
 parameter ways = 8;
+parameter TIME_DURATION = 5;
 
 
 // Define an array of instructions
@@ -56,7 +57,6 @@ cache #(.sets(16384), .ways(4)) instruction_cache (
 	    .cache_in(cache_input_i),
         .cache_out(cache_output_i)
     );
-
 processor processor(
         .clk(clk),
         .instruction(instruction),
@@ -69,8 +69,6 @@ processor processor(
         .count(sum),
         .read_enable(read_enable)
         );
-
-
 mesi_fsm fsm(
         .clk(clk), 
         .rst(rst), 
@@ -80,12 +78,11 @@ mesi_fsm fsm(
         .hit(hit),
         .hitM(hitM)
         );
-
 //count LRU(.rst(rst), .sum(sum));
 
 
 // Clock generation
-always #5 clk = ~clk;
+always #TIME_DURATION clk = ~clk;
 
 initial begin
     // Initialize inputs
@@ -111,6 +108,7 @@ end
 
 // end reset
 rst = 0;
+#2*TIME_DURATION;
 
 
 // Loop over the instructions
