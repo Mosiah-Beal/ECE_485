@@ -9,7 +9,7 @@ proc main {} {
     # Hide window
     noview source
 
-    // refresh the library
+    # refresh the library
     vlog -work work -refresh -force_refresh
 
     # (re)Compile the design
