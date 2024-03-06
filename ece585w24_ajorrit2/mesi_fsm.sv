@@ -109,26 +109,26 @@ module mesi_fsm(
             I: begin
                 $display("Invalid", $time);
                 case (instruction.n)
-                    0, 2: begin
-                    //  if (hit || hitM)
-                        //  nextstate = S; // Multiple read or Transition to S or E depending on snoop hardware
-                    // else
-                            nextstate = E;  // Single read
+                    0, 2: begin     // Single read
+                        nextstate = E;
                     end
-                    1: begin   // RFO
+                    1: begin        // RFO
                         nextstate = M;
                     end
-                    3, 4, 8: begin   // Invalidate
+                    3, 4, 8: begin  // Invalidate
                         nextstate = I;
                     end
-                    default: begin
+                    default: begin  // Same state
                         nextstate = I;
                     end
                 endcase
             end
 
-            default: nextstate <= I;
+            default: nextstate <= I;    // Default to invalid state if mesi bits are unknown
         endcase
+
+        // display the transition of states
+        $display("Transitioning from %p to %p", internal_line.MESI_bits, nextstate);
     end
 
     // Combinational logic block for determining outputs based on the current state and input

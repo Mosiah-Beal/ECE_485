@@ -2,8 +2,12 @@
 
 # Main procedure
 proc main {} {
-    # End simulation
+    
+    # End previous simulation
     quit -sim
+    
+    # Hide window
+    noview source
 
     # (re)Compile the design
     set files [glob *.sv]
@@ -11,29 +15,33 @@ proc main {} {
         puts "Compiling $file"
         vlog -work work $file
     }
-    
+
     # simulate the design
     vsim work.top -suppress 12003
-    
+
     # Add signals to the wave window
     add_signals3
 
+    view wave
     # Run the simulation
     run -all
 
 }
 
-// Add all signals in the top level to the wave window
 proc add_signals {} {
     add wave -position insertpoint /top/*
+
+     # press h
+    configure wave -signalnamewidth 1
 }
 
-// Add every signal in the design to the wave window
 proc add_signals2 {} {
     add wave -position insertpoint -recursive /top/*
+
+     # press h
+    configure wave -signalnamewidth 1
 }
 
-// Explicitly add signals to the wave window
 proc add_signals3 {} {
     add wave -position insertpoint  \
     /top/sets \
@@ -54,6 +62,9 @@ proc add_signals3 {} {
     /top/start \
     /top/sum \
     /top/instructions
+
+     # press h
+    configure wave -signalnamewidth 1
 }
 
 # Execute the main procedure

@@ -119,6 +119,7 @@ rst = 0;
 // Loop over the instructions
 for (int i = 0; i < 20; i = i + 1) begin
 
+    // Check if there are no more instructions left
     if($isunknown(instructions[i])) begin
         $display("Invalid / last instruction reached. Exiting simulation.");
         break;
