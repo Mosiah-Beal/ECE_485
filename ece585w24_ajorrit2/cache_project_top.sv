@@ -81,7 +81,7 @@ mesi_fsm fsm(
         .hitM(hitM)
         );
 
-count LRU(.rst(rst), .sum(sum));
+//count LRU(.rst(rst), .sum(sum));
 
 
 // Clock generation

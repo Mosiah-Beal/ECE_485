@@ -1,4 +1,4 @@
-module count(input logic rst, output logic [2:0] sum);
+module count(input start, input logic rst, output logic [2:0] sum);
 
 
 always_ff@(posedge start) begin
