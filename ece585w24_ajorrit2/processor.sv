@@ -288,7 +288,7 @@ module processor(
                     
                     internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
-                    
+                    return_line_i = current_line_i;
                     end
                 2: begin
                     $display("Read instruction cache");
@@ -342,6 +342,7 @@ module processor(
 
                     internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
+		    return_line_i = current_line_i;
 
                     end
                 4: begin
@@ -368,7 +369,8 @@ module processor(
 
                     internal_d[d_select] = block_in;
                     internal_d[d_select].LRU = 3'b0;
-                    return_line_d = internal_d;              
+                    return_line_d = internal_d;
+		    return_line_i = current_line_i;              
 
                     end
                 8, 9: begin

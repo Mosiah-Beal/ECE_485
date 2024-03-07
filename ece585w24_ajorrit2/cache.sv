@@ -30,8 +30,8 @@ always_comb begin
                     for (int j = 0; j < sets;j++) begin
                         cache[j][i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
                         cache[j][i].MESI_bits = I;     // Initialize MESI bits to Invalid
-                        cache[j][i].tag = i;        // Initialize tag to 0
-                        cache[j][i].data = i;       // Initialize mem to 0
+                        cache[j][i].tag = 12'b0;        // Initialize tag to 0
+                        cache[j][i].data = j;       // Initialize mem to 0
                     end
                     $display("reset");
                 end
@@ -51,13 +51,13 @@ always_comb begin
                 0, 1, 2, 3, 4: begin // Read or write instructions   
                     cache[instruction.address.set_index][i] = cache_in[i];
                 end
-                
+               		
                 8: begin // Reset cache
                     for (int j = 0; j < sets;j++) begin
                         cache[j][i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
                         cache[j][i].MESI_bits = I;     // Initialize MESI bits to Invalid
-                        cache[j][i].tag = i;        // Initialize tag to 0
-                        cache[j][i].data = i;       // Initialize mem to 0
+                        cache[j][i].tag = 12'b0;        // Initialize tag to 0
+                        cache[j][i].data = j;       // Initialize mem to 0
                     end
                     $display("reset");
                 end
