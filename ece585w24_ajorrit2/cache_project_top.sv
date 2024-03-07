@@ -86,6 +86,8 @@ mesi_fsm fsm(
 // Clock generation
 always #TIME_DURATION clk = ~clk;
 
+
+// Set initial values
 initial begin
     // Initialize inputs
     clk = 0;
@@ -97,34 +99,38 @@ initial begin
     // Give a clock pulse to end reset
     #TIME_DURATION;
     rst = 0;
-
-//#TIME_DURATION;
+end
 
 
 // Loop over the instructions
-for (int i = 0; i < 20; i = i + 1) begin
+initial begin
 
-    // Check if there are no more instructions left
-    if($isunknown(instructions[i])) begin
-        $display("Invalid / last instruction reached. Exiting simulation.");
-        break;
-    end
+    // wait for reset to end
+    #TIME_DURATION;
+    for (int i = 0; i < 20; i = i + 1) begin
 
-    
-    // read
-    #5;
+        // Check if there are no more instructions left
+        if($isunknown(instructions[i])) begin
+            $display("Invalid / last instruction reached. Exiting simulation.");
+            break;
+        end
 
-    $display("Time = %t : Instruction = %p", $time, instruction);
-    instruction = instructions[i];    
-    
-    // write
-    #5;
+        
+        // read
+        #TIME_DURATION;
 
-    // Display output cache line LRU bits
-    $display("Time = %t : Cache Line LRU = %p %p %p %p %p %p %p %p", $time, cache_output_d[0].LRU, cache_output_d[1].LRU, cache_output_d[2].LRU, cache_output_d[3].LRU, cache_output_d[4].LRU, cache_output_d[5].LRU, cache_output_d[6].LRU, cache_output_d[7].LRU);
-end
+        //$display("Time = %t : Instruction = %p", $time, instruction);
+        instruction = instructions[i];    
+        
+        // write
+        #TIME_DURATION;
 
-$finish;
+        // Display output cache line LRU bits
+        $display("Time = %t : Cache Line LRU = %p %p %p %p %p %p %p %p", $time, cache_input_d[0].LRU, cache_input_d[1].LRU, cache_input_d[2].LRU, cache_input_d[3].LRU, cache_input_d[4].LRU, cache_input_d[5].LRU, cache_input_d[6].LRU, cache_input_d[7].LRU);
+        $display();
+        end
+
+    $finish;
 end
 
 
