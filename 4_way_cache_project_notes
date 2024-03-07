@@ -23,7 +23,6 @@ write org is important not sure how
 need to write to cache in order? for example if in set 000 1 block is valid 3 blocks invalid
 check if block one is valid if not check if block two is valid etc(seems like definitely yes) 
 how to design this algorithmn? with conditionals (so far conditionals are ugly would rather use case) or case statement
-cast out procedure + dirty bit? how does the cast out procedure function + when do we set dirty bit?
 
 as I understand it write through data is changed in both memory and cache 
 write back data is only changed in cache and dirty bit is set. 
@@ -40,6 +39,17 @@ Action items
 use n for mealey input
 add registers for next state transition
 add 0-9 input
+
+// Instruction (n)
+Where n is 
+0 read data request to L1 data cache 
+1 write data request to L1 data cache 
+2 instruction fetch (a read request to L1 instruction cache) 
+3 invalidate command from L2 
+4 data request from L2 (in response to snoop) 
+8 clear the cache and reset all state (and statistics) 
+9 print contents and state of the cache (allow subsequent trace activity)
+
 
 //MESI
 
