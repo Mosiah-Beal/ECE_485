@@ -19,6 +19,9 @@ parameter sets = 16384;
 parameter ways = 8;
 parameter TIME_DURATION = 5;
 
+int sum_d;
+int sum_i;
+
 
 // Define an array of instructions
 //4+32+3+2 = 41
@@ -127,7 +130,21 @@ initial begin
 
         // Display output cache line LRU bits
         $display("Time = %t : Cache Line LRU = %p %p %p %p %p %p %p %p", $time, cache_input_d[0].LRU, cache_input_d[1].LRU, cache_input_d[2].LRU, cache_input_d[3].LRU, cache_input_d[4].LRU, cache_input_d[5].LRU, cache_input_d[6].LRU, cache_input_d[7].LRU);
-        $display();
+        $display("");
+
+        // Check for duplicate LRU bits by summing them
+        sum_d = cache_input_d[0].LRU + cache_input_d[1].LRU + cache_input_d[2].LRU + cache_input_d[3].LRU + cache_input_d[4].LRU + cache_input_d[5].LRU + cache_input_d[6].LRU + cache_input_d[7].LRU;
+        if (sum_d != 28) begin
+            $display("Duplicate LRU bits found. Exiting simulation.");
+        end
+
+        sum_i = cache_input_i[0].LRU + cache_input_i[1].LRU + cache_input_i[2].LRU + cache_input_i[3].LRU;
+        if (sum_i != 6) begin
+            $display("Duplicate LRU bits found. Exiting simulation.");
+        end
+
+
+
         end
 
     $finish;

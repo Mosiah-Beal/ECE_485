@@ -277,6 +277,9 @@ module processor(
 
                     // Update the internal cache line 
                     internal_d = current_line_d;
+
+                    // Update it with the MESI bits from the FSM
+                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
                     
                     // Check if there are any hits in the data cache
                     if(|data_read_bus == 1) begin 
@@ -291,7 +294,6 @@ module processor(
                         end 
                     end
                     
-                    internal_d[d_select] = block_in;
                     internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
                     
@@ -301,6 +303,9 @@ module processor(
                     block_out = current_line_i[i_select];
                     block_out.tag = instruction.address.tag;
                     internal_i = current_line_i;
+                    
+                    // Update it with the MESI bits from the FSM
+                    internal_i[i_select].MESI_bits = block_in.MESI_bits;
 
                     // Check if there are any hits in the instruction cache
                     if(|instruction_read_bus == 1) begin 
@@ -315,7 +320,6 @@ module processor(
                         end 
                     end
 
-                    internal_i[i_select] = block_in;
                     internal_i[i_select].LRU = 3'b0;
                     return_line_i = internal_i;	    
 
@@ -324,6 +328,9 @@ module processor(
                     block_out = current_line_d[d_select];
                     block_out.tag = instruction.address.tag;
                     internal_d = current_line_d;
+
+                    // Update it with the MESI bits from the FSM
+                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
 
                     // Check if there are any hits in the data cache
                     if(|data_read_bus == 1) begin 
@@ -338,7 +345,6 @@ module processor(
                         end 
                     end
 
-                    internal_d[d_select] = block_in;
                     internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
 
@@ -347,6 +353,9 @@ module processor(
                     block_out = current_line_d[d_select];
                     block_out.tag = instruction.address.tag;
                     internal_d = current_line_d;
+
+                    // Update it with the MESI bits from the FSM
+                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
 
                     // Check if there are any hits in the data cache
                     if(|data_read_bus == 1) begin 

@@ -13,6 +13,14 @@ proc main {} {
     project open 485_Project.mpf
     project compileall
 
+
+    # Check the status of the compilation
+    if {[catch {project compileall} errmsg]} {
+        # If there was an error during compilation, print the error message and exit
+        puts stderr "Error during compilation: $errmsg"
+        quit -f
+    }
+
     # refresh the library
     vlog -work work -refresh -force_refresh
 
