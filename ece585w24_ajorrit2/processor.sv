@@ -1,6 +1,8 @@
 // Import the struct package
 import my_struct_package::*;
 
+//`define DEBUG
+
 module processor(
     /* Signal ports
     * top: clk, instruction, current_line, return_line
@@ -21,23 +23,13 @@ module processor(
     
 );
     // repeat instructions
-    command_t prev_instruction;
-    command_t current_instruction;
-
-    // way select
-    logic [2:0] d_select;
-    logic [1:0] i_select;
+    command_t prev_instruction, current_instruction;
     
-    // Invalid LRU variables
-    int way_select_i;
-    int invalid_select_i;
-    int way_select_d;
-    int invalid_select_d;
-    cache_line_t way_line_d;
-    cache_line_t way_line_i;
-    int invalid_LRU_i;
-    int invalid_LRU_d;
-
+    // LRU variables
+    int way_select_i, way_select_d;
+    cache_line_t way_line_i, way_line_d;
+    int invalid_select_i, invalid_select_d;
+    int invalid_LRU_i, invalid_LRU_d;
 
     // cache indexing
     int i = 0; 
@@ -51,6 +43,9 @@ module processor(
     cache_line_t internal_d[8];
     cache_line_t internal_i[4];
 
+    // way select
+    logic [2:0] d_select;
+    logic [1:0] i_select;
 
     // Loop through the ways to check for hits
     always_comb begin : check_hits
@@ -123,10 +118,12 @@ module processor(
             end
             else begin
                 // Display the current line
-                // $display("current_line_i = ");
-                // for(int i = 0; i < 4; i++) begin
-                //     $display("%p", current_line_i[i]);
-                // end
+                `ifdef DEBUG
+                    $display("current_line_i = ");
+                    for(int i = 0; i < 4; i++) begin
+                    $display("%p", current_line_i[i]);
+                    end
+                `endif
 
                 // Initialize housekeeping variables    (highest = oldest value)
                 way_select_i = 0;       // Holds the index of the way with the current oldest LRU way
@@ -186,10 +183,12 @@ module processor(
             else begin
 
                 // Display the current line
-                // $display("current_line_d = ");
-                // for(int i = 0; i < 8; i++) begin
-                //     $display("%p", current_line_d[i]);
-                // end
+                `ifdef DEBUG
+                    $display("current_line_d = ");
+                    for(int i = 0; i < 8; i++) begin
+                        $display("%p", current_line_d[i]);
+                    end
+                `endif
                 
                 // Initialize housekeeping variables    (highest = oldest value)
                 way_select_d = 0;       // Holds the index of the way with the current oldest LRU way
@@ -229,7 +228,6 @@ module processor(
         endcase
     end
 
-
     // compare current instruction to previous instruction
     always_ff@(negedge clk) begin: Sequential_Logic
         prev_instruction <= current_instruction;
@@ -238,100 +236,115 @@ module processor(
 
     // Update the cache line
     always_comb begin 
-        // Display selected ways
-        // $display("d_select = %d", d_select);
-        // $display("i_select = %d\n", i_select);
+        
+        `ifdef DEBUG
+            // Display the current instruction
+            $display("Time = %t : Instruction = %p", $time, instruction);
+            
+            // Display selected ways
+            $display("d_select = %d", d_select);
+            $display("i_select = %d\n", i_select);
 
-        // // Display the hit buses
- 	    // $display("d_bus = %b", data_read_bus);
-        // $display("i_bus = %b\n", instruction_read_bus);
+            // Display the hit buses
+            $display("d_bus = %b", data_read_bus);
+            $display("i_bus = %b\n", instruction_read_bus);
+        `endif
 
         // Update the cache line
-        // Check if the instruction has changed (may be comparing pointers)
-            case(instruction.n)
-                0, 1: begin
-                    //$display("Read/Write data cache");
+        case(instruction.n)
+            0, 1: begin
+                //$display("Read/Write data cache");
 
-                    // Update the output block
-                    block_out = current_line_d[d_select];
+                // Update the output block
+                block_out = current_line_d[d_select];
+                
+                // Change the tag of the block
+                block_out.tag = instruction.address.tag;
+
+                // Update the internal cache line 
+                internal_d = current_line_d;
+
+                // Update it with the MESI bits from the FSM
+                internal_d[d_select].MESI_bits = block_in.MESI_bits;
+                internal_d[d_select].tag = block_in.tag;
+                
+                if(current_instruction !== prev_instruction) begin 
+                    //$display("Time = %t : Instruction = %p", $time, instruction);
                     
-                    // Change the tag of the block
-                    block_out.tag = instruction.address.tag;
-
-                    // Update the internal cache line 
-                    internal_d = current_line_d;
-
-                    // Update it with the MESI bits from the FSM
-                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
-                    internal_d[d_select].tag = block_in.tag;
-                    
-		    if(current_instruction !== prev_instruction) begin 
-           		 $display("Time = %t : Instruction = %p", $time, instruction);
                     // Check if there are any hits in the data cache
-                    	if(|data_read_bus == 1) begin 
-                        	for(int i = 0; i< d_select; i++) begin
-                            	internal_d[i].LRU = current_line_d[i].LRU +1;
-                        	end
-                    	end
+                    if(|data_read_bus == 1) begin 
+                        for(int i = 0; i< d_select; i++) begin
+                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                        end
+                    end
+                    
                     // If there are no hits, update the LRU
-                   	 else begin
-                        	for(int i = 0; i<8; i++) begin
-                            	internal_d[i].LRU = current_line_d[i].LRU +1;
-                        	end 
-                    	end
+                    else begin
+                        for(int i = 0; i<8; i++) begin
+                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                        end 
                     end
-                    internal_d[d_select].LRU = 3'b0;
-                    return_line_d = internal_d;
-                    return_line_i = current_line_i;
-                    end
-                2: begin
-                    $display("Read instruction cache");
-                    block_out = current_line_i[i_select];
-                    
-                    internal_i = current_line_i;    //clearing data
-                    
-                    // Update it with the MESI bits from the FSM
-                    internal_i[i_select].MESI_bits = block_in.MESI_bits;
-                    internal_i[i_select].tag = instruction.address.tag;
-                    internal_i[i_select].data = block_in.data;
+                end
 
-                    // Check if there are any hits in the instruction cache
-		    if(current_instruction !== prev_instruction) begin 
-                    	if(|instruction_read_bus == 1) begin 
-                        	for(int i = 0; i< i_select; i++) begin
-                            	internal_i[i].LRU = current_line_i[i].LRU +1;
-                        	end
-                    	end
-                    	// If there are no hits, update the LRU
-                    	else begin
-                        	for(int i = 0; i<4; i++) begin
-                         	   internal_i[i].LRU = current_line_i[i].LRU +1;
-                        	end 
-                    	end
-			
-		    end
+                // Update the LRU of the selected way and send out the cache lines        
+                internal_d[d_select].LRU = 3'b0;
+                return_line_d = internal_d;
+                return_line_i = current_line_i;
+            end
+            
+            2: begin
+                //$display("Instruction fetch");
+                block_out = current_line_i[i_select];
+                internal_i = current_line_i;
+                
+                // Update it with the MESI bits from the FSM
+                internal_i[i_select].MESI_bits = block_in.MESI_bits;
+                internal_i[i_select].tag = instruction.address.tag;
+                internal_i[i_select].data = block_in.data;
+
+                // Check if there are any hits in the instruction cache
+                if(current_instruction !== prev_instruction) begin 
+                    
+                    if(|instruction_read_bus == 1) begin 
+                        for(int i = 0; i< i_select; i++) begin
+                            internal_i[i].LRU = current_line_i[i].LRU +1;
+                        end
+                    end
+                    
+                    // If there are no hits, update the LRU
+                    else begin
+                        for(int i = 0; i<4; i++) begin
+                            internal_i[i].LRU = current_line_i[i].LRU +1;
+                        end 
+                    end
+		        end
+                    // Update the LRU of the selected way and send out the cache lines
                     internal_i[i_select].LRU = 3'b0;
-                    return_line_i = internal_i;	    
+                    return_line_i = internal_i;
+                    return_line_d = internal_d;
+            end
+                
+            3: begin 
+                //$display("Invalidate from L2");
+                block_out = current_line_d[d_select];
+                block_out.tag = instruction.address.tag;
+                internal_d = current_line_d;
 
+                // Update it with the MESI bits from the FSM
+                internal_d[d_select].MESI_bits = block_in.MESI_bits;
+                internal_d[d_select].tag = block_in.tag;
+
+                // Check if there are any hits in the data cache
+                if(current_instruction !== prev_instruction) begin 
+           		    //$display("Time = %t : Instruction = %p", $time, instruction);
+                    
+                    // Check if there are any hits in the data cache
+                    if(|data_read_bus == 1) begin 
+                        for(int i = 0; i< d_select; i++) begin
+                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                        end
                     end
-                3: begin 
-                    block_out = current_line_d[d_select];
-                    block_out.tag = instruction.address.tag;
-                    internal_d = current_line_d;
-
-                    // Update it with the MESI bits from the FSM
-                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
-                    internal_d[d_select].tag = block_in.tag;
-
-                    // Check if there are any hits in the data cache
-                    if(current_instruction !== prev_instruction) begin 
-           		 $display("Time = %t : Instruction = %p", $time, instruction);
-                    // Check if there are any hits in the data cache
-                    	if(|data_read_bus == 1) begin 
-                        	for(int i = 0; i< d_select; i++) begin
-                            	internal_d[i].LRU = current_line_d[i].LRU +1;
-                        	end
-                    	end
+                    
                     // If there are no hits, update the LRU
                    	 else begin
                         	for(int i = 0; i<8; i++) begin
@@ -339,29 +352,34 @@ module processor(
                         	end 
                     	end
                     end
+                    
+                    // Update the LRU of the selected way and send out the cache lines
                     internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
-		    return_line_i = current_line_i;
+		            return_line_i = current_line_i;
+            end
 
+            4: begin
+                //$display("Data request from L2");
+                block_out = current_line_d[d_select];
+                block_out.tag = instruction.address.tag;
+                internal_d = current_line_d;
+
+                // Update it with the MESI bits from the FSM
+                internal_d[d_select].MESI_bits = block_in.MESI_bits;
+                internal_d[d_select].tag = block_in.tag;
+
+                // Check if there are any hits in the data cache
+                if(current_instruction !== prev_instruction) begin 
+           		    //$display("Time = %t : Instruction = %p", $time, instruction);
+                    
+                    // Check if there are any hits in the data cache
+                    if(|data_read_bus == 1) begin 
+                        for(int i = 0; i< d_select; i++) begin
+                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                        end
                     end
-                4: begin
-                    block_out = current_line_d[d_select];
-                    block_out.tag = instruction.address.tag;
-                    internal_d = current_line_d;
-
-                    // Update it with the MESI bits from the FSM
-                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
-                    internal_d[d_select].tag = block_in.tag;
-
-                    // Check if there are any hits in the data cache
-                    if(current_instruction !== prev_instruction) begin 
-           		 $display("Time = %t : Instruction = %p", $time, instruction);
-                    // Check if there are any hits in the data cache
-                    	if(|data_read_bus == 1) begin 
-                        	for(int i = 0; i< d_select; i++) begin
-                            	internal_d[i].LRU = current_line_d[i].LRU +1;
-                        	end
-                    	end
+                    
                     // If there are no hits, update the LRU
                    	 else begin
                         	for(int i = 0; i<8; i++) begin
@@ -369,16 +387,18 @@ module processor(
                         	end 
                     	end
                     end
+
+                    // Update the LRU of the selected way and send out the cache lines
                     internal_d[d_select] = block_in;
                     internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
-		    return_line_i = current_line_i;              
-
-                    end
-                8, 9: begin
-                    // Do nothing 
-                    end
-            endcase
+		            return_line_i = current_line_i;              
+            end
+                
+            8, 9: begin
+                // $display("Statistics / reset");
+            end
+        endcase
     end       
 
 endmodule

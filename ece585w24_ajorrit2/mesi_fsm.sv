@@ -1,5 +1,4 @@
-//TODO: work on the FSM, fix the LRU bug
-
+//`define DEBUG
 
 // Import the struct package
 import my_struct_package::*;
@@ -33,11 +32,17 @@ module mesi_fsm(
 
     // Combinational logic block for determining the next state based on the current state and input
     always_comb begin: Next_State_Logic
-        // $display(" internal_line.tag = %h     : internal_line.LRU = %h \n internal_line.MESI_bits = %h : internal_line.data = %h", internal_line.tag, internal_line.LRU, internal_line.MESI_bits, internal_line.data); 
-        // $display(" return_line.tag   = %h     : return_line.LRU   = %h \n return_line.MESI_bits   = %h : return_line.data   = %h", return_line.tag,return_line.LRU,return_line.MESI_bits,return_line.data);
+        `ifdef DEBUG
+            $display(" internal_line.tag = %h     : internal_line.LRU = %h \n internal_line.MESI_bits = %h : internal_line.data = %h", internal_line.tag, internal_line.LRU, internal_line.MESI_bits, internal_line.data); 
+            $display(" return_line.tag   = %h     : return_line.LRU   = %h \n return_line.MESI_bits   = %h : return_line.data   = %h", return_line.tag,return_line.LRU,return_line.MESI_bits,return_line.data);
+        `endif
+
         case (internal_line.MESI_bits)
             M: begin
-                $display("Modified", $time);
+                `ifdef DEBUG
+                    $display("Modified", $time);
+                `endif
+
                 case (instruction.n)
                     0, 1:   // (0) local read (assumed from same processor due to requirements, no transition to S)
                             // (1) local write
@@ -65,7 +70,10 @@ module mesi_fsm(
             end
         
             E: begin
-                $display("Exclusive", $time);
+                `ifdef DEBUG
+                    $display("Exclusive", $time);
+                `endif
+
                 case (instruction.n)
                     0: begin   // (Assumed from different processor due to requirements, transition to S)
                         nextstate = S;
@@ -89,7 +97,10 @@ module mesi_fsm(
             end
 
             S: begin
-                $display("Shared", $time);
+                `ifdef DEBUG
+                    $display("Shared", $time);
+                `endif
+                
                 case (instruction.n)
                     0, 2, 4: begin   // local read or no change in state
                         nextstate = S;
@@ -107,7 +118,10 @@ module mesi_fsm(
             end
 
             I: begin
-                $display("Invalid", $time);
+                `ifdef DEBUG
+                    $display("Invalid", $time);
+                `endif
+
                 case (instruction.n)
                     0, 2: begin     // Single read
                         nextstate = E;
@@ -128,7 +142,7 @@ module mesi_fsm(
         endcase
 
         // display the transition of states
-        $display("Transitioning from %p to %p", internal_line.MESI_bits, nextstate);
+        $display("%t: Transitioning from %p to %p", $time, internal_line.MESI_bits, nextstate);
     end
 
     // Combinational logic block for determining outputs based on the current state and input

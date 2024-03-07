@@ -19,6 +19,7 @@ cache_line_t cache[sets-1:0][ways-1:0];   // L1 cache
 always_comb begin
 
     for (int i = 0; i < ways; i++) begin
+        
         // read
         if(clk == 0) begin
             case (instruction.n)
@@ -33,7 +34,7 @@ always_comb begin
                         cache[j][i].tag = 12'b0;        // Initialize tag to 0
                         cache[j][i].data = j;       // Initialize mem to 0
                     end
-                    $display("reset");
+                    $display("reset cache (r)");
                 end
                 
                 9: begin // Display cache line(currently, doesn't have a gap between instruction and data lines)
@@ -45,6 +46,7 @@ always_comb begin
                 end
             endcase
         end
+        
         //write
         else if(clk == 1) begin
             case (instruction.n)
@@ -59,7 +61,7 @@ always_comb begin
                         cache[j][i].tag = 12'b0;        // Initialize tag to 0
                         cache[j][i].data = j;       // Initialize mem to 0
                     end
-                    $display("reset");
+                    $display("reset cache (w)");
                 end
                 
                 9: begin // Display cache line
