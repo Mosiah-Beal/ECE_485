@@ -252,15 +252,6 @@ module processor(
             $display("Repeat instruction 1");
             $display("Time = %t : Instruction = %p", $time, instruction);
         end      
-        
-        // Check if the contents of the instructions are the same (should be more accurate)
-        else if((current_instruction.n == prev_instruction.n) && 
-                (current_instruction.address == prev_instruction.address) && 
-                (current_instruction.PID == prev_instruction.PID) && 
-                (current_instruction.cache_num == prev_instruction.cache_num)) 
-        begin    
-            $display("Repeat instruction2");
-        end   
 
         // Otherwise, this is a new instruction
         else begin
@@ -280,6 +271,7 @@ module processor(
 
                     // Update it with the MESI bits from the FSM
                     internal_d[d_select].MESI_bits = block_in.MESI_bits;
+                    internal_d[d_select].tag = block_in.tag;
                     
                     // Check if there are any hits in the data cache
                     if(|data_read_bus == 1) begin 
@@ -301,11 +293,13 @@ module processor(
                 2: begin
                     $display("Read instruction cache");
                     block_out = current_line_i[i_select];
-                    block_out.tag = instruction.address.tag;
-                    internal_i = current_line_i;
+                    
+                    internal_i = current_line_i;    //clearing data
                     
                     // Update it with the MESI bits from the FSM
                     internal_i[i_select].MESI_bits = block_in.MESI_bits;
+                    internal_i[i_select].tag = instruction.address.tag;
+                    internal_i[i_select].data = block_in.data;
 
                     // Check if there are any hits in the instruction cache
                     if(|instruction_read_bus == 1) begin 
@@ -331,6 +325,7 @@ module processor(
 
                     // Update it with the MESI bits from the FSM
                     internal_d[d_select].MESI_bits = block_in.MESI_bits;
+                    internal_d[d_select].tag = block_in.tag;
 
                     // Check if there are any hits in the data cache
                     if(|data_read_bus == 1) begin 
@@ -356,6 +351,7 @@ module processor(
 
                     // Update it with the MESI bits from the FSM
                     internal_d[d_select].MESI_bits = block_in.MESI_bits;
+                    internal_d[d_select].tag = block_in.tag;
 
                     // Check if there are any hits in the data cache
                     if(|data_read_bus == 1) begin 

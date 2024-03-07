@@ -11,8 +11,6 @@ proc main {} {
 
     # (Compile the design
     project open 485_Project.mpf
-    project compileall
-
 
     # Check the status of the compilation
     if {[catch {project compileall} errmsg]} {
@@ -69,6 +67,8 @@ proc add_cache_signals {} {
     /top/instruction \
     /top/cache_input_d \
     /top/cache_output_d \
+    /top/cache_input_i \
+    /top/cache_output_i 
 }
 
 # Execute the main procedure
