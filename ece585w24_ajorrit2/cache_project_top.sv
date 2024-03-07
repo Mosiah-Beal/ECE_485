@@ -108,14 +108,14 @@ initial begin
         cache_input_i[i].LRU = i;
         cache_input_i[i].MESI_bits = I;
         cache_input_i[i].tag = 12'b0;
-        cache_input_i[i].data = 32'b0;
+        cache_input_i[i].data = 4-i;
     end
 
     for (int i = 0; i < 8; i = i + 1) begin
         cache_input_d[i].LRU = i;
         cache_input_d[i].MESI_bits = I;
         cache_input_d[i].tag = 12'b0;
-        cache_input_d[i].data = 32'b0;
+        cache_input_d[i].data = 8-i;
     end
  
     // Give a clock pulse to end reset
