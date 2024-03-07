@@ -35,3 +35,5 @@
 *.bak
 
 *.json
+
+*.tcl

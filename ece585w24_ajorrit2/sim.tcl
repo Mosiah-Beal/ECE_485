@@ -10,7 +10,9 @@ proc main {} {
     noview source
 
     # (Compile the design
-    project open 485_Project.mpf
+    project open ECE485.mpf
+    #project open ECE485.mpf
+    #project open ECE485.mpf
 
     # Check the status of the compilation
     if {[catch {project compileall} errmsg]} {
@@ -39,7 +41,7 @@ proc main {} {
 
 proc add_signals {} {
     add wave -position insertpoint /top/*
-    add wave -position insertpoint -recursive /top/*
+    //add wave -position insertpoint -recursive /top/*
 }
 
 proc add_manual {} {
