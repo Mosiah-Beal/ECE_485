@@ -11,6 +11,8 @@ proc main {} {
 
     # (Compile the design
     project open ECE485.mpf
+    #project open ECE485.mpf
+    #project open ECE485.mpf
 
     # Check the status of the compilation
     if {[catch {project compileall} errmsg]} {
