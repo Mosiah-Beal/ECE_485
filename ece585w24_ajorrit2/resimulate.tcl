@@ -2,8 +2,15 @@
 
 # Main procedure
 proc main {} {
-    # End simulation
+    
+    # End previous simulation
     quit -sim
+    
+    # Hide window
+    noview source
+
+    # refresh the library
+    // vlog -work work -refresh -force_refresh
 
     # (re)Compile the design
     set files [glob *.sv]
@@ -11,30 +18,32 @@ proc main {} {
         puts "Compiling $file"
         vlog -work work $file
     }
-    
+
+    # refresh the library (again, just to be sure)
+    vlog -work work -refresh -force_refresh
+
+
     # simulate the design
     vsim work.top -suppress 12003
-    
-    # Add signals to the wave window
-    add_signals3
 
+    # Add signals to the wave window
+    add_cache_signals
+
+    # Set the width of the signal names
+    configure wave -signalnamewidth 1
+
+    view wave
     # Run the simulation
     run -all
 
 }
 
-// Add all signals in the top level to the wave window
 proc add_signals {} {
     add wave -position insertpoint /top/*
-}
-
-// Add every signal in the design to the wave window
-proc add_signals2 {} {
     add wave -position insertpoint -recursive /top/*
 }
 
-// Explicitly add signals to the wave window
-proc add_signals3 {} {
+proc add_manual {} {
     add wave -position insertpoint  \
     /top/sets \
     /top/ways \
@@ -49,11 +58,16 @@ proc add_signals3 {} {
     /top/fsm_output_line \
     /top/hit \
     /top/hitM \
-    /top/write_enable \
-    /top/read_enable \
-    /top/start \
     /top/sum \
     /top/instructions
+}
+
+proc add_cache_signals {} {
+    add wave -position insertpoint  \
+    /top/clk \
+    /top/instruction \
+    /top/cache_input_d \
+    /top/cache_output_d \
 }
 
 # Execute the main procedure

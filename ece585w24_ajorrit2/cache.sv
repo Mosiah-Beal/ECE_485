@@ -3,8 +3,6 @@ import my_struct_package::*; // import structs
 module cache #(parameter sets = 16384, parameter ways = 8)(
 	input  clk,  
 	input  command_t instruction,
-	input  write_enable,
-	input  read_enable,
 	input  cache_line_t cache_in[ways],
 	output cache_line_t cache_out[ways]
 );
@@ -21,8 +19,8 @@ cache_line_t cache[sets-1:0][ways-1:0];   // L1 cache
 always_comb begin
 
     for (int i = 0; i < ways; i++) begin
-        
-        if(read_enable) begin
+        // read
+        if(clk == 0) begin
             case (instruction.n)
                 0, 1, 2, 3, 4: begin // Read or write instructions    
                     cache_out[i] = cache[instruction.address.set_index][i];
@@ -47,7 +45,8 @@ always_comb begin
                 end
             endcase
         end
-        else if(write_enable) begin
+        //write
+        else if(clk == 1) begin
             case (instruction.n)
                 0, 1, 2, 3, 4: begin // Read or write instructions   
                     cache[instruction.address.set_index][i] = cache_in[i];

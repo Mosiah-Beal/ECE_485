@@ -1,3 +1,6 @@
+//TODO: work on the FSM, fix the LRU bug
+
+
 // Import the struct package
 import my_struct_package::*;
 
@@ -30,8 +33,8 @@ module mesi_fsm(
 
     // Combinational logic block for determining the next state based on the current state and input
     always_comb begin: Next_State_Logic
-        $display(" internal_line.tag = %h     : internal_line.LRU = %h \n internal_line.MESI_bits = %h : internal_line.data = %h", internal_line.tag, internal_line.LRU, internal_line.MESI_bits, internal_line.data); 
-        $display(" return_line.tag   = %h     : return_line.LRU   = %h \n return_line.MESI_bits   = %h : return_line.data   = %h", return_line.tag,return_line.LRU,return_line.MESI_bits,return_line.data);
+        // $display(" internal_line.tag = %h     : internal_line.LRU = %h \n internal_line.MESI_bits = %h : internal_line.data = %h", internal_line.tag, internal_line.LRU, internal_line.MESI_bits, internal_line.data); 
+        // $display(" return_line.tag   = %h     : return_line.LRU   = %h \n return_line.MESI_bits   = %h : return_line.data   = %h", return_line.tag,return_line.LRU,return_line.MESI_bits,return_line.data);
         case (internal_line.MESI_bits)
             M: begin
                 $display("Modified", $time);
@@ -106,26 +109,26 @@ module mesi_fsm(
             I: begin
                 $display("Invalid", $time);
                 case (instruction.n)
-                    0, 2: begin
-                    //  if (hit || hitM)
-                        //  nextstate = S; // Multiple read or Transition to S or E depending on snoop hardware
-                    // else
-                            nextstate = E;  // Single read
+                    0, 2: begin     // Single read
+                        nextstate = E;
                     end
-                    1: begin   // RFO
+                    1: begin        // RFO
                         nextstate = M;
                     end
-                    3, 4, 8: begin   // Invalidate
+                    3, 4, 8: begin  // Invalidate
                         nextstate = I;
                     end
-                    default: begin
+                    default: begin  // Same state
                         nextstate = I;
                     end
                 endcase
             end
 
-            default: nextstate <= I;
+            default: nextstate <= I;    // Default to invalid state if mesi bits are unknown
         endcase
+
+        // display the transition of states
+        $display("Transitioning from %p to %p", internal_line.MESI_bits, nextstate);
     end
 
     // Combinational logic block for determining outputs based on the current state and input

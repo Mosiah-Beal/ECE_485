@@ -123,41 +123,48 @@ module processor(
             end
             else begin
                 // Display the current line
-                $display("current_line_i = ");
-                for(int i = 0; i < 4; i++) begin
-                    $display("%p", current_line_i[i]);
-                end
+                // $display("current_line_i = ");
+                // for(int i = 0; i < 4; i++) begin
+                //     $display("%p", current_line_i[i]);
+                // end
 
-                way_select_i = 0; // default to way 0, keeps track of lowest LRU way
-                invalid_select_i = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
-                invalid_select_i = 0; // default to most recent LRU value
-                invalid_LRU_i = 0; // default to most recent LRU value
-                // choose the lowest LRU way, unless there are 1+ invalid ways, then choose the lowest invalid way
+                // Initialize housekeeping variables    (highest = oldest value)
+                way_select_i = 0;       // Holds the index of the way with the current oldest LRU way
+                invalid_select_i = -1;  // Holds the index of the oldest invalid way (initially impossible value)
+                invalid_LRU_i = 0;      // Holds the LRU value of the oldest invalid way (initially most recent LRU value)
+
+
+                // Loop through the ways to find the highest LRU way and the highest invalid way
                 for(int i = 0; i < 4; i++) begin
+
+                    // grab 1 way
                     way_line_i = current_line_i[i];
-                    // update way_select_i if the current way has a lower LRU value
+
+                    // The current way has older LRU value
                     if(way_line_i.LRU > current_line_i[way_select_i].LRU) begin
                         way_select_i = i;
                     end
-                    // update invalid_select_i if the current way is invalid and has a lower LRU value
+                    
+                    // The current way is invalid and has an older LRU value
                     if((way_line_i.MESI_bits == 0) && (way_line_i.LRU > invalid_LRU_i)) begin
                         invalid_select_i = i;
                         invalid_LRU_i = way_line_i.LRU;
                     end
                 end
                     
-                // if the invalid_select_i is still the impossible value, use the way_select_i
+                // After looping through all ways, if the invalid_select_i is still the impossible value
+                // use the way_select_i to overwrite the oldest valid way
                 if(invalid_select_i == -1) begin
                     i_select = way_select_i;
                 end
-                // otherwise, use the invalid_select_i
+                // otherwise, use the invalid_select_i to overwrite the oldest invalid way
                 else begin
                     i_select = invalid_select_i;
                 end
-            end
-        end
+            end // end else
+        end // end default
         endcase
-    end
+    end // end comb
 
     // Encode to select column of cache for data cache
     always_comb begin
@@ -179,36 +186,41 @@ module processor(
             else begin
 
                 // Display the current line
-                $display("current_line_d = ");
-                for(int i = 0; i < 8; i++) begin
-                    $display("%p", current_line_d[i]);
-                end
+                // $display("current_line_d = ");
+                // for(int i = 0; i < 8; i++) begin
+                //     $display("%p", current_line_d[i]);
+                // end
                 
-                way_select_d = 0; // default to way 0, keeps track of index of the way with the current highest LRU way
-                invalid_select_d = -1; // default to impossible value, keeps track of lowest invalid way (Invalid = 2'b00)
-                invalid_LRU_d = 0; // default to most recent LRU value
-                // choose the highest LRU way, unless there are 1+ invalid ways, then choose the highest invalid way
+                // Initialize housekeeping variables    (highest = oldest value)
+                way_select_d = 0;       // Holds the index of the way with the current oldest LRU way
+                invalid_select_d = -1;  // Holds the index of the oldest invalid way (initially impossible value)
+                invalid_LRU_d = 0;      // Holds the LRU value of the oldest invalid way (initially most recent LRU value)
+
+                // Loop through the ways to find the highest LRU way and the highest invalid way
                 for(int i = 0; i < 8; i++) begin
+
                     // grab 1 way
                     way_line_d = current_line_d[i];
-                    
-                    // update way_select_d if the current way has a lower LRU value
+
+                    // The current way has older LRU value
                     if(way_line_d.LRU > current_line_d[way_select_d].LRU) begin
                         way_select_d = i;
                     end
-
-                    // update invalid_select_d if the current way is invalid and has a lower LRU value
-                    if((way_line_d.MESI_bits == I) && (way_line_d.LRU > invalid_LRU_d)) begin
+                    
+                    // The current way is invalid and has an older LRU value
+                    if((way_line_d.MESI_bits == 0) && (way_line_d.LRU > invalid_LRU_d)) begin
                         invalid_select_d = i;
                         invalid_LRU_d = way_line_d.LRU;
                     end
                 end
 
-                // if the invalid_select_d is still the impossible value, use the way_select_d
+
+                // After looping through all ways, if the invalid_select_d is still the impossible value
+                // use the way_select_d to overwrite the oldest valid way
                 if(invalid_select_d == -1) begin
                     d_select = way_select_d;
                 end
-                // otherwise, use the invalid_select_d
+                // Otherwise, use the invalid_select_d to overwrite the oldest invalid way
                 else begin
                     d_select = invalid_select_d;
                 end
@@ -219,7 +231,7 @@ module processor(
 
 
     // compare current instruction to previous instruction
-    always_ff@(posedge read_enable) begin: Sequential_Logic
+    always_ff@(posedge clk) begin: Sequential_Logic
         prev_instruction <= current_instruction;
         current_instruction <= instruction;
     end
@@ -227,24 +239,47 @@ module processor(
     // Update the cache line
     always_comb begin 
         // Display selected ways
-        $display("d_select = %d", d_select);
-        $display("i_select = %d\n", i_select);
+        // $display("d_select = %d", d_select);
+        // $display("i_select = %d\n", i_select);
 
-        // Display the hit buses
- 	    $display("d_bus = %b", data_read_bus);
-        $display("i_bus = %b\n", instruction_read_bus);
+        // // Display the hit buses
+ 	    // $display("d_bus = %b", data_read_bus);
+        // $display("i_bus = %b\n", instruction_read_bus);
 
         // Update the cache line
+        // Check if the instruction has changed (may be comparing pointers)
         if(current_instruction == prev_instruction) begin 
-            $display("Repeat instruction");
-        end
+            $display("Repeat instruction 1");
+            $display("Time = %t : Instruction = %p", $time, instruction);
+        end      
+        
+        // Check if the contents of the instructions are the same (should be more accurate)
+        else if((current_instruction.n == prev_instruction.n) && 
+                (current_instruction.address == prev_instruction.address) && 
+                (current_instruction.PID == prev_instruction.PID) && 
+                (current_instruction.cache_num == prev_instruction.cache_num)) 
+        begin    
+            $display("Repeat instruction2");
+        end   
+
+        // Otherwise, this is a new instruction
         else begin
+            $display("Time = %t : Instruction = %p", $time, instruction);
             case(instruction.n)
                 0, 1: begin
-                    $display("Read/Write data cache");
+                    //$display("Read/Write data cache");
+
+                    // Update the output block
                     block_out = current_line_d[d_select];
-                    block_out.tag = instruction.address.tag; 
+                    
+                    // Change the tag of the block
+                    block_out.tag = instruction.address.tag;
+
+                    // Update the internal cache line 
                     internal_d = current_line_d;
+
+                    // Update it with the MESI bits from the FSM
+                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
                     
                     // Check if there are any hits in the data cache
                     if(|data_read_bus == 1) begin 
@@ -259,7 +294,6 @@ module processor(
                         end 
                     end
                     
-                    internal_d[d_select] = block_in;
                     internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
                     
@@ -269,6 +303,9 @@ module processor(
                     block_out = current_line_i[i_select];
                     block_out.tag = instruction.address.tag;
                     internal_i = current_line_i;
+                    
+                    // Update it with the MESI bits from the FSM
+                    internal_i[i_select].MESI_bits = block_in.MESI_bits;
 
                     // Check if there are any hits in the instruction cache
                     if(|instruction_read_bus == 1) begin 
@@ -283,7 +320,6 @@ module processor(
                         end 
                     end
 
-                    internal_i[i_select] = block_in;
                     internal_i[i_select].LRU = 3'b0;
                     return_line_i = internal_i;	    
 
@@ -292,6 +328,9 @@ module processor(
                     block_out = current_line_d[d_select];
                     block_out.tag = instruction.address.tag;
                     internal_d = current_line_d;
+
+                    // Update it with the MESI bits from the FSM
+                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
 
                     // Check if there are any hits in the data cache
                     if(|data_read_bus == 1) begin 
@@ -306,7 +345,6 @@ module processor(
                         end 
                     end
 
-                    internal_d[d_select] = block_in;
                     internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
 
@@ -315,6 +353,9 @@ module processor(
                     block_out = current_line_d[d_select];
                     block_out.tag = instruction.address.tag;
                     internal_d = current_line_d;
+
+                    // Update it with the MESI bits from the FSM
+                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
 
                     // Check if there are any hits in the data cache
                     if(|data_read_bus == 1) begin 

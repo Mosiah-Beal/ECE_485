@@ -1,4 +1,4 @@
-﻿Design Overview ECE 485/585
+Design Overview ECE 485/585
 
 The stated design parameters are:
 Your team is responsible for the design and simulation of a split L1 cache for a new 32-bit processor

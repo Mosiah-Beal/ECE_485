@@ -12,22 +12,25 @@ module top;
     cache_line_t fsm_output_line;
     logic hit;
     logic hitM;
-    logic write_enable;
-    logic read_enable;
-    logic start;
     logic [2:0] sum;
 
 // Parameters
 parameter sets = 16384;
 parameter ways = 8;
+parameter TIME_DURATION = 5;
+
+int sum_d;
+int sum_i;
 
 
 // Define an array of instructions
-reg [39:0] instructions [20];
+//4+32+3+2 = 41
+reg [40:0] instructions [20];   // n, address, PID, cache_num
 initial begin
-    instructions[0] = 40'b0; // New instruction at the front
-    instructions[1] = {4'b0,32'h984DE132,3'b0,2'b0};
-    instructions[2] = {4'b0,32'h116DE12F,3'b0,2'b0};
+    instructions[0] = {4'b1000, 32'b0, 3'b0, 2'b0};         // time = 10
+    //instructions[0] = {40'b0};                              // time = 10
+    instructions[1] = {4'b0,32'h984DE132,3'b0,2'b0};        // time = 20
+    instructions[2] = {4'b0,32'h116DE12F,3'b0,2'b0};        // time = 30
     instructions[3] = {4'b0,32'h100DE130,3'b0,2'b0};
     instructions[4] = {4'b0,32'h999DE12E,3'b0,2'b0};
     instructions[5] = {4'b0,32'h645DE10A,3'b0,2'b0};
@@ -49,9 +52,7 @@ cache #(.sets(16384), .ways(8)) data_cache (
         .clk(clk),
         .instruction(instruction),
 	    .cache_in(cache_input_d),
-        .cache_out(cache_output_d),
-	    .write_enable(write_enable),
-	    .read_enable(read_enable)
+        .cache_out(cache_output_d)
     );
 
  // Instantiate the instruction cache with sets = 16384 and ways = 4
@@ -59,11 +60,8 @@ cache #(.sets(16384), .ways(4)) instruction_cache (
         .clk(clk),
         .instruction(instruction),
 	    .cache_in(cache_input_i),
-        .cache_out(cache_output_i),
-	    .write_enable(write_enable),
-	    .read_enable(read_enable)
+        .cache_out(cache_output_i)
     );
-
 processor processor(
         .clk(clk),
         .instruction(instruction),
@@ -76,8 +74,6 @@ processor processor(
         .count(sum),
         .read_enable(read_enable)
         );
-
-
 mesi_fsm fsm(
         .clk(clk), 
         .rst(rst), 
@@ -87,13 +83,14 @@ mesi_fsm fsm(
         .hit(hit),
         .hitM(hitM)
         );
-
-count LRU(.start(start),.rst(rst), .sum(sum));
+//count LRU(.rst(rst), .sum(sum));
 
 
 // Clock generation
-always #5 clk = ~clk;
+always #TIME_DURATION clk = ~clk;
 
+
+// Set initial values
 initial begin
     // Initialize inputs
     clk = 0;
@@ -101,106 +98,56 @@ initial begin
     instruction = {4'b1000,32'b0,3'b0,2'b0};
     hit = 0;
     hitM = 0;
-    write_enable = 0; 
-    start = 1;
-    read_enable = 1;
  
-for(int i = 0; i<8; i++)begin
-	cache_input_d[i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-	cache_input_d[i].MESI_bits = I;     // Initialize MESI bits to Invalid
-	cache_input_d[i].tag = 12'b0;        // Initialize tag to 0
-	cache_input_d[i].data = 32'b0;       // Initialize mem to 0
+    // Give a clock pulse to end reset
+    #TIME_DURATION;
+    rst = 0;
 end
-
-for(int i = 0; i<4; i++)begin
-	cache_input_i[i].LRU = i;           // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
-	cache_input_i[i].MESI_bits = I;     // Initialize MESI bits to Invalid
-	cache_input_i[i].tag = 12'b0;        // Initialize tag to 0
-	cache_input_i[i].data = 32'b0;       // Initialize mem to 0
-end
-
-// read
-#5;
-start = 0;
-write_enable = 0;
-read_enable = 1;
-instruction = instructions[0];
 
 
 // Loop over the instructions
-for (int i = 1; i < 12; i = i + 1) begin
-    // write
-    #5;
-    start = 1;
-    write_enable = 1;
-    read_enable = 0;
-    
-    // apply instruction
-    instruction = instructions[i];
+initial begin
 
-    // read
-    #5;
-    start = 0;
-    write_enable = 0;
-    read_enable = 1;
-end
+    // wait for reset to end
+    #TIME_DURATION;
+    for (int i = 0; i < 20; i = i + 1) begin
 
+        // Check if there are no more instructions left
+        if($isunknown(instructions[i])) begin
+            $display("Invalid / last instruction reached. Exiting simulation.");
+            break;
+        end
 
-/*   $display("Test Case 2:");    
-    // Set instruction, block_in, hit, hitM values accordingly
-    instruction = {4'b1,32'h8FA2B7C4,3'b0,2'b0};
-    
+        
+        // read
+        #TIME_DURATION;
 
-    // Apply some clock cycles
-    #10;
+        //$display("Time = %t : Instruction = %p", $time, instruction);
+        instruction = instructions[i];    
+        
+        // write
+        #TIME_DURATION;
 
-    // Print outputs
-    instruction = {4'b1,32'h8FA2B7C4,3'b0,2'b0};
+        // Display output cache line LRU bits
+        $display("Time = %t : Cache Line LRU = %p %p %p %p %p %p %p %p", $time, cache_input_d[0].LRU, cache_input_d[1].LRU, cache_input_d[2].LRU, cache_input_d[3].LRU, cache_input_d[4].LRU, cache_input_d[5].LRU, cache_input_d[6].LRU, cache_input_d[7].LRU);
+        $display("");
 
-    // Apply some clock cycles
-    #10;
+        // Check for duplicate LRU bits by summing them
+        sum_d = cache_input_d[0].LRU + cache_input_d[1].LRU + cache_input_d[2].LRU + cache_input_d[3].LRU + cache_input_d[4].LRU + cache_input_d[5].LRU + cache_input_d[6].LRU + cache_input_d[7].LRU;
+        if (sum_d != 28) begin
+            $display("Duplicate LRU bits found. Exiting simulation.");
+        end
 
-    // Print outputs
-    instruction = {4'b1,32'h3C8D4EAF,3'b0,2'b0};
-
-    // Continue with more test cases if needed
-
-    // End simulation after test cases
-    #10;
-	
-	instruction = {4'b1,32'h8FA2B7C4,3'b0,2'b0};
-	
-	#10; 
-
-	// Test case 1
-    $display("Test Case 2:");
-    // Set instruction, block_in, hit, hitM values accordingly
-    instruction = {4'b0,32'h8FA2B7C4,3'b0,2'b0};
-    
-
-    // Apply some clock cycles
-    #10;
-
-    // Print outputs
-    instruction = {4'b0,32'h8FA2B7C4,3'b0,2'b0};
-
-    // Apply some clock cycles
-    #10;
-
-    // Print outputs
-    instruction = {4'b0,32'h3C8D4EAF,3'b0,2'b0};
-
-    // Continue with more test cases if needed
-
-    // End simulation after test cases
-    #10;
-
-	instruction = {4'b0,32'h8FA2B7C4,3'b0,2'b0};
-	#10; 
-*/ 
+        sum_i = cache_input_i[0].LRU + cache_input_i[1].LRU + cache_input_i[2].LRU + cache_input_i[3].LRU;
+        if (sum_i != 6) begin
+            $display("Duplicate LRU bits found. Exiting simulation.");
+        end
 
 
-$finish;
+
+        end
+
+    $finish;
 end
 
 
