@@ -321,9 +321,9 @@ module processor(
                     // Update the LRU of the selected way and send out the cache lines
                     internal_i[i_select].LRU = 3'b0;
                     return_line_i = internal_i;
-                    return_line_d = internal_d;
+                    return_line_d = current_line_d;
             end
-                
+
             3: begin 
                 //$display("Invalidate from L2");
                 block_out = current_line_d[d_select];

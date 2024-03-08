@@ -153,7 +153,7 @@ module mesi_fsm(
 	    return_line.data = internal_line.data;
         
         // Update mesi_bits based on nextstate
-        return_line.MESI_bits = nextstate;   
+        return_line.MESI_bits = internal_line.MESI_bits;   
     end
 
 endmodule 
