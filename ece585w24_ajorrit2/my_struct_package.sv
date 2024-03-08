@@ -26,10 +26,10 @@ typedef struct packed {
 
 // Cache line struct, contains tag, LRU, MESI bits, and data
 typedef struct packed {
-	logic [11:0] tag;         // 12 bits for tag
-	logic [2:0] LRU;          // 3 bits for LRU
-	states_t MESI_bits;    // 2 bits for MESI states
-	logic [31:0] data;        // 512 bits for data
+	logic [11:0] tag;         	// 12 bits for tag
+	logic [2:0] LRU;         	// 3 bits for LRU
+	states_t MESI_bits;    		// 2 bits for MESI states
+	logic [31:0] data;        	// 512 bits for data
 } cache_line_t;
 
 
