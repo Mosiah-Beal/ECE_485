@@ -253,21 +253,18 @@ module processor(
                     //$display("Read/Write data cache");
 
                     // Update the output block
-                    block_out = current_line_d[d_select];
+                    block_out = current_line_d[d_select];    
                     
-                    // Change the tag of the block
-                    block_out.tag = instruction.address.tag;
-
                     // Update the internal cache line 
                     internal_d = current_line_d;
-
-                    // Update it with the MESI bits from the FSM
+		     
+		    // Update it with the MESI bits from the FSM
                     internal_d[d_select].MESI_bits = block_in.MESI_bits;
-                    internal_d[d_select].tag = block_in.tag;
-                    
+                    internal_d[d_select].tag = instruction.address.tag;
+                    internal_d[d_select].data = block_in.data;
+			
+                    //check hits
 		    if(current_instruction !== prev_instruction) begin 
-           		 $display("Time = %t : Instruction = %p", $time, instruction);
-                    // Check if there are any hits in the data cache
                     	if(|data_read_bus == 1) begin 
                         	for(int i = 0; i< d_select; i++) begin
                             	internal_d[i].LRU = current_line_d[i].LRU +1;
@@ -280,7 +277,8 @@ module processor(
                         	end 
                     	end
                     end
-                    internal_d[d_select].LRU = 3'b0;
+                    
+		    internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
                     return_line_i = current_line_i;
                     end
@@ -312,7 +310,7 @@ module processor(
 		    end
                     internal_i[i_select].LRU = 3'b0;
                     return_line_i = internal_i;	    
-
+		    return_line_d = current_line_d;
                     end
                 3: begin 
                     block_out = current_line_d[d_select];
