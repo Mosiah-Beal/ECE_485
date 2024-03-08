@@ -15,7 +15,7 @@ proc main {} {
     #project open ECE485.mpf
 
     # Check the status of the compilation
-    if {[catch {project compileall} errmsg]} {
+    if {[catch {project compioleall} errmsg]} {
         # If there was an error during compilation, print the error message and exit
         puts stderr "Error during compilation: $errmsg"
         quit -f

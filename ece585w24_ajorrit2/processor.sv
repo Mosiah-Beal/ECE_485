@@ -4,14 +4,11 @@ import my_struct_package::*;
 module processor(
     /* Signal ports
     * top: clk, instruction, current_line, return_line
-    * count: count
     * FSM: block_in, block_out
     */
 
     input  clk,
-    input  read_enable,
     input  command_t instruction,
-    input  logic [2:0] count,
     input  cache_line_t current_line_i[4],
     input  cache_line_t current_line_d[8],
     input  cache_line_t block_in,
@@ -238,30 +235,16 @@ module processor(
 
     // Update the cache line
     always_comb begin 
-        // Display selected ways
-        // $display("d_select = %d", d_select);
-        // $display("i_select = %d\n", i_select);
-
-        // // Display the hit buses
- 	    // $display("d_bus = %b", data_read_bus);
-        // $display("i_bus = %b\n", instruction_read_bus);
-
-        // Update the cache line
-        // Check if the instruction has changed (may be comparing pointers)
             case(instruction.n)
                 0, 1: begin
-                    //$display("Read/Write data cache");
-
-                    // Update the output block
-                    block_out = current_line_d[d_select];    
                     
+                    block_out = current_line_d[d_select];
+		    block_out.tag = instruction.address.tag;
                     // Update the internal cache line 
                     internal_d = current_line_d;
 		     
 		    // Update it with the MESI bits from the FSM
-                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
-                    internal_d[d_select].tag = instruction.address.tag;
-                    internal_d[d_select].data = block_in.data;
+                    internal_d[d_select] = block_in;
 			
                     //check hits
 		    if(current_instruction !== prev_instruction) begin 
@@ -282,16 +265,16 @@ module processor(
                     return_line_d = internal_d;
                     return_line_i = current_line_i;
                     end
+
                 2: begin
-                    $display("Read instruction cache");
                     block_out = current_line_i[i_select];
-                    
-                    internal_i = current_line_i;    //clearing data
+                    block_out.tag = instruction.address.tag;
+                    // Update the internal cache line
+		    internal_i = current_line_i;   
                     
                     // Update it with the MESI bits from the FSM
-                    internal_i[i_select].MESI_bits = block_in.MESI_bits;
-                    internal_i[i_select].tag = instruction.address.tag;
-                    internal_i[i_select].data = block_in.data;
+                    internal_i[i_select] = block_in;
+                 
 
                     // Check if there are any hits in the instruction cache
 		    if(current_instruction !== prev_instruction) begin 
@@ -308,22 +291,24 @@ module processor(
                     	end
 			
 		    end
+
                     internal_i[i_select].LRU = 3'b0;
                     return_line_i = internal_i;	    
 		    return_line_d = current_line_d;
                     end
+
                 3: begin 
                     block_out = current_line_d[d_select];
                     block_out.tag = instruction.address.tag;
-                    internal_d = current_line_d;
+                    // Update the internal cache line
+		    internal_d = current_line_d;
 
                     // Update it with the MESI bits from the FSM
-                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
-                    internal_d[d_select].tag = block_in.tag;
+                    internal_d[d_select]= block_in;
+                    
 
                     // Check if there are any hits in the data cache
                     if(current_instruction !== prev_instruction) begin 
-           		 $display("Time = %t : Instruction = %p", $time, instruction);
                     // Check if there are any hits in the data cache
                     	if(|data_read_bus == 1) begin 
                         	for(int i = 0; i< d_select; i++) begin
@@ -337,23 +322,24 @@ module processor(
                         	end 
                     	end
                     end
+
                     internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
 		    return_line_i = current_line_i;
 
                     end
+
                 4: begin
                     block_out = current_line_d[d_select];
                     block_out.tag = instruction.address.tag;
-                    internal_d = current_line_d;
+                    // Update the internal cache line
+		    internal_d = current_line_d;
 
                     // Update it with the MESI bits from the FSM
-                    internal_d[d_select].MESI_bits = block_in.MESI_bits;
-                    internal_d[d_select].tag = block_in.tag;
+                    internal_d[d_select] = block_in;
 
                     // Check if there are any hits in the data cache
                     if(current_instruction !== prev_instruction) begin 
-           		 $display("Time = %t : Instruction = %p", $time, instruction);
                     // Check if there are any hits in the data cache
                     	if(|data_read_bus == 1) begin 
                         	for(int i = 0; i< d_select; i++) begin
@@ -367,12 +353,13 @@ module processor(
                         	end 
                     	end
                     end
-                    internal_d[d_select] = block_in;
+
                     internal_d[d_select].LRU = 3'b0;
                     return_line_d = internal_d;
 		    return_line_i = current_line_i;              
 
                     end
+
                 8, 9: begin
                     // Do nothing 
                     end

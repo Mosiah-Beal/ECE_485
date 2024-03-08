@@ -33,7 +33,6 @@ always_comb begin
                         cache[j][i].tag = 12'b0;        // Initialize tag to 0
                         cache[j][i].data = j;       // Initialize mem to 0
                     end
-                    $display("reset");
                 end
                 
                 9: begin // Display cache line(currently, doesn't have a gap between instruction and data lines)
@@ -59,7 +58,6 @@ always_comb begin
                         cache[j][i].tag = 12'b0;        // Initialize tag to 0
                         cache[j][i].data = j;       // Initialize mem to 0
                     end
-                    $display("reset");
                 end
                 
                 9: begin // Display cache line
@@ -73,5 +71,8 @@ always_comb begin
         end
 
     end
+if(instruction.n == 9) begin
+$display("\n\n");
+end
 end
 endmodule

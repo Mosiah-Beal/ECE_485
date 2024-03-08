@@ -20,8 +20,6 @@ typedef struct packed {
 typedef struct packed {
     logic [3:0] n;             // instruction
     address_t address;      // 32-bit address
-    logic [2:0] PID;           // processor id
-    logic [1:0] cache_num;   // which instruction cache
 } command_t;
 
 // Cache line struct, contains tag, LRU, MESI bits, and data
