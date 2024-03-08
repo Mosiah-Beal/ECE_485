@@ -15,6 +15,14 @@ module processor(
   // Import the struct package
     import my_struct_package::*;
 
+  // Statistic Variables
+    struct {
+        int cache_reads =  0;
+        int cache_writes = 0;
+        int cache_hits = 0;
+        int cache_misses = 0;
+        int cache_ratio = cache_hits / cache_misses;
+    } stats;
 
     logic [2:0] d_select;
     logic [1:0] i_select;
@@ -36,15 +44,18 @@ always_comb begin : check_hits
             case (instruction.n)  // which instruction is this?
                 0: begin // data read
                     data_read_bus[i] = 1;   // if read instruction -> hit;
+                    cache_reads++;
                 end
                 1: begin // data write
                     data_read_bus[i] = 'z;   // if write instruction -> hitM;
+                    cache_writes++;
                 end
                 2: begin // instruction fetch
                     data_read_bus[i] = 1;
                 end
                 3: begin // L2 invalidate
                     data_read_bus[i] = 'z;   // if hit found on other caches
+                    cache_reads++;
                 end
                 default: begin
                     data_read_bus[i] = '0;   // dont care
@@ -64,15 +75,18 @@ always_comb begin : check_hits
             case (instruction.n)  // which instruction is this?
                 0: begin // data read
                     instruction_read_bus[j] = 1;   // if read instruction -> hit;
+                    cache_reads++;
                 end
                 1: begin // data write
                     instruction_read_bus[j] = 'z;   // if write instruction -> hitM;
+                    cache_writes++;
                 end
                 2: begin // instruction fetch
                     instruction_read_bus[j] = 1;
                 end
                 3: begin // L2 invalidate
                     instruction_read_bus[j] = 'z;   // if hit found on other caches
+                    cache_writes++;
                 end
                 default: begin
                     instruction_read_bus[j] = '0;   // dont care
