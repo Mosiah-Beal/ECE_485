@@ -10,10 +10,7 @@ proc main {} {
     noview source
 
     # (Compile the design
-    project open ECE485.mpf
-    #project open ECE485.mpf
-    #project open ECE485.mpf
-
+    set project_name [glob *85*.mpf | *85.mpf]
     # Check the status of the compilation
     if {[catch {project compileall} errmsg]} {
         # If there was an error during compilation, print the error message and exit
@@ -22,10 +19,10 @@ proc main {} {
     }
 
     # refresh the library
-    vlog -work work -refresh -force_refresh
+    vlog -work work -refresh -force_refresh -suppress 8386
 
     # simulate the design
-    vsim work.top -suppress 12003
+    vsim work.top -suppress 12003 -suppress 8386
 
     # Add signals to the wave window
     add_cache_signals
