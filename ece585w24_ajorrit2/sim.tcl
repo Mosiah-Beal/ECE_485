@@ -10,15 +10,12 @@ proc main {} {
     noview source
 
     # (Compile the design
-    project open ECE485.mpf
-    #project open ECE485.mpf
-    #project open ECE485.mpf
+    set project_name [glob *85.mpf | *85*.mpf]
 
     # Check the status of the compilation
     if {[catch {project compileall} errmsg]} {
         # If there was an error during compilation, print the error message and exit
         puts stderr "Error during compilation: $errmsg"
-        quit -f
     }
 
     # refresh the library
