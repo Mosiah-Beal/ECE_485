@@ -15,14 +15,19 @@ proc main {} {
     if {[catch {project compileall} errmsg]} {
         # If there was an error during compilation, print the error message and exit
         puts stderr "Error during compilation: $errmsg"
-        quit -f
+        # quit -f
     }
+
+    # Suppress the ghost errors of deleted testbenches: 8386 
 
     # refresh the library
     vlog -work work -refresh -force_refresh -suppress 8386
 
     # simulate the design
-    vsim work.top -suppress 12003 -suppress 8386
+    # suppressing the following errors:
+    # 12003: Variable is written by continuous and procedural assignments
+    # 3839: Signal is driven via a port connection
+    vsim work.top -suppress 12003 -suppress 8386 -suppress 3839 
 
     # Add signals to the wave window
     add_cache_signals
@@ -63,6 +68,7 @@ proc add_manual {} {
 proc add_cache_signals {} {
     add wave -position insertpoint  \
     /top/clk \
+    /top/mode_select \
     /top/instruction \
     /top/cache_input_d \
     /top/cache_output_d \
@@ -72,3 +78,15 @@ proc add_cache_signals {} {
 
 # Execute the main procedure
 main
+
+# Change to STATS mode
+force -deposit /top/mode_select 1
+
+# Run the simulation to the end of the instructions array
+run -all
+
+# Change to VERBOSE mode
+force -deposit /top/mode_select 2
+
+# Run the simulation to the end of the instructions array
+run -all
