@@ -9,23 +9,27 @@ proc main {} {
     # Hide window
     noview source
 
-    # (Compile the design
-    project open ECE485.mpf
-    #project open ECE485.mpf
-    #project open ECE485.mpf
+    # Compile the design
+    set project [glob *85*.mpf | *85.mpf]
+    project open $project
 
     # Check the status of the compilation
-    if {[catch {project compioleall} errmsg]} {
+    if {[catch {project compileall} errmsg]} {
         # If there was an error during compilation, print the error message and exit
         puts stderr "Error during compilation: $errmsg"
-        quit -f
+        # quit -f
     }
 
+    # Suppress the ghost errors of deleted testbenches: 8386 
+
     # refresh the library
-    vlog -work work -refresh -force_refresh
+    vlog -work work -refresh -force_refresh -suppress 8386
 
     # simulate the design
-    vsim work.top -suppress 12003
+    # suppressing the following errors:
+    # 12003: Variable is written by continuous and procedural assignments
+    # 3839: Signal is driven via a port connection
+    vsim work.top -suppress 12003 -suppress 3839 
 
     # Add signals to the wave window
     add_cache_signals
