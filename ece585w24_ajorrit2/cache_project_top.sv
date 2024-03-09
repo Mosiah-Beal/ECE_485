@@ -130,17 +130,14 @@ always #TIME_DURATION clk = ~clk;
 initial begin
     // Initialize the caches
     clk = 0;    // Start with a low clock (write mode)
-    rst = 1;    // Initialize the reset signal
+    //rst = 1;    // Initialize the reset signal
     instruction = {4'd8,32'b0,3'b0,2'b0};    // Send a reset instruction
  
     // Give a clock pulse to propogate the initial values
-    #TIME_DURATION; // Clock will be 1 after this (read mode)
+    //#TIME_DURATION; // Clock will be 1 after this (read mode)
 
     // End reset
-    rst = 0;
-
-    #TIME_DURATION; // Clock will be 0 after this (write mode)
-    #TIME_DURATION; // Clock will be 1 after this (read mode)
+    //rst = 0;
 
     // Stop the simulation so the mode can be selected
     $stop;
@@ -183,20 +180,47 @@ end
 // Whenever the instruction changes
 always @(instruction) begin
    
+    // Display the cache lines if the instruction is 9
+    if(instruction.n == 9) begin
+        // Data cache
+        for(int i = 0; i < D_WAYS; i++) begin
+            $display("Time = %0t: \t\tData Cache Line[%h] = %p", $time, instruction.address.set_index, data_cache.cache[instruction.address.set_index][i]);
+        end
+        // Instruction cache
+        for(int i = 0; i < I_WAYS; i++) begin
+            $display("Time = %0t: \t\tInstruction Cache Line[%h] = %p", $time, instruction.address.set_index, instruction_cache.cache[instruction.address.set_index][i]);
+        end
+        $display("");
+    end
+
    // Check if we are in silent mode
     if(mode_select >= MODE_STATS) begin
             
+        // Read and write statistics
+        case(instruction.n) 
+
+            0,2,4: read_sum += 1;
+            1,3:   write_sum += 1;
+            
+            // Other values do not affect the write/read ratio
+            default: begin
+                //do nothing
+            end
+        endcase
+
         // Hit and miss statistics
         case(instruction.n)
             // Check if there were any hits on the data cache
             0,1,3,4: begin
-
                 if(|processor.data_read_bus)begin
+                    // Increment the hit counter and recalculate the ratio
                     hit_sum += 1;
+                    ratio = hit_sum/(hit_sum + miss_sum);
                 end
                 else begin
-                    // Increment the miss counter
+                    // Increment the miss counter and recalculate the ratio
                     miss_sum += 1;
+                    ratio = hit_sum/(hit_sum + miss_sum);
 
                     // Check if we need to print the address
                     if (mode_select == MODE_VERBOSE) begin
@@ -208,11 +232,14 @@ always @(instruction) begin
             // Check if there were any hits on the instruction cache
             2: begin
                 if(|processor.instruction_read_bus) begin
+                    // Increment the hit counter and recalculate the ratio
                     hit_sum += 1;
+                    ratio = hit_sum/(hit_sum + miss_sum);
                 end
                 else begin
-                    // Increment the miss counter
+                    // Increment the miss counter and recalculate the ratio
                     miss_sum += 1;
+                    ratio = hit_sum/(hit_sum + miss_sum);
 
                     // Check if we need to print the address
                     if (mode_select == MODE_VERBOSE) begin
@@ -221,6 +248,14 @@ always @(instruction) begin
                 end
             end
 
+            // Other values do not affect the hit/miss ratio
+            default: begin
+                // Do nothing
+            end
+        endcase
+
+        // Check if we need to print the statistics
+        case(instruction.n)
             8: begin
                 // Reset the statistics
                 hit_sum = 0;
@@ -231,46 +266,27 @@ always @(instruction) begin
             end
 
             9: begin
-                `ifdef DEBUG
-                    // Print the statistics
+                // Print the statistics
+                $display("read_sum = %d", read_sum);
+                $display("write_sum = %d", write_sum);
+                $display("miss_sum = %d", miss_sum);
+                $display("hit_sum = %d", hit_sum);
+                $display("ratio = %f", ratio);
+                $display("");
+            end
+
+            default: begin
+                // If we are in verbose mode, also print the statistics every instruction
+                if (mode_select >= MODE_VERBOSE) begin
                     $display("read_sum = %d", read_sum);
                     $display("write_sum = %d", write_sum);
                     $display("miss_sum = %d", miss_sum);
                     $display("hit_sum = %d", hit_sum);
                     $display("ratio = %f", ratio);
-                `endif
-            end
-
-            default: begin
-                // Invalid instruction
-                // $display("Invalid instruction.");
+                    $display("");
+                end
             end
         endcase
-
-        // Read and write statistics
-        case(instruction.n) 
-
-            0,2,4: read_sum += 1;
-            1,3:   write_sum += 1;
-            
-            default: begin
-                //do nothing
-            end
-        endcase
-
-        // Calculate the hit ratio
-        if(hit_sum + miss_sum != 0) begin
-            ratio = (hit_sum/hit_sum + miss_sum);
-        end
-
-        // If we are in verbose mode, also print the statistics on each instruction
-        if (mode_select >= MODE_VERBOSE) begin
-            $display("read_sum = %d", read_sum);
-            $display("write_sum = %d", write_sum);
-            $display("miss_sum = %d", miss_sum);
-            $display("hit_sum = %d", hit_sum);
-            $display("ratio = %f", ratio);
-        end
 
         // Now check if we need to print the transition
         if (mode_select >= MODE_VERBOSE) begin
@@ -316,6 +332,7 @@ always @(instruction) begin
             endcase
         end
     end
+
 
     // Check if the LRU bits are unique
     `ifdef DEBUG

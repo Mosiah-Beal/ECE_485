@@ -48,7 +48,7 @@ always_comb begin
                 end
                 
                 9: begin // Display cache line(currently, doesn't have a gap between instruction and data lines)
-                    $display("Time = %0t: \t\tCache Line[%h] = %p", $time, instruction.address.set_index, cache[instruction.address.set_index][i]);
+                    // $display("Time = %0t: \t\tInput Cache Line[%h] = %p", $time, instruction.address.set_index, cache[instruction.address.set_index][i]);
                 end
                 
                 default: begin
@@ -73,7 +73,7 @@ always_comb begin
                 end
                 
                 9: begin // Display cache line
-                    $display("Time = %0t: \t\tCache Line[%h] = %p", $time, instruction.address.set_index, cache[instruction.address.set_index][i]);
+                    // $display("Time = %0t: \t\tOutput Cache Line[%h] = %p", $time, instruction.address.set_index, cache[instruction.address.set_index][i]);
                 end
                 
                 default: begin
@@ -81,10 +81,6 @@ always_comb begin
                 end
             endcase
         end
-    end
-
-    if(instruction.n == 9) begin
-        $display("\n\n");
     end
 end
 endmodule
