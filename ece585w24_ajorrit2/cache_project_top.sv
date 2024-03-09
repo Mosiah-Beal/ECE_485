@@ -116,7 +116,6 @@ initial begin
     else begin
         mode_select = MODE_SILENT;
     end
-    $display("Mode = %d", mode_select);
 end
 
  
@@ -206,7 +205,7 @@ always @(instruction) begin
         $display("");
     end
 
-    // Check if we are in silent mode
+    // Check if have something to do
     if(mode_select >= MODE_STATS) begin
             
         // Read and write statistics
