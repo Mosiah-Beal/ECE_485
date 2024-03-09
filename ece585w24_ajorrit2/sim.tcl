@@ -9,10 +9,8 @@ proc main {} {
     # Hide window
     noview source
 
-    # Compile the design
-    set project [glob *85*.mpf | *85.mpf]
-    project open $project
-
+    # (Compile the design
+    set project_name [glob *85*.mpf | *85.mpf]
     # Check the status of the compilation
     if {[catch {project compileall} errmsg]} {
         # If there was an error during compilation, print the error message and exit
@@ -29,7 +27,7 @@ proc main {} {
     # suppressing the following errors:
     # 12003: Variable is written by continuous and procedural assignments
     # 3839: Signal is driven via a port connection
-    vsim work.top -suppress 12003 -suppress 3839 
+    vsim work.top -suppress 12003 -suppress 8386 -suppress 3839 
 
     # Add signals to the wave window
     add_cache_signals
