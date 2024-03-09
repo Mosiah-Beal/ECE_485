@@ -70,6 +70,7 @@ proc add_manual {} {
 proc add_cache_signals {} {
     add wave -position insertpoint  \
     /top/clk \
+    /top/mode_select \
     /top/instruction \
     /top/cache_input_d \
     /top/cache_output_d \
@@ -79,3 +80,15 @@ proc add_cache_signals {} {
 
 # Execute the main procedure
 main
+
+# Change to STATS mode
+force -deposit /top/mode_select 1
+
+# Run the simulation to the end of the instructions array
+run -all
+
+# Change to VERBOSE mode
+force -deposit /top/mode_select 2
+
+# Run the simulation to the end of the instructions array
+run -all

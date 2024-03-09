@@ -21,7 +21,7 @@ module top;
     cache_line_t fsm_output_line;
     
     // Helper variables
-    logic mode_select;
+    logic [2:0] mode_select;
     int sum_d;
     int sum_i;
     real hit_sum = 0;
@@ -130,28 +130,30 @@ always #TIME_DURATION clk = ~clk;
 initial begin
     // Initialize the caches
     clk = 0;    // Start with a low clock (write mode)
-    //rst = 1;    // Initialize the reset signal
     instruction = {4'd8,32'b0,3'b0,2'b0};    // Send a reset instruction
- 
-    // Give a clock pulse to propogate the initial values
-    //#TIME_DURATION; // Clock will be 1 after this (read mode)
 
-    // End reset
-    //rst = 0;
-
-    // Stop the simulation so the mode can be selected
+    // Allow FSM to initialize
+    rst = 1;
+    #TIME_DURATION;
+    rst = 0;
     $stop;
 end
 
 // Feed instructions to the processor on the negative edge of the clock
 always @(negedge clk) begin
+    
     // Send instructions once we leave silent mode)
-    if (mode_select != MODE_SILENT) begin
+    if (mode_select > MODE_SILENT) begin
         // Check if there are no more instructions left
         if($isunknown(instructions[instruction_index])) begin
             $display("Invalid / last instruction reached.");
+            
+            // Go back to silent mode
+            instruction_index = 0;
+            mode_select = MODE_SILENT;
+            
+            // Stop the simulation
             $stop;
-            // See if we need to reset the index? (future work)
         end
         else begin
             // Send the instruction to the processor
@@ -159,15 +161,25 @@ always @(negedge clk) begin
             // $display("Time = %t : Instruction = %p", $time, instruction);
         end   
     end
+
+    // Silent mode
+    else begin
+        // Do nothing
+    end
 end
 
 // Check if we are changing the mode
+//force -deposit /top/mode_select 1 0
+//run -all
 always @(mode_select) begin
+    // Reset the instruction index
+    instruction_index = 0;
+    // Send a reset instruction
+    instruction = {4'd8,32'b0,3'b0,2'b0};
+
     // Check if we are in silent mode
     if(mode_select == MODE_SILENT) begin
-        $display("Mode = SILENT");
-        // Reset the instruction index
-        instruction_index = 0;
+        $display("Mode = SILENT");    
     end
     else if(mode_select == MODE_STATS) begin
         $display("Mode = STATS");
@@ -175,6 +187,7 @@ always @(mode_select) begin
     else if(mode_select == MODE_VERBOSE) begin
         $display("Mode = VERBOSE");
     end
+
 end
 
 // Whenever the instruction changes
@@ -193,7 +206,7 @@ always @(instruction) begin
         $display("");
     end
 
-   // Check if we are in silent mode
+    // Check if we are in silent mode
     if(mode_select >= MODE_STATS) begin
             
         // Read and write statistics
@@ -267,11 +280,11 @@ always @(instruction) begin
 
             9: begin
                 // Print the statistics
-                $display("read_sum = %d", read_sum);
-                $display("write_sum = %d", write_sum);
-                $display("miss_sum = %d", miss_sum);
-                $display("hit_sum = %d", hit_sum);
-                $display("ratio = %f", ratio);
+                $display("read_sum =  %0d", read_sum);
+                $display("write_sum = %0d", write_sum);
+                $display("miss_sum =  %0d", miss_sum);
+                $display("hit_sum =   %0d", hit_sum);
+                $display("ratio =     %0f", ratio);
                 $display("");
             end
 
@@ -354,12 +367,29 @@ always @(instruction) begin
     `endif
 
     // Check if the sum is not equal to the expected value
-    if (sum_i != 6) begin
-        $display("PROBLEM (top): %0t Duplicate LRU bits found in instruction cache.", $time);
-    end
-    if (sum_d != 28) begin
-        $display("PROBLEM (top): %0t Duplicate LRU bits found in data cache.", $time);
-    end
+    case(instruction.n)
+        // Ignore on Reset/Initialize
+        'x, 8: begin
+            // Do nothing
+        end
+
+        // Otherwise, check the LRU values
+        default: begin
+            // Check if the instruction cache has duplicate LRU bits
+            if (sum_i != 6) begin
+                $display("PROBLEM (top): %0t Duplicate LRU bits found in instruction cache.", $time);
+                // Nice formatting
+                if(sum_d == 28) begin
+                    $display("");   // Add a new line
+                end
+            end
+
+            // Check if the data cache has duplicate LRU bits
+            if (sum_d != 28) begin
+                $display("PROBLEM (top): %0t Duplicate LRU bits found in data cache.\n", $time);
+            end
+        end
+    endcase
 
 end
 
