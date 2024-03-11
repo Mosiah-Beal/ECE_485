@@ -346,6 +346,7 @@ always @(instruction) begin
     end
 
 
+    // LRU DEBUGGING
     // Check if the LRU bits are unique
     `ifdef DEBUG
         // Display the time, instruction, and cache line LRU bits
