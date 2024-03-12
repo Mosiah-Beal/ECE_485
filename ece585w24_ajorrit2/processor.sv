@@ -229,8 +229,7 @@ module processor(
 
     // compare current instruction to previous instruction
     always_ff@(negedge clk) begin: Sequential_Logic
-        prev_instruction <= current_instruction;
-        current_instruction <= instruction;
+        prev_instruction <= instruction;
     end
 
     // Update the cache line
@@ -247,7 +246,7 @@ module processor(
                     internal_d[d_select] = block_in;
 			
                     //check hits
-		    if(current_instruction !== prev_instruction) begin 
+		    if(instruction !== prev_instruction) begin 
                     	if(|data_read_bus == 1) begin 
                         	for(int i = 0; i< d_select; i++) begin
                             	internal_d[i].LRU = current_line_d[i].LRU +1;
