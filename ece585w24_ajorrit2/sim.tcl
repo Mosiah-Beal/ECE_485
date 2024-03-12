@@ -12,6 +12,7 @@ proc main {mode trace_file} {
     noview source
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     # (Compile the design
     project open ECE485.mpf
     #project open ECE485.mpf
@@ -30,12 +31,17 @@ proc main {mode trace_file} {
     # simulate the design
     vsim work.top -suppress 12003
 =======
+=======
+>>>>>>> Stashed changes
     # Compile the design
     set project_name [glob *85*.mpf | *85.mpf]
    
  
     # Refresh the library
     vlog -work work -refresh -force_refresh     
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
     # Add signals to the wave window
@@ -76,9 +82,12 @@ proc add_cache_signals {} {
 }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # Execute the main procedure
 main
 =======
+=======
+>>>>>>> Stashed changes
 # Check if the number of command-line arguments is correct
 if {[llength $argv] != 3} {
     puts  $argv
@@ -92,4 +101,7 @@ set trace_file [lindex $argv 2]
 
 # Execute the main procedure
 main $mode $trace_file
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
