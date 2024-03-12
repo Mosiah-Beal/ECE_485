@@ -77,7 +77,7 @@ mesi_fsm fsm(
 
 
 // Define an array of instructions: n = 4 bits, address = 32 bits; 4+32 = 36 bits
-logic [35:0] instructions [TEST_INSTRUCTIONS];
+command_t instructions [TEST_INSTRUCTIONS];
 initial begin
     instructions[0] = {4'd8, 32'b0};         // reset
     instructions[1] = {35'b0};                  // read data
