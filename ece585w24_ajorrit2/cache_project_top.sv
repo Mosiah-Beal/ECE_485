@@ -325,7 +325,7 @@ always @(instruction) begin
 
             // Check if there were any hits on the instruction cache
             2: begin
-                if((|processor.instruction_read_bus == 1) || (|processor.instruction_read_bus=== 'x)) begin
+                if((|processor.instruction_read_bus == 1) || (|processor.instruction_read_bus === 'x)) begin
                     // Increment the hit counter and recalculate the ratio
                     hit_sum += 1;
                     ratio = hit_sum/(hit_sum + miss_sum);

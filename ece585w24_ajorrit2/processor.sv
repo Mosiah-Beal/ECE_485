@@ -52,7 +52,7 @@ module processor(
     // Loop through the ways to check for hits
     always_comb begin : check_hits
         // Check data cache ways for hits
-        for (i = 0; i < 8; i++) begin
+        for (int i = 0; i < 8; i++) begin
             data_read_bus[i] = 0;    // Assume this cache has no hit        
 
             // check if there is a match in the way, using the set index passed in (updates read_bus)
@@ -278,19 +278,20 @@ module processor(
                  
 
                     // Check if there are any hits in the instruction cache
-		    if(current_instruction !== prev_instruction) begin 
-                    	if((|instruction_read_bus == 1) || (|instruction_read_bus === 'x)) begin 
-                        	for(int i = 0; i< i_select; i++) begin
-                            	internal_i[i].LRU = current_line_i[i].LRU +1;
-                        	end
-                    	end
+		    if(current_instruction !== prev_instruction) begin
+			if(instruction.address.tag != current_line_i[i_select].tag )begin
+                    	 	if((|instruction_read_bus == 1) || (|instruction_read_bus === 'x)) begin 
+   		                     	for(int i = 0; i< i_select; i++) begin
+                	            	internal_i[i].LRU = current_line_i[i].LRU +1;
+                        		end
+                    		end
                     	// If there are no hits, update the LRU
-                    	else begin
-                        	for(int i = 0; i<4; i++) begin
-                         	   internal_i[i].LRU = current_line_i[i].LRU +1;
-                        	end 
-                    	end
-			
+                    		else begin
+                        		for(int i = 0; i<4; i++) begin
+                         	  	 internal_i[i].LRU = current_line_i[i].LRU +1;
+                        		end 
+                    		end
+			end
 		    end
 
                     internal_i[i_select].LRU = 3'b0;
@@ -309,19 +310,20 @@ module processor(
                     
 
                     // Check if there are any hits in the data cache
-                    if(current_instruction !== prev_instruction) begin 
-                    // Check if there are any hits in the data cache
-                    	if((|data_read_bus == 1) || (|data_read_bus === 'x)) begin 
-                        	for(int i = 0; i< d_select; i++) begin
-                            	internal_d[i].LRU = current_line_d[i].LRU +1;
-                        	end
-                    	end
+		    if(instruction !== prev_instruction) begin 
+			if(instruction.address.tag != current_line_d[d_select].tag )begin 
+                    		if((|data_read_bus == 1) || (|data_read_bus === 'x)) begin 
+                        		for(int i = 0; i< d_select; i++) begin
+                            		internal_d[i].LRU = current_line_d[i].LRU +1;
+                        		end
+                    		end
                     // If there are no hits, update the LRU
-                   	 else begin
-                        	for(int i = 0; i<8; i++) begin
-                            	internal_d[i].LRU = current_line_d[i].LRU +1;
-                        	end 
-                    	end
+                   	 	else begin
+                        		for(int i = 0; i<8; i++) begin
+                            		internal_d[i].LRU = current_line_d[i].LRU +1;
+                        		end 
+                    		end
+			end
                     end
 
                     internal_d[d_select].LRU = 3'b0;
@@ -340,19 +342,20 @@ module processor(
                     internal_d[d_select] = block_in;
 
                     // Check if there are any hits in the data cache
-                    if(current_instruction !== prev_instruction) begin 
-                    // Check if there are any hits in the data cache
-                    	if((|data_read_bus == 1) || (|data_read_bus === 'x)) begin 
-                        	for(int i = 0; i< d_select; i++) begin
-                            	internal_d[i].LRU = current_line_d[i].LRU +1;
-                        	end
-                    	end
+		    if(instruction !== prev_instruction) begin 
+			if(instruction.address.tag != current_line_d[d_select].tag )begin 
+                    		if((|data_read_bus == 1) || (|data_read_bus === 'x)) begin 
+                        		for(int i = 0; i< d_select; i++) begin
+                            		internal_d[i].LRU = current_line_d[i].LRU +1;
+                        		end
+                    		end
                     // If there are no hits, update the LRU
-                   	 else begin
-                        	for(int i = 0; i<8; i++) begin
-                            	internal_d[i].LRU = current_line_d[i].LRU +1;
-                        	end 
-                    	end
+                   	 	else begin
+                        		for(int i = 0; i<8; i++) begin
+                            		internal_d[i].LRU = current_line_d[i].LRU +1;
+                        		end 
+                    		end
+			end
                     end
 
                     internal_d[d_select].LRU = 3'b0;
