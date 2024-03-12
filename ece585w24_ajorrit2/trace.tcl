@@ -28,15 +28,12 @@ while {[gets $file line] >= 0} {
     set address [lindex $parts 1]
 
     # Convert n value and address into binary format
+    # Reverse the binary string because the module expects big endian
     set n_binary [string reverse [format %04b $n]]
     
-    # not reversed version
-    #set n_binary [format %04b $n]
-
     # Convert the address from hexadecimal to decimal
+    # Endianess is addressed when the address is split into tag, set index, and byte offset
     scan $address %x address_decimal
-
-    #set address_binary [string reverse [format %032b $address_decimal]]
 
     # not reversed version
     set address_binary [format %032b $address_decimal]
@@ -48,10 +45,10 @@ while {[gets $file line] >= 0} {
     lappend array $struct
 }
 
-puts "Sending to module"
+puts "Sending commands to module"
 
 set index 0
-run 1ns
+run 0ns
 
 # Loop through each struct in the array
 foreach struct $array {
@@ -63,11 +60,12 @@ foreach struct $array {
     set address_bits [split $address_binary ""]
 
     # Split address_bits into tag, set_index, and byte_offset
+    # After splitting, reverse the list to make it big endian
     set tag_bits [lreverse [lrange $address_bits 0 11]]
     set set_index_bits [lreverse [lrange $address_bits 12 25]]
     set byte_offset_bits [lreverse [lrange $address_bits 26 end]]
 
-    # Force the values
+    # Force the values (packed structs must be forced individually)
     for {set i 3} {$i >= 0} {incr i -1} {
         force -deposit /top/instructions[$index].n[$i] 1'b[lindex $n_bits $i]
     }
@@ -87,5 +85,8 @@ foreach struct $array {
 
     incr index
 }
+
+# Say that we are done
+puts "Done sending to module"
 
 stop

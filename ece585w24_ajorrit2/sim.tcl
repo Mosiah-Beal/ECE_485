@@ -36,6 +36,7 @@ proc main {} {
     configure wave -signalnamewidth 1
 
     view wave
+    
     # Run the simulation
     run -all
 
@@ -79,14 +80,3 @@ proc add_cache_signals {} {
 # Execute the main procedure
 main
 
-# Change to STATS mode
-force -deposit /top/mode_select 1
-
-# Run the simulation to the end of the instructions array
-run -all
-
-# Change to VERBOSE mode
-force -deposit /top/mode_select 2
-
-# Run the simulation to the end of the instructions array
-run -all

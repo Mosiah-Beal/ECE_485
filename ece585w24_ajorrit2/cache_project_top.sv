@@ -80,28 +80,6 @@ mesi_fsm fsm(
 command_t instructions [TEST_INSTRUCTIONS];
 initial begin
     instructions[0] = {4'd8, 32'b0};         // reset
-    instructions[1] = {35'b0};                  // read data
-    instructions[2] = {4'd0,32'h984DE132};      // read data
-    instructions[3] = {4'd0,32'h116DE12F};      // read data
-    instructions[4] = {4'd0,32'h100DE130};      // read data
-    instructions[5] = {4'd0,32'h999DE12E};      // read data
-    instructions[6] = {4'd0,32'h645DE10A};      // read data
-    instructions[7] = {4'd0,32'h846DE107};      // read data
-    instructions[8] = {4'd0,32'h211DE128};      // read data
-    instructions[9] = {4'd0,32'h777DE133};      // read data
-    instructions[10] = {4'd9,32'h777DE133};     // print stats
-    instructions[11] = {4'd0,32'h846DE107};     // read data
-    instructions[12] = {4'd0,32'h846DE107};     // read data
-    instructions[13] = {4'd0,32'h846DE107};     // read data
-    instructions[14] = {4'd9,32'h777DE133};     // print stats
-    instructions[15] = {4'd2,32'h846DE107};     // read instruction
-    instructions[16] = {4'd2,32'h984DE132};     // read instruction
-    instructions[17] = {4'd2,32'h116DE12F};     // read instruction
-    instructions[18] = {4'd2,32'h100DE130};     // read instruction
-    instructions[19] = {4'd2,32'h999DE12E};     // read instruction
-    instructions[20] = {4'd2,32'h645DE10A};     // read instruction
-    instructions[21] = {4'd2,32'h846DE107};     // read instruction
-
 end
 
 // Check if the MODE argument is provided
@@ -147,8 +125,18 @@ always @(negedge clk) begin
         if($isunknown(instructions[instruction_index])) begin
             $display("Invalid / last instruction reached.");
             
-            // Go back to silent mode
+            // Go back to beginning of the instruction array
             instruction_index = 0;
+            
+            // Clear the array
+            for(int i = 0; i < TEST_INSTRUCTIONS; i++) begin
+                instructions[i] = 'x;
+                // Keep the reset instruction at the beginning (in case no other instructions are provided)
+                if(i == 0) begin
+                    instructions[i] = {4'd8, 32'b0};
+                end
+            end
+
             mode_select = MODE_SILENT;
             
             // Stop the simulation
@@ -163,7 +151,8 @@ always @(negedge clk) begin
 
     // Silent mode
     else begin
-        // Do nothing
+        $display("Silent mode");
+        $stop;
     end
 end
 
