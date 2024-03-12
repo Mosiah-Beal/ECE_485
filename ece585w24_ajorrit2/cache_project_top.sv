@@ -88,11 +88,12 @@ function automatic string find(ref string a);
   string s; 
   string r;
 
-  for(int i = 0; i < len_a; i++) begin
+  for(int i = 0; i< len_a; i++) begin
 	s = a.substr(i,i);
 	case(s)
 	"0","1","2","3","4","5","6","7",
-	"8","9","A","B","C","D","E","F": r = {r,s};
+	"8","9","A","B","C","D","E","F",
+	"a","b","c","d","e","f": r = {r,s};
 		default: begin
 		continue;
 		end
@@ -305,7 +306,7 @@ always @(instruction) begin
         case(instruction.n)
             // Check if there were any hits on the data cache
             0,1,3,4: begin
-                if(|processor.data_read_bus)begin
+                if((|processor.data_read_bus == 1) || (|processor.data_read_bus === 'x))begin
                     // Increment the hit counter and recalculate the ratio
                     hit_sum += 1;
                     ratio = hit_sum/(hit_sum + miss_sum);
@@ -324,7 +325,7 @@ always @(instruction) begin
 
             // Check if there were any hits on the instruction cache
             2: begin
-                if(|processor.instruction_read_bus) begin
+                if((|processor.instruction_read_bus == 1) || (|processor.instruction_read_bus=== 'x)) begin
                     // Increment the hit counter and recalculate the ratio
                     hit_sum += 1;
                     ratio = hit_sum/(hit_sum + miss_sum);
