@@ -104,15 +104,144 @@ mesi_fsm fsm(
         );
 //count LRU(.rst(rst), .sum(sum));
 
+logic [36] instructions [TEST_INSTRUCTIONS];
 
+
+
+function automatic string find(ref string a);
+  // checks if string A contains string B
+  int len_a= a.len();
+  string s; 
+  string r;
+
+  for(int i = 0; i < len_a; i++) begin
+	s = a.substr(i,i);
+	case(s)
+	"0","1","2","3","4","5","6","7",
+	"8","9","A","B","C","D","E","F": r = {r,s};
+		default: begin
+		continue;
+		end
+	endcase 
+	//$display("s = %s", s);
+	//$display("r = %s", r);
+  end
+	return r;  
+	
+endfunction   
+
+
+function automatic void trace_in(ref logic [36] instructions[TEST_INSTRUCTIONS]);
+    string file;
+    int fp = 0;
+    int status = 0;
+    string line;
+    logic [36] hex_value = 36'b0;
+    int i = 0;
+
+    if (!$value$plusargs("FILENAME=%s", file)) begin
+        file = "trace.txt";
+        $display("WARNING: Using Default Trace settings.");
+    end 
+
+    fp = $fopen(file, "r");
+
+    if (!fp) begin
+        $display("FILE READ ERROR");
+        $stop;
+    end
+
+    while (!$feof(fp)) begin
+        $fgets(line, fp);
+    //$display("%s",line);
+    line = find(line);
+
+        // Convert the clean line to hex_value
+        status = $sscanf(line, "%h", hex_value);
+
+        // Display hex_value for debugging
+        //$display("%h", hex_value);
+
+        // Check if i exceeds the array size
+        if (i >= TEST_INSTRUCTIONS) begin
+            $display("SEGMENTATION FAULT");
+            break; // Exit the loop
+        end
+
+        // Store hex_value in instructions array
+        instructions[i] = hex_value;
+        i++;
+    end
+
+    $fclose(fp); // Close the file after processing
+endfunction
+
+ 
+
+
+
+<<<<<<< Updated upstream
+=======
+// Define an array of instructions: n = 4 bits, address = 32 bits; 4+32 = 36 bits
+
+/*initial begin
+    instructions[0] = {4'd8, 32'b0};         // reset
+    instructions[1] = {35'b0};                  // read data
+    instructions[2] = {4'd0,32'h984DE132};      // read data
+    instructions[3] = {4'd0,32'h116DE12F};      // read data
+    instructions[4] = {4'd0,32'h100DE130};      // read data
+    instructions[5] = {4'd0,32'h999DE12E};      // read data
+    instructions[6] = {4'd0,32'h645DE10A};      // read data
+    instructions[7] = {4'd0,32'h846DE107};      // read data
+    instructions[8] = {4'd0,32'h211DE128};      // read data
+    instructions[9] = {4'd0,32'h777DE133};      // read data
+    instructions[10] = {4'd9,32'h777DE133};     // print stats
+    instructions[11] = {4'd0,32'h846DE107};     // read data
+    instructions[12] = {4'd0,32'h846DE107};     // read data
+    instructions[13] = {4'd0,32'h846DE107};     // read data
+    instructions[14] = {4'd9,32'h777DE133};     // print stats
+    instructions[15] = {4'd2,32'h846DE107};     // read instruction
+    instructions[16] = {4'd2,32'h984DE132};     // read instruction
+    instructions[17] = {4'd2,32'h116DE12F};     // read instruction
+    instructions[18] = {4'd2,32'h100DE130};     // read instruction
+    instructions[19] = {4'd2,32'h999DE12E};     // read instruction
+    instructions[20] = {4'd2,32'h645DE10A};     // read instruction
+    instructions[21] = {4'd2,32'h846DE107};     // read instruction
+
+end*/
+
+// Check if the MODE argument is provided
+initial begin
+    // Check if MODE argument is provided
+    if ($test$plusargs("MODE=VERBOSE")) begin
+        mode_select = MODE_VERBOSE;
+    end 
+    else if ($test$plusargs("MODE=STATS")) begin
+        mode_select = MODE_STATS;     
+    end
+    else begin
+        mode_select = MODE_SILENT;
+    end
+end
+
+ 
+>>>>>>> Stashed changes
 // Clock generation
 always #TIME_DURATION clk = ~clk;
 
 
 // Set initial values
 initial begin
+<<<<<<< Updated upstream
     // Initialize inputs
     clk = 0;
+=======
+    // Initialize the caches
+    clk = 0;    // Start with a low clock (write mode)
+    instruction = {4'd8,32'b0,3'b0,2'b0};    // Send a reset instruction
+    trace_in(instructions);
+    // Allow FSM to initialize
+>>>>>>> Stashed changes
     rst = 1;
     instruction = {4'b1000,32'b0,3'b0,2'b0};
   
@@ -143,9 +272,28 @@ if(mode_select == MODE_STATS) begin
 	for (int i = 0; i < 20; i = i + 1) begin
 
         // Check if there are no more instructions left
+<<<<<<< Updated upstream
         if($isunknown(instructions[i])) begin
             $display("Invalid / last instruction reached. Exiting simulation.");
             break;
+=======
+        if($isunknown(instructions[instruction_index])) begin
+            
+	    $display("Invalid / last instruction reached.");
+	    $display("");
+            $display("read_sum = %d", read_sum);
+            $display("write_sum = %d", write_sum);
+            $display("miss_sum = %d", miss_sum);
+            $display("hit_sum = %d", hit_sum);
+            $display("ratio = %f", ratio);
+            $display("");
+            // Go back to silent mode
+            instruction_index = 0;
+            mode_select = MODE_SILENT;
+            
+            // Stop the simulation
+            $stop;
+>>>>>>> Stashed changes
         end
 
         
