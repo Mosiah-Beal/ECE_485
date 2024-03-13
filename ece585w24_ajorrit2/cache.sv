@@ -72,5 +72,9 @@ always_comb begin
 
     end
 
+    // Add a newline after printing the instruction and data cache lines
+    if(instruction.n == 9) begin
+        $display("");
+    end
 end
 endmodule

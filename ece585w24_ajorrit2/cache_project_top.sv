@@ -43,6 +43,9 @@ parameter MODE_SILENT = 0;
 parameter MODE_STATS = 1;
 parameter MODE_VERBOSE = 2;
 
+// Define an array of instructions: n = 4 bits, address = 32 bits; 4+32 = 36 bits
+command_t instructions [TEST_INSTRUCTIONS];
+
 // Instantiate the data cache with sets = 16384 and ways = 8
 cache #(.sets(SETS), .ways(D_WAYS)) data_cache (
         .clk(clk),
@@ -76,42 +79,97 @@ mesi_fsm fsm(
         .return_line(fsm_input_line)
         );
 
-
-
-logic [36] instructions [TEST_INSTRUCTIONS];
-
-
-
+// Takes a line of text and returns a string with only the first 9 valid hex characters (pads address with 0s if necessary)
 function automatic string find(ref string a);
-  // checks if string A contains string B
-  int len_a= a.len();
-  string s; 
-  string r;
+    int len_a= a.len();
+    int missing;    // number of missing characters
+    string s;       // substring for valid hex characters
+    string v;       // string to store valid hex characters
+    string r;       // string to store the first 9 valid hex characters (will be returned)
 
-  for(int i = 0; i< 9; i++) begin
-	s = a.substr(i,i);
-	case(s)
-	"0","1","2","3","4","5","6","7",
-	"8","9","A","B","C","D","E","F",
-	"a","b","c","d","e","f": r = {r,s};
-		default: begin
-		continue;
-		end
-	endcase 
-	//$display("s = %s", s);
-	//$display("r = %s", r);
-  end
+    // Strip the string of all non-hex characters
+    for(int i = 0; i < len_a; i++) begin
+
+        // Get the current character
+        s = a.substr(i,i);
+        case(s)
+            "0","1","2","3","4","5","6","7",
+            "8","9","A","B","C","D","E","F",
+            "a","b","c","d","e","f": begin
+                // Add the valid hex character to the string
+                v = {v,s};
+            end
+            default: begin
+                // Go to the next character
+                continue;
+            end
+        endcase 
+        //$display("s = %s", s);
+        //$display("v = %s", v);
+    end
+
+    // Check if there are no valid hex characters
+    if(v.len() == 0) begin
+        $display("WARNING: No valid hex characters found in the line, setting command to 8 00000000.");
+        //$display("line = %s", a);
+        r = "800000000";
+        return r;
+    end
+
+    // Check if the instruction is valid (0, 1, 2, 3, 4, 8, 9)
+    case(v.substr(0,0))
+        "0","1","2","3","4","8","9": begin
+            // Do nothing
+        end
+        default: begin
+            $display("WARNING: Invalid instruction found in the line, setting command to 8 00000000.");
+            //$display("v = %s", v);
+            r = "800000000";
+            return r;
+        end
+    endcase
+
+    // Check if the string is less than 9 characters (instruction is present)
+    if(v.len() < 9) begin
+        $display("WARNING: line is %d characters long", v.len());
+        //$display("v = %s", v);
+
+        // Add the instruction (first character) to the string
+        r = {r,v.substr(0,0)};
+
+        missing = 9 - v.len();
+
+        // For the remaining 8 characters needed, pad the string with 0s in front of the address
+        for(int i = 0; i < 8 - missing; i++) begin
+            r = {r,"0"};
+        end
+
+        // Now add the rest of the string (the address) 
+        r = {r,v.substr(1,v.len()-1)};
+
+        // one line version
+        //r = {v.substr(0,0), {8-v.len(){'0'}}, v.substr(1,v.len()-1)};
+        
+        // Display the result
+        $display("WARNING: Padded address = %s", r);
+    end
+    else begin
+        // Take the first 9 characters
+        r = v.substr(0,8);
+    end
+
+    $display("Extracted hex characters = %s", r);
 	return r;  
 	
 endfunction   
 
 
-function automatic void trace_in(ref logic [36] instructions[TEST_INSTRUCTIONS]);
+function automatic void trace_in(ref command_t instructions[TEST_INSTRUCTIONS]);
     string file;
     int fp = 0;
     int status = 0;
     string line;
-    logic [36] hex_value = 36'b0;
+    command_t hex_value = 36'b0;
     int i = 0;
 
     if (!$value$plusargs("FILENAME=%s", file)) begin
@@ -128,8 +186,8 @@ function automatic void trace_in(ref logic [36] instructions[TEST_INSTRUCTIONS])
 
     while (!$feof(fp)) begin
         $fgets(line, fp);
-    //$display("%s",line);
-    line = find(line);
+        //$display("%s",line);
+        line = find(line);
 
         // Convert the clean line to hex_value
         status = $sscanf(line, "%h", hex_value);
@@ -151,33 +209,7 @@ function automatic void trace_in(ref logic [36] instructions[TEST_INSTRUCTIONS])
     $fclose(fp); // Close the file after processing
 endfunction
 
-// Define an array of instructions: n = 4 bits, address = 32 bits; 4+32 = 36 bits
-/*
-initial begin
-    instructions[0] = {4'd8, 32'b0};         // reset
-    instructions[1] = {35'b0};                  // read data
-    instructions[2] = {4'd0,32'h984DE132};      // read data
-    instructions[3] = {4'd0,32'h116DE12F};      // read data
-    instructions[4] = {4'd0,32'h100DE130};      // read data
-    instructions[5] = {4'd0,32'h999DE12E};      // read data
-    instructions[6] = {4'd0,32'h645DE10A};      // read data
-    instructions[7] = {4'd0,32'h846DE107};      // read data
-    instructions[8] = {4'd0,32'h211DE128};      // read data
-    instructions[9] = {4'd0,32'h777DE133};      // read data
-    instructions[10] = {4'd9,32'h777DE133};     // print stats
-    instructions[11] = {4'd0,32'h846DE107};     // read data
-    instructions[12] = {4'd0,32'h846DE107};     // read data
-    instructions[13] = {4'd0,32'h846DE107};     // read data
-    instructions[14] = {4'd9,32'h777DE133};     // print stats
-    instructions[15] = {4'd2,32'h846DE107};     // read instruction
-    instructions[16] = {4'd2,32'h984DE132};     // read instruction
-    instructions[17] = {4'd2,32'h116DE12F};     // read instruction
-    instructions[18] = {4'd2,32'h100DE130};     // read instruction
-    instructions[19] = {4'd2,32'h999DE12E};     // read instruction
-    instructions[20] = {4'd2,32'h645DE10A};     // read instruction
-    instructions[21] = {4'd2,32'h846DE107};     // read instruction
 
-end*/
 
 // Check if the MODE argument is provided
 initial begin
@@ -206,6 +238,7 @@ initial begin
     clk = 0;    // Start with a low clock (write mode)
     instruction = {4'd8,32'b0,3'b0,2'b0};    // Send a reset instruction
     trace_in(instructions);
+    
     // Allow FSM to initialize
     rst = 1;
     #TIME_DURATION;
@@ -274,19 +307,6 @@ end
 
 // Whenever the instruction changes
 always @(posedge clk) begin
-   
-    // Display the cache lines if the instruction is 9
-    /*if(instruction.n == 9) begin
-        if(clk) begin
-	// Data cache
-            $display("Time = %0t: \t\tData Cache Line[%h] = %p", $time, instruction.address.set_index, data_cache.cache_out);
-        
-	// Instruction cache
-       
-            $display("Time = %0t: \t\tInstruction Cache Line[%h] = %p", $time, instruction.address.set_index, instruction_cache.cache_out);
-	    $display("");
-	end
-    end*/
 
     // Check if have something to do
     if(mode_select >= MODE_STATS) begin
@@ -326,7 +346,7 @@ always @(posedge clk) begin
 
             // Check if there were any hits on the instruction cache
             2: begin
-                if(processor.instruction_read_bus) begin
+                if(|processor.instruction_read_bus) begin
                     // Increment the hit counter and recalculate the ratio
                     hit_sum++;
                     ratio = hit_sum/(hit_sum + miss_sum);
@@ -362,7 +382,7 @@ always @(posedge clk) begin
 
             9: begin
                 // Print the statistics
-		$display("");
+		        $display("time = %0t", $time);
                 $display("read_sum =  %0d", read_sum);
                 $display("write_sum = %0d", write_sum);
                 $display("miss_sum =  %0d", miss_sum);
@@ -374,6 +394,7 @@ always @(posedge clk) begin
             default: begin
                 // If we are in verbose mode, also print the statistics every instruction
                 if (mode_select >= MODE_VERBOSE) begin
+                    $display("Verbose mode: time = %0t", $time);
                     $display("read_sum = %d", read_sum);
                     $display("write_sum = %d", write_sum);
                     $display("miss_sum = %d", miss_sum);
