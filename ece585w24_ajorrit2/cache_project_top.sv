@@ -362,6 +362,7 @@ always @(posedge clk) begin
 
             9: begin
                 // Print the statistics
+		$display("");
                 $display("read_sum =  %0d", read_sum);
                 $display("write_sum = %0d", write_sum);
                 $display("miss_sum =  %0d", miss_sum);
