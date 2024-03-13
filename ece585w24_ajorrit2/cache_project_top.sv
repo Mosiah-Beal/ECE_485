@@ -25,11 +25,13 @@ module top;
     logic [2:0] mode_select;
     int sum_d;
     int sum_i;
-    static real hit_sum = 0;
-    static real miss_sum = 0; 
-    static int read_sum = 0;
-    static int write_sum = 0;
+    static real hit_sum = 0;    // Number of hits
+    static real miss_sum = 0;   // Number of misses
+    static int read_sum = 0;    // Number of reads
+    static int write_sum = 0;   // Number of writes
     real ratio;
+    static int i_safe = 1; // Assume the instruction cache is safe
+    static int d_safe = 1; // Assume the data cache is safe
     int instruction_index = 0;
 
 // Parameters
@@ -110,9 +112,9 @@ function automatic string find(ref string a);
 
     // Check if there are no valid hex characters
     if(v.len() == 0) begin
-        $display("WARNING: No valid hex characters found in the line, setting command to 8 00000000.");
-        //$display("line = %s", a);
-        r = "800000000";
+        $display("WARNING: No valid hex characters found in the line, skipping");
+        $display("line = %s", a);
+        r = "skip";
         return r;
     end
 
@@ -122,9 +124,9 @@ function automatic string find(ref string a);
             // Do nothing
         end
         default: begin
-            $display("WARNING: Invalid instruction found in the line, setting command to 8 00000000.");
-            //$display("v = %s", v);
-            r = "800000000";
+            $display("WARNING: Invalid instruction found in the line, skipping");
+            $display("Extracted line = %s", v);
+            r = "skip";
             return r;
         end
     endcase
@@ -158,7 +160,7 @@ function automatic string find(ref string a);
         r = v.substr(0,8);
     end
 
-    $display("Extracted hex characters = %s", r);
+    // $display("Extracted hex characters = %s", r);
 	return r;  
 	
 endfunction   
@@ -172,22 +174,37 @@ function automatic void trace_in(ref command_t instructions[TEST_INSTRUCTIONS]);
     command_t hex_value = 36'b0;
     int i = 0;
 
+    // Check if the FILENAME argument is provided
     if (!$value$plusargs("FILENAME=%s", file)) begin
         file = "trace.txt";
         $display("WARNING: Using Default Trace settings.");
     end 
 
+    // Try to open the file
     fp = $fopen(file, "r");
 
+    // Check if the file was opened successfully
     if (!fp) begin
         $display("FILE READ ERROR");
         $stop;
     end
 
+    // Insert a reset instruction at the beginning of the array
+    instructions[i++] = {4'd8,32'b0};
+
+    // Read the file line by line
     while (!$feof(fp)) begin
+        // Read a line from the file
         $fgets(line, fp);
         //$display("%s",line);
+        
+        // Clean the line
         line = find(line);
+
+        // Check if the line is invalid
+        if(line == "skip") begin
+            continue;
+        end
 
         // Convert the clean line to hex_value
         status = $sscanf(line, "%h", hex_value);
@@ -202,8 +219,7 @@ function automatic void trace_in(ref command_t instructions[TEST_INSTRUCTIONS]);
         end
 
         // Store hex_value in instructions array
-        instructions[i] = hex_value;
-        i++;
+        instructions[i++] = hex_value;
     end
 
     $fclose(fp); // Close the file after processing
@@ -479,17 +495,39 @@ always @(posedge clk) begin
 
         // Otherwise, check the LRU values
         default: begin
-            // Check if the instruction cache has duplicate LRU bits
-            if (sum_i != 6) begin
-                $display("WARNING (top): at time %0t Duplicate LRU bits found in instruction cache.", $time);
-                // Nice formatting
-                if(sum_d == 28) begin
-                    $display("");   // Add a new line
+
+            // Check if the caches are safe
+            i_safe = 1; // Assume the instruction cache is safe
+            d_safe = 1; // Assume the data cache is safe
+
+            // Check that the instruction cache is not in an invalid state
+            for(int i = 0; i < I_WAYS; i++) begin
+                if (|cache_output_i[i] === 'x) begin
+                    // $display("WARNING (top): at time %0t Instruction cache is in an invalid state.", $time);
+                    i_safe = 0; // The instruction cache is not safe
                 end
             end
 
-            // Check if the data cache has duplicate LRU bits
-            if (sum_d != 28) begin
+            // Check that the data cache is not in an invalid state
+            for(int i = 0; i < D_WAYS; i++) begin
+                if (|cache_output_d[i] === 'x) begin
+                    // $display("WARNING (top): at time %0t Data cache is in an invalid state.", $time);
+                    d_safe = 0; // The data cache is not safe
+                end
+            end
+
+
+            // Check if the instruction cache has duplicate LRU bits (and isn't in an invalid state)
+            if ((sum_i != 6) && (i_safe == 1)) begin
+                $display("WARNING (top): at time %0t Duplicate LRU bits found in instruction cache.", $time);
+                // Nice formatting
+                if((sum_d == 28) || (d_safe == 0)) begin
+                    $display("");   // Add a new line since this is the last warning
+                end
+            end
+
+            // Check if the data cache has duplicate LRU bits (and isn't in an invalid state)
+            if ((sum_d != 28) && (d_safe == 1)) begin
                 $display("WARNING (top): at time %0t Duplicate LRU bits found in data cache.\n", $time);
             end
         end
