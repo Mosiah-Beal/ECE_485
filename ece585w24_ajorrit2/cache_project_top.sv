@@ -25,10 +25,10 @@ module top;
     logic [2:0] mode_select;
     int sum_d;
     int sum_i;
-    real hit_sum = 0;
-    real miss_sum = 0; 
-    int read_sum = 0;
-    int write_sum = 0;
+    static real hit_sum = 0;
+    static real miss_sum = 0; 
+    static int read_sum = 0;
+    static int write_sum = 0;
     real ratio;
     int instruction_index = 0;
 
@@ -88,7 +88,7 @@ function automatic string find(ref string a);
   string s; 
   string r;
 
-  for(int i = 0; i< len_a; i++) begin
+  for(int i = 0; i< 9; i++) begin
 	s = a.substr(i,i);
 	case(s)
 	"0","1","2","3","4","5","6","7",
@@ -210,6 +210,7 @@ initial begin
     rst = 1;
     #TIME_DURATION;
     rst = 0;
+
     $stop;
 end
 
@@ -272,20 +273,20 @@ always @(mode_select) begin
 end
 
 // Whenever the instruction changes
-always @(instruction) begin
+always @(posedge clk) begin
    
     // Display the cache lines if the instruction is 9
-    if(instruction.n == 9) begin
-        // Data cache
-        for(int i = 0; i < D_WAYS; i++) begin
-            $display("Time = %0t: \t\tData Cache Line[%h] = %p", $time, instruction.address.set_index, data_cache.cache[instruction.address.set_index][i]);
-        end
-        // Instruction cache
-        for(int i = 0; i < I_WAYS; i++) begin
-            $display("Time = %0t: \t\tInstruction Cache Line[%h] = %p", $time, instruction.address.set_index, instruction_cache.cache[instruction.address.set_index][i]);
-        end
-        $display("");
-    end
+    /*if(instruction.n == 9) begin
+        if(clk) begin
+	// Data cache
+            $display("Time = %0t: \t\tData Cache Line[%h] = %p", $time, instruction.address.set_index, data_cache.cache_out);
+        
+	// Instruction cache
+       
+            $display("Time = %0t: \t\tInstruction Cache Line[%h] = %p", $time, instruction.address.set_index, instruction_cache.cache_out);
+	    $display("");
+	end
+    end*/
 
     // Check if have something to do
     if(mode_select >= MODE_STATS) begin
@@ -306,9 +307,9 @@ always @(instruction) begin
         case(instruction.n)
             // Check if there were any hits on the data cache
             0,1,3,4: begin
-                if((|processor.data_read_bus == 1) || (|processor.data_read_bus === 'x))begin
+                if(|processor.data_read_bus)begin
                     // Increment the hit counter and recalculate the ratio
-                    hit_sum += 1;
+                    hit_sum ++;
                     ratio = hit_sum/(hit_sum + miss_sum);
                 end
                 else begin
@@ -325,9 +326,9 @@ always @(instruction) begin
 
             // Check if there were any hits on the instruction cache
             2: begin
-                if((|processor.instruction_read_bus == 1) || (|processor.instruction_read_bus === 'x)) begin
+                if(processor.instruction_read_bus) begin
                     // Increment the hit counter and recalculate the ratio
-                    hit_sum += 1;
+                    hit_sum++;
                     ratio = hit_sum/(hit_sum + miss_sum);
                 end
                 else begin
@@ -384,7 +385,7 @@ always @(instruction) begin
 
         // Now check if we need to print the transition
         if (mode_select >= MODE_VERBOSE) begin
-            $display("Transitioning from %p to %p", fsm.internal_line.MESI_bits, fsm.nextstate);
+            $display("Transitioning from %p to %p : time = %0t", fsm.internal_line.MESI_bits, fsm.nextstate,$time);
             
             case(fsm.internal_line.MESI_bits)
                 // Current state is M

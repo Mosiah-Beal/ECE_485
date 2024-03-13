@@ -17,7 +17,9 @@ module cache #(parameter sets = 16384, parameter ways = 8)(
 cache_line_t cache[sets-1:0][ways-1:0];   // L1 cache
 
 always_comb begin
-
+if(instruction.n == 9) begin
+$display("\n");
+end
     for (int i = 0; i < ways; i++) begin
         // read
         if(clk == 0) begin
@@ -61,7 +63,7 @@ always_comb begin
                 end
                 
                 9: begin // Display cache line
-                    $display("Time = %t : Cache Line[%h] = %p", $time, instruction.address.set_index, cache[instruction.address.set_index][i]);
+                    //$display("Time = %t : Cache Line[%h] = %p", $time, instruction.address.set_index, cache[instruction.address.set_index][i]);
                 end
                 
                 default: begin
@@ -72,7 +74,7 @@ always_comb begin
 
     end
 if(instruction.n == 9) begin
-$display("\n\n");
+$display("\n");
 end
 end
 endmodule

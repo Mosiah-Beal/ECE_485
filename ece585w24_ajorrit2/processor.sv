@@ -58,18 +58,7 @@ module processor(
             // check if there is a match in the way, using the set index passed in (updates read_bus)
             if (instruction.address.tag == current_line_d[i].tag) begin
                 case (instruction.n)  // which instruction is this?
-                    0: begin // data read
-                        data_read_bus[i] = 1;   // if read instruction -> hit;
-                    end
-                    1: begin // data write
-                        data_read_bus[i] = 'z;   // if write instruction -> hitM;
-                    end
-                    2: begin // instruction fetch
-                        data_read_bus[i] = 1;
-                    end
-                    3: begin // L2 invalidate
-                        data_read_bus[i] = 'z;   // if hit found on other caches
-                    end
+                    0,1,2,3,4: data_read_bus[i] = 1;   // if read instruction -> hit;
                     default: begin
                         data_read_bus[i] = '0;   // dont care
                     end
@@ -86,18 +75,7 @@ module processor(
             // check if there is a match in the way, using the set index passed in (updates read_bus)
             if (instruction.address.tag == current_line_i[j].tag) begin
                 case (instruction.n)  // which instruction is this?
-                    0: begin // data read
-                        instruction_read_bus[j] = 1;   // if read instruction -> hit;
-                    end
-                    1: begin // data write
-                        instruction_read_bus[j] = 'z;   // if write instruction -> hitM;
-                    end
-                    2: begin // instruction fetch
-                        instruction_read_bus[j] = 1;
-                    end
-                    3: begin // L2 invalidate
-                        instruction_read_bus[j] = 'z;   // if hit found on other caches
-                    end
+                    0,1,2,3,4: instruction_read_bus[j] = 1;   // if read instruction -> hit;
                     default: begin
                         instruction_read_bus[j] = '0;   // dont care
                     end
