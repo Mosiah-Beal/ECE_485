@@ -574,7 +574,7 @@ always_ff @(posedge clk) begin
         $display("\tEvicted line = %p", processor.internal_d[processor.d_select]);
         
         // The first 8 lines are writethrough, the rest are writeback
-        if(++num_evicts_d < D_WAYS) begin
+        if(++num_evicts_d <= D_WAYS) begin
             num_writethroughs_d++;
             // Display what line was written to L2
             $display("Writethrough to L2 <%h>", processor.internal_d[processor.d_select].tag);
@@ -593,7 +593,7 @@ always_ff @(posedge clk) begin
         $display("\tEvicted line = %p", processor.internal_i[processor.i_select]);
 
         // The first 4 lines are writethrough, the rest are writeback
-        if(++num_evicts_i < I_WAYS) begin
+        if(++num_evicts_i <= I_WAYS) begin
             num_writethroughs_i++;
             // Display what line was written to L2
             $display("Writethrough to L2 <%h>", processor.internal_i[processor.i_select].tag);
