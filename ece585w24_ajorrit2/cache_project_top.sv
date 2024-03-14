@@ -631,9 +631,6 @@ always_ff @(posedge clk) begin
             $display("Writeback[%0d]i to L2 <%h>", num_writebacks_i, processor.internal_i[processor.i_select].tag);
 
         end
-    endcase
-
-        processor.evict_i = 0; // Reset the flag
     end
 
 end
