@@ -112,6 +112,12 @@ function automatic string find(ref string a);
     string v;       // string to store valid hex characters
     string r;       // string to store the first 9 valid hex characters (will be returned)
 
+    // Skip lines which are empty or start with a #
+    if(a.len() == 0 || a.substr(0,0) == "#") begin
+        r = "skip";
+        return r;
+    end
+
     // Strip the string of all non-hex characters
     for(int i = 0; i < len_a; i++) begin
 

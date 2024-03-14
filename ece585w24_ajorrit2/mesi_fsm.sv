@@ -55,7 +55,7 @@ module mesi_fsm(
 
             I: begin
                 case (instruction.n)
-		    0,2: nextstate = E;
+		            0,2: nextstate = E;
                     1: nextstate = M;
                     default: nextstate = I;
                 endcase
