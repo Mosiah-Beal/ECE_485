@@ -204,14 +204,16 @@ module processor(
     end
 
     // Update the cache line
-    always_comb begin 
+    always_comb begin
+        // Update the internal cache lines
+        internal_d = current_line_d;
+        internal_i = current_line_i;
+
         case(instruction.n)
-            0, 1: begin
+            // Data cache
+            0, 1, 3, 4: begin
                 // Send the selected way to the FSM to update the MESI bits
                 block_out = current_line_d[d_select];
-
-                // Update the internal data cache line 
-                internal_d = current_line_d;
             
                 // Update it with the MESI bits from the FSM
                 internal_d[d_select].MESI_bits = block_in.MESI_bits;
@@ -222,7 +224,7 @@ module processor(
                     if(|data_read_bus) begin 
                         for(int i = 0; i< 8; i++) begin
                             if(internal_d[i].LRU < current_line_d[d_select].LRU) begin
-                                internal_d[i].LRU = current_line_d[i].LRU +1;
+                                internal_d[i].LRU++;
                             end
                         end
                     end
@@ -230,140 +232,56 @@ module processor(
                     // If there are no hits, update the LRU
                     else begin
                         for(int i = 0; i<8; i++) begin
-                            internal_d[i].LRU = current_line_d[i].LRU +1;
+                            internal_d[i].LRU++;
                         end 
                     end
                 
                     // Set the LRU of the selected way to 0 only if this is a new instruction
                     internal_d[d_select].LRU = 3'b0;
                 end
-        
-                // Return the updated cache line
-                return_line_d = internal_d;
-                return_line_i = current_line_i;
             end
 
+            // Instruction cache
             2: begin
                 // Send the selected way to the FSM to update the MESI bits
                 block_out = current_line_i[i_select];
 
-                // Update the internal cache line
-                internal_i = current_line_i;   
-
                 // Update it with the MESI bits from the FSM
                 internal_i[i_select].MESI_bits = block_in.MESI_bits;
+
+                // Update the tag of the selected way
                 internal_i[i_select].tag = instruction.address.tag;
 
                 // Check if there are any hits in the instruction cache
                 if(current_instruction !== prev_instruction) begin
                     if(|instruction_read_bus) begin 
                         for(int i = 0; i < 4; i++) begin
+                            // If the way has a lower LRU value than the selected way, increment the LRU
                             if(internal_i[i].LRU < current_line_i[i_select].LRU) begin
-                                internal_i[i].LRU = current_line_i[i_select].LRU + 1;
+                                internal_i[i].LRU++;
                             end
                         end
                     end
                     // If there are no hits, update the LRU
                     else begin
                         for(int i = 0; i < 4; i++) begin
-                            
-                            // Make sure we wrap around the LRU (3 -> 0)
-                            if(internal_i[i].LRU == 3) begin
-                                internal_i[i].LRU = 0;
-                            end
-                            else begin
-                                internal_i[i].LRU = current_line_i[i].LRU + 1;
-                            end
+                            internal_i[i].LRU++;
                         end 
                     end
 
                     // Set the LRU of the selected way to 0 only if this is a new instruction
                     internal_i[i_select].LRU = 3'b0;
                 end
-
-
-
-                // Return the updated cache line
-                return_line_i = internal_i;    
-                return_line_d = current_line_d;
-            end
-
-            3: begin
-                // Send the selected way to the FSM to update the MESI bits
-                block_out = current_line_d[d_select];
-
-                // Update the internal cache line
-                internal_d = current_line_d;
-
-                // Update it with the MESI bits from the FSM
-                internal_d[d_select].MESI_bits = block_in.MESI_bits;
-                internal_d[d_select].tag = instruction.address.tag;
-
-                // Check if there are any hits in the data cache
-                if(instruction !== prev_instruction) begin 
-                    if(|data_read_bus) begin 
-                        for(int i = 0; i < 8; i++) begin
-                            if(internal_d[i].LRU < current_line_d[d_select].LRU) begin
-                                internal_d[i].LRU = current_line_d[d_select].LRU + 1;
-                            end
-                        end
-                    end
-                    // If there are no hits, update the LRU
-                    else begin
-                        for(int i = 0; i < 8; i++) begin
-                            internal_d[i].LRU = current_line_d[d_select].LRU + 1;
-                        end 
-                    end
-
-                    // Set the LRU of the selected way to 0 only if this is a new instruction
-                    internal_d[d_select].LRU = 3'b0;
-                end    
-                
-                // Return the updated cache line
-                return_line_d = internal_d;
-                return_line_i = current_line_i;
-            end
-
-            4: begin
-                // Send the selected way to the FSM to update the MESI bits
-                block_out = current_line_d[d_select];
-
-                // Update the internal cache line
-                internal_d = current_line_d;
-
-                // Update it with the MESI bits from the FSM
-                internal_d[d_select].MESI_bits = block_in.MESI_bits;
-                internal_d[d_select].tag = instruction.address.tag;
-
-                // Check if there are any hits in the data cache
-                if(instruction !== prev_instruction) begin 
-                    if(|data_read_bus) begin 
-                        for(int i = 0; i < 8; i++) begin
-                            if(internal_d[i].LRU < current_line_d[d_select].LRU) begin
-                                internal_d[i].LRU = current_line_d[d_select].LRU + 1;
-                            end
-                        end
-                    end
-                    // If there are no hits, update the LRU
-                    else begin
-                        for(int i = 0; i < 8; i++) begin
-                            internal_d[i].LRU = current_line_d[d_select].LRU + 1;
-                        end 
-                    end
-
-                    // Set the LRU of the selected way to 0
-                    internal_d[d_select].LRU = 3'b0;
-                end
-
-                // Return the updated cache line
-                return_line_d = internal_d;
-                return_line_i = current_line_i;
             end
 
             8, 9: begin
                 // Do nothing 
             end
         endcase
+
+        // Return the updated cache line(s)
+        return_line_d = internal_d;
+        return_line_i = internal_i;
     end       
 
 endmodule
