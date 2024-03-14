@@ -1,20 +1,20 @@
-8 66666666
-0 10019d94
-1 10019d88 hit
-2 408edc00
-3 6098f800 
-4 203d8c00 
-0 20ff8800 
-1 20ff8c00 hit 
-2 408edc00 hit
-3 6098f800 hit
-4 203d8c00 hit
-0 10019d90
-1 10019d8c hit
-2 408edc00 hit
-3 6098f800 hit
-4 203d8e00
-9 203d8e00 
-8 00000000
-9 203d8e00
+8 66666666 restart
+0 10019d94 dread  (100, 0676, 14) miss
+1 10019d88 dwrite (100, 0676, 08) hit
+2 408edc00 iread  (408, 3B70, 00) miss
+3 6098f800 dwrite (609, 23E0, 00) miss 
+4 203d8c00 iread  (203, 3630, 00) miss
+0 20ff8800 iread  (20F, 3E20, 00) miss
+1 20ff8c00 dwrite (20F, 3E30, 00) miss 
+2 408edc00 iread  (408, 3B70, 00) hit
+3 6098f800 dwrite (609, 23E0, 00) hit 
+4 203d8c00 iread  (203, 3630, 00) hit
+0 10019d90 dread  (100, 0676, 10) hit
+1 10019d8c dwrite (100, 0676, 0C) hit
+2 408edc00 iread  (408, 3B70, 00) hit
+3 6098f800 iwrite (609, 23E0, 00) hit
+4 203d8e00 iread  (203, 3638, 00) miss
+9 203d8e00 print  
+8 00000000 restart
+9 203d8e00 print
 
