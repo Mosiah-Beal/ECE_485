@@ -311,7 +311,7 @@ always #TIME_DURATION clk = ~clk;
 initial begin
     // Initialize the caches
     clk = 0;    // Start with a low clock (write mode)
-    instruction = {4'd8,32'b0,3'b0,2'b0};    // Send a reset instruction
+    instruction = {4'd8,32'b0};    // Send a reset instruction
     trace_in(instructions);
     
     // Allow FSM to initialize
@@ -487,7 +487,7 @@ always @(posedge clk) begin
         // Check if we need to print information about the other modules
         if (mode_select >= MODE_VERBOSE) begin
             // FSM MESI transitions
-            $display("time = %0t: Transitioning from %p to %p", $time, fsm.internal_line.MESI_bits, fsm.nextstate);
+            $display("time = %0t: Transitioning from %p to %p For instruction[%0d]", $time, fsm.internal_line.MESI_bits, fsm.nextstate, instruction_index);
             
             case(fsm.internal_line.MESI_bits)
                 // Current state is Modified
