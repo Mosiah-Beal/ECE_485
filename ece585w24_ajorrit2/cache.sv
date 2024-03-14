@@ -23,7 +23,7 @@ always_comb begin
             for (int j = 0; j < ways; j++) begin
                 cache[i][j].LRU = j;            // LRU = way of the cache line (0, 1, 2, 3, 4, 5, 6, 7)
                 cache[i][j].MESI_bits = I;      // Initialize MESI bits to Invalid
-                cache[i][j].tag = 12'b0;        // Initialize tag to 0
+                cache[i][j].tag = i;            // Initialize tag to set index
                 cache[i][j].data = i;           // Initialize mem to set index
             end
         end
