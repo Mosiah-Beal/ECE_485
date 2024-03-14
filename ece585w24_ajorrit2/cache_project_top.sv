@@ -461,6 +461,9 @@ always @(posedge clk) begin
 
 		I: begin
 			case(fsm.nextstate)
+				M: begin
+				$display("Read for Ownership from L2 <%h>", instruction.address);	
+				end 	
 				E: begin
 				$display("Read from L2 <%h>", instruction.address);
 				end
