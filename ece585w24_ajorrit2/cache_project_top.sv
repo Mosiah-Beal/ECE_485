@@ -577,12 +577,12 @@ always_ff @(posedge clk) begin
         if(++num_evicts_d <= D_WAYS) begin
             num_writethroughs_d++;
             // Display what line was written to L2
-            $display("Writethrough to L2 <%h>", processor.internal_d[processor.d_select].tag);
+            $display("Writethrough[%0d]d to L2 <%h>", num_writethroughs_d, processor.internal_d[processor.d_select].tag);
         end
         else begin
             num_writebacks_d++;
             // Display what line was written to L2
-            $display("Writeback to L2 <%h>", processor.internal_d[processor.d_select].tag);
+            $display("Writeback[%0d]d to L2 <%h>", num_writebacks_d, processor.internal_d[processor.d_select].tag);
         end
     end
 
@@ -596,12 +596,12 @@ always_ff @(posedge clk) begin
         if(++num_evicts_i <= I_WAYS) begin
             num_writethroughs_i++;
             // Display what line was written to L2
-            $display("Writethrough to L2 <%h>", processor.internal_i[processor.i_select].tag);
+            $display("Writethrough[%0d]i to L2 <%h>", num_writethroughs_i, processor.internal_i[processor.i_select].tag);
         end
         else begin
             num_writebacks_i++;
             // Display what line was written to L2
-            $display("Writeback to L2 <%h>", processor.internal_i[processor.i_select].tag);
+            $display("Writeback[%0d]i to L2 <%h>", num_writebacks_i, processor.internal_i[processor.i_select].tag);
         end
 
         processor.evict_i = 0; // Reset the flag
