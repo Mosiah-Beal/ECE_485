@@ -1,0 +1,19 @@
+8          restart
+0 10019d94 dread  (100, 0676, 14) miss
+1 10019d88 dwrite (100, 0676, 08) hit
+2 20019d88 iread  (200, 0676, 08) miss
+3 30019d88 dwrite (300, 0676, 08) miss
+4 40019d88 dread  (400, 0676, 08) miss
+0 50019d88 dread  (500, 0676, 08) miss
+1 60019d88 dwrite (600, 0676, 08) miss
+2 70019d88 iread  (700, 0676, 08) miss
+3 80019d88 dwrite (800, 0676, 08) miss
+4 90019d88 dread  (900, 0676, 08) miss
+0 10019d90 dread  (100, 0676, 10) miss
+1 10019d8c dwrite (100, 0676, 0C) hit
+2 20019d8c iread  (200, 0676, 0C) hit
+3 30019d8c dwrite (300, 0676, 0C) hit
+4 40019d8c dread  (400, 0676, 0C) hit
+9          print  
+8          restart
+9          print

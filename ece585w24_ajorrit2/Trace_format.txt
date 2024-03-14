@@ -1,0 +1,44 @@
+// Instruction (n)
+Where n is 
+0 read data request to L1 data cache 
+1 write data request to L1 data cache 
+2 instruction fetch (a read request to L1 instruction cache) 
+3 invalidate command from L2 
+4 data request from L2 (in response to snoop) 
+8 clear the cache and reset all state (and statistics) 
+9 print contents and state of the cache (allow subsequent trace activity)
+
+typedef struct packed {
+	logic [11:0] tag;         // 12 bits for tag
+	logic [13:0] set_index;   // 14 bits for set index
+	logic [5:0]  byte_offset; // 6 bits for byte offset
+} address_t;
+
+
+0x00000000 - 0x0000003F all have the same tag and set index 
+
+
+
+
+// Test replacement strategies for an 8-way associative cache
+0 0x00000000
+0 0x00000040
+0 0x00000080
+0 0x000000C0
+0 0x00000100
+0 0x00000140 
+0 0x00000180 
+0 0x000001C0
+0 0x00000200
+0 0x00000240 
+0 0x00000280 
+0 0x000002C0
+0 0x00000300
+0 0x00000340 
+0 0x00000380 
+0 0x000003C0
+0 0x00000400
+0 0x00000440 
+0 0x00000480 
+0 0x000004C0
+0 0x00000500
