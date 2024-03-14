@@ -32,8 +32,6 @@
 *.app
 
 # Others
-*.bak
+**/*.bak
 
-*.json
-
-#*.tcl
+**/*.json

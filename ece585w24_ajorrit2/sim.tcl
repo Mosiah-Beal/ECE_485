@@ -78,20 +78,6 @@ if {[info exists mode] && [info exists trace_file]} {
 
 }
 
-# # Check if the number of command-line arguments is correct
-# if {[llength $argv] != 3} {
-#     puts  $argv
-#     puts "Usage: $argv0 <mode> <trace_file>"
-#     exit 1
-# }
-
-# # Extract mode and trace file from command-line arguments
-# set mode [lindex $argv 1]
-# set trace_file [lindex $argv 2]
-
-# Execute the main procedure
-# main $mode $trace_file
-
 # Command to run the simulation
 # vsim -do "set trace_file trace1.txt; set mode STATS; source sim.tcl" work.top
 
