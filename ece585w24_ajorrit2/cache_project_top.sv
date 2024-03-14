@@ -482,6 +482,7 @@ always @(posedge clk) begin
 				E: begin
 				$display("Read from L2 <%h>", instruction.address);
 				end
+            endcase
 		end 
                 // Current state is E
                 // Current state is S
