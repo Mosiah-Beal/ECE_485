@@ -154,7 +154,7 @@ function automatic string find(ref string a);
         end
         "8", "9": begin
             // Reset or print statistics, set the rest of the string to 0s
-            r = v;
+            r = v.substr(0,0);
             r = {r,"00000000"};
             return r;
 
@@ -269,7 +269,7 @@ function automatic void trace_in(ref command_t instructions[TEST_INSTRUCTIONS]);
 
         // Display hex_value for debugging
         // $display("%p", hex_value);
-        // $display("Cleaned line: %s",line);
+        
 
         // Check if i exceeds the array size
         if (i >= TEST_INSTRUCTIONS) begin
@@ -278,6 +278,7 @@ function automatic void trace_in(ref command_t instructions[TEST_INSTRUCTIONS]);
         end
 
         // Store hex_value in instructions array
+        // $display("Cleaned line: %s",line);
         instructions[i++] = hex_value;
     end
 

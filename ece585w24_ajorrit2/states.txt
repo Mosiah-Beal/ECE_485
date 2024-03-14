@@ -6,28 +6,21 @@
 # S -> M, S, I
 # I -> M, E, I
 
-# Test if MESI bits can reach all values
-8 00000000   # Reset cacheline to Invalid
-1 00000000   # I -> M
-0 00000000   # M -> E
-4 00000000   # E -> S
-3 00000000   # S -> I
-
 # Modified transitions
 1 10000000   # First M
 1 20000000   # Second M
 1 10000000   # M -> M
 3 20000000   # M -> I
+8 00000000
 
 # Exclusive transitions
 0 10000000   # First E
 0 20000000   # Second E
 0 30000000   # Third E
-0 40000000   # Fourth E
-0 10000000   # E -> E
-4 20000000   # E -> S
-1 30000000   # E -> M
-3 40000000   # E -> I
+4 10000000   # E -> S
+1 20000000   # E -> M
+3 30000000   # E -> I
+8 00000000
 
 # Shared transitions
 4 10000000   # First S
@@ -36,6 +29,7 @@
 4 10000000   # S -> S
 1 20000000   # S -> M
 3 30000000   # S -> I
+8 00000000
 
 # Invalid transitions
 3 10000000   # First I
@@ -44,3 +38,4 @@
 3 10000000   # I -> I
 0 20000000   # I -> E
 1 30000000   # I -> M
+8 00000000
