@@ -474,13 +474,18 @@ always @(posedge clk) begin
                 S: begin
                 end
 
-                I: begin
-                    case(fsm.nextstate)
-                        E: begin
-                        $display("Read from L2 <%h>", instruction.address);
-                        end
-                    endcase
-                end 
+		I: begin
+			case(fsm.nextstate)
+				M: begin
+				$display("Read for Ownership from L2 <%h>", instruction.address);	
+				end 	
+				E: begin
+				$display("Read from L2 <%h>", instruction.address);
+				end
+		end 
+                // Current state is E
+                // Current state is S
+                // Current state is I
 
                 // Invalid states
                 default: begin
