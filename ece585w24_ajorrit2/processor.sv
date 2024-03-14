@@ -40,6 +40,7 @@ module processor(
     int evict_i = 0;
 
 
+
     // cache indexing
     int i = 0; 
     int j = 0;
@@ -111,7 +112,7 @@ module processor(
                 end
                 // The way_select is initialized
                 else begin
-                    
+
                     // Initialize housekeeping variables    (highest = oldest value)
                     way_select_i = 0;       // Holds the index of the way with the current oldest LRU way
                     invalid_select_i = -1;  // Holds the index of the oldest invalid way (initially impossible value)
@@ -131,6 +132,7 @@ module processor(
                         
                         // The current way is invalid and has an older LRU value
                         if((way_line_i.MESI_bits == I) && (way_line_i.LRU > invalid_LRU_i)) begin
+
                             invalid_select_i = i;
                             invalid_LRU_i = way_line_i.LRU;
                         end
@@ -180,30 +182,48 @@ module processor(
                     // grab 1 way
                     way_line_d = current_line_d[i];
 
-                    // The current way has older LRU value
-                    if(way_line_d.LRU > current_line_d[way_select_d].LRU) begin
-                        way_select_d = i;
-                    end
+
+                    // Display the current line
+                    // $display("current_line_d = ");
+                    // for(int i = 0; i < 8; i++) begin
+                    //     $display("%p", current_line_d[i]);
+                    // end
                     
-                    // The current way is invalid and has an older LRU value
-                    if((way_line_d.MESI_bits == 0) && (way_line_d.LRU > invalid_LRU_d)) begin
-                        invalid_select_d = i;
-                        invalid_LRU_d = way_line_d.LRU;
+                    // Initialize housekeeping variables    (highest = oldest value)
+                    way_select_d = 0;       // Holds the index of the way with the current oldest LRU way
+                    invalid_select_d = -1;  // Holds the index of the oldest invalid way (initially impossible value)
+                    invalid_LRU_d = 0;      // Holds the LRU value of the oldest invalid way (initially most recent LRU value)
+
+                    // Loop through the ways to find the highest LRU way and the highest invalid way
+                    for(int i = 0; i < 8; i++) begin
+
+                        // grab 1 way
+                        way_line_d = current_line_d[i];
+
+                        // The current way has older LRU value
+                        if(way_line_d.LRU > current_line_d[way_select_d].LRU) begin
+                            way_select_d = i;
+                        end
+                        
+                        // The current way is invalid and has an older LRU value
+                        if((way_line_d.MESI_bits == 0) && (way_line_d.LRU > invalid_LRU_d)) begin
+                            invalid_select_d = i;
+                            invalid_LRU_d = way_line_d.LRU;
+                        end
                     end
-                end
 
 
-                // After looping through all ways, if the invalid_select_d is still the impossible value
-                // use the way_select_d to overwrite the oldest valid way
-                if(invalid_select_d == -1) begin
-                    d_select = way_select_d;
-                end
-                // Otherwise, use the invalid_select_d to overwrite the oldest invalid way
-                else begin
-                    d_select = invalid_select_d;
-                end
-            end 
-        end
+                    // After looping through all ways, if the invalid_select_d is still the impossible value
+                    // use the way_select_d to overwrite the oldest valid way
+                    if(invalid_select_d == -1) begin
+                        d_select = way_select_d;
+                    end
+                    // Otherwise, use the invalid_select_d to overwrite the oldest invalid way
+                    else begin
+                        d_select = invalid_select_d;
+                    end
+                end 
+            end
         endcase
     end
 
@@ -270,6 +290,7 @@ module processor(
                             // If the way has a lower LRU value than the selected way, increment the LRU
                             if(internal_i[i].LRU < current_line_i[i_select].LRU) begin
                                 internal_i[i].LRU++;
+
                             end
                         end
                     end
@@ -279,7 +300,9 @@ module processor(
                             internal_i[i].LRU++;
                         end 
                         evict_i++;
+
                     end
+                end
 
                     // Set the LRU of the selected way to 0 only if this is a new instruction
                     internal_i[i_select].LRU = 3'b0;
@@ -288,6 +311,7 @@ module processor(
                 // Return the updated cache line(s)
                 return_line_i = internal_i;
                 return_line_d = current_line_d;
+
             end
 
             8, 9: begin

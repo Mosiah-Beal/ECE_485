@@ -27,18 +27,22 @@ proc main {mode trace_file} {
     # Select a project to compile
     project open [glob *85*.mpf | *85.mpf]
 
+
     # Check the status of the compilation
     if {[catch {project compileall} errmsg]} {
         # If there was an error during compilation, print the error message and exit
         puts stderr "Error during compilation: $errmsg"
-        quit -f
+        # quit -f
     }
+
+    # Suppress the ghost errors of deleted testbenches: 8386 
 
     # refresh the library
     vlog -work work -refresh -force_refresh -suppress 8386
 
     # simulate the design
     vsim work.top -suppress 12003 -voptargs=+acc +MODE=$mode +FILENAME=$trace_file
+
 
     # Add signals to the wave window
     add_cache_signals
@@ -71,6 +75,7 @@ if {[info exists mode] && [info exists trace_file]} {
     puts "Error: This script must be run from ModelSim"
     puts "Usage: vsim -do \"set trace_file trace1.txt; set mode STATS; source sim.tcl\" work.top"
     exit 1
+
 }
 
 # # Check if the number of command-line arguments is correct
@@ -89,3 +94,4 @@ if {[info exists mode] && [info exists trace_file]} {
 
 # Command to run the simulation
 # vsim -do "set trace_file trace1.txt; set mode STATS; source sim.tcl" work.top
+

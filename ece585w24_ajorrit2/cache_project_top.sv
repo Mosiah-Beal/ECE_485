@@ -3,7 +3,9 @@ import my_struct_package::*;
 
 // Debugging define
 //`define DEBUG
+
 `define TRAILING_ZEROS
+
 
 // Mode select defines
 `define SILENT 0
@@ -301,6 +303,7 @@ initial begin
     $stop;
 end
 
+
 // Feed instructions to the processor on the negative edge of the clock
 always @(negedge clk) begin
     
@@ -316,6 +319,7 @@ always @(negedge clk) begin
             $display("hit_sum = %d", hit_sum);
             $display("ratio = %f", ratio);
             $display("");
+
             
             // Go back to silent mode
             instruction_index = 0;
@@ -327,7 +331,8 @@ always @(negedge clk) begin
         else begin
             // Send the instruction to the processor
             instruction = instructions[instruction_index++];
-            $display("Time = %t : Instruction = %p", $time, instruction);
+            //$display("Time = %t : Instruction = %p", $time, instruction);
+
         end   
     end
 
@@ -624,10 +629,13 @@ always_ff @(posedge clk) begin
             num_writebacks_i++;
             // Display what line was written to L2
             $display("Writeback[%0d]i to L2 <%h>", num_writebacks_i, processor.internal_i[processor.i_select].tag);
+
         end
+    endcase
 
         processor.evict_i = 0; // Reset the flag
     end
+
 end
 
 
