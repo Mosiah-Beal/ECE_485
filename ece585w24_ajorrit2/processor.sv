@@ -84,55 +84,65 @@ module processor(
         end
     end 
 
+    // Update the current instruction (prev_instruction is used to check if the instruction has changed)
+    always_ff@(negedge clk) begin: Sequential_Logic
+        prev_instruction <= instruction;
+    end
+
     // Encode to select column of cache for instruction cache
     always_comb begin
-        case(instruction_read_bus) 
+        case(instruction_read_bus)
+
+            // Found a hit in the cache 
             4'b1000, 4'bz000: i_select = 2'b11;
             4'b0100, 4'b0z00: i_select = 2'b10;
             4'b0010, 4'b00z0: i_select = 2'b01;
             4'b0001, 4'b000z: i_select = 2'b00;
             
-        default: begin
-            if(i_select === 'x)begin
-                i_select = 3;
-            end
-            else begin
-                
-                // Initialize housekeeping variables    (highest = oldest value)
-                way_select_i = 0;       // Holds the index of the way with the current oldest LRU way
-                invalid_select_i = -1;  // Holds the index of the oldest invalid way (initially impossible value)
-                invalid_LRU_i = 0;      // Holds the LRU value of the oldest invalid way (initially most recent LRU value)
-
-
-                // Loop through the ways to find the highest LRU way and the highest invalid way
-                for(int i = 0; i < 4; i++) begin
-
-                    // grab 1 way
-                    way_line_i = current_line_i[i];
-
-                    // The current way has older LRU value
-                    if(way_line_i.LRU > current_line_i[way_select_i].LRU) begin
-                        way_select_i = i;
-                    end
-                    
-                    // The current way is invalid and has an older LRU value
-                    if((way_line_i.MESI_bits == 0) && (way_line_i.LRU > invalid_LRU_i)) begin
-                        invalid_select_i = i;
-                        invalid_LRU_i = way_line_i.LRU;
-                    end
+            // No hit in the cache
+            default: begin
+                // The way_select is uninitialized
+                if(i_select === 'x)begin
+                    i_select = 3;
                 end
-                    
-                // After looping through all ways, if the invalid_select_i is still the impossible value
-                // use the way_select_i to overwrite the oldest valid way
-                if(invalid_select_i == -1) begin
-                    i_select = way_select_i;
-                end
-                // otherwise, use the invalid_select_i to overwrite the oldest invalid way
+                // The way_select is initialized
                 else begin
-                    i_select = invalid_select_i;
-                end
-            end // end else
-        end // end default
+                    
+                    // Initialize housekeeping variables    (highest = oldest value)
+                    way_select_i = 0;       // Holds the index of the way with the current oldest LRU way
+                    invalid_select_i = -1;  // Holds the index of the oldest invalid way (initially impossible value)
+                    invalid_LRU_i = 0;      // Holds the LRU value of the oldest invalid way (initially most recent LRU value)
+
+
+                    // Loop through the ways to find the highest LRU way and the highest invalid way
+                    for(int i = 0; i < 4; i++) begin
+
+                        // grab 1 way
+                        way_line_i = current_line_i[i];
+
+                        // The current way has older LRU value
+                        if(way_line_i.LRU > current_line_i[way_select_i].LRU) begin
+                            way_select_i = i;
+                        end
+                        
+                        // The current way is invalid and has an older LRU value
+                        if((way_line_i.MESI_bits == I) && (way_line_i.LRU > invalid_LRU_i)) begin
+                            invalid_select_i = i;
+                            invalid_LRU_i = way_line_i.LRU;
+                        end
+                    end
+                        
+                    // After looping through all ways, if the invalid_select_i is still the impossible value
+                    // use the way_select_i to overwrite the oldest valid way
+                    if(invalid_select_i == -1) begin
+                        i_select = way_select_i;
+                    end
+                    // otherwise, use the invalid_select_i to overwrite the oldest invalid way
+                    else begin
+                        i_select = invalid_select_i;
+                    end
+                end // end else
+            end // end default
         endcase
     end // end comb
 
@@ -193,25 +203,19 @@ module processor(
         endcase
     end
 
-
-    // compare current instruction to previous instruction
-    always_ff@(negedge clk) begin: Sequential_Logic
-        prev_instruction <= instruction;
-    end
-
     // Update the cache line
     always_comb begin 
         case(instruction.n)
             0, 1: begin
                 // Send the selected way to the FSM to update the MESI bits
                 block_out = current_line_d[d_select];
-                block_out.tag = instruction.address.tag;
 
                 // Update the internal data cache line 
                 internal_d = current_line_d;
             
                 // Update it with the MESI bits from the FSM
-                internal_d[d_select] = block_in;
+                internal_d[d_select].MESI_bits = block_in.MESI_bits;
+                internal_d[d_select].tag = instruction.address.tag;
         
                 // Update the LRU if this is a new instruction
                 if(instruction !== prev_instruction) begin 
@@ -229,11 +233,11 @@ module processor(
                             internal_d[i].LRU = current_line_d[i].LRU +1;
                         end 
                     end
+                
+                    // Set the LRU of the selected way to 0 only if this is a new instruction
+                    internal_d[d_select].LRU = 3'b0;
                 end
         
-                // Set the LRU of the selected way to 0
-                internal_d[d_select].LRU = 3'b0;
-
                 // Return the updated cache line
                 return_line_d = internal_d;
                 return_line_i = current_line_i;
@@ -242,13 +246,13 @@ module processor(
             2: begin
                 // Send the selected way to the FSM to update the MESI bits
                 block_out = current_line_i[i_select];
-                block_out.tag = instruction.address.tag;
 
                 // Update the internal cache line
                 internal_i = current_line_i;   
 
                 // Update it with the MESI bits from the FSM
-                internal_i[i_select] = block_in;
+                internal_i[i_select].MESI_bits = block_in.MESI_bits;
+                internal_i[i_select].tag = instruction.address.tag;
 
                 // Check if there are any hits in the instruction cache
                 if(current_instruction !== prev_instruction) begin
@@ -262,13 +266,22 @@ module processor(
                     // If there are no hits, update the LRU
                     else begin
                         for(int i = 0; i < 4; i++) begin
-                            internal_i[i].LRU = current_line_i[i_select].LRU + 1;
+                            
+                            // Make sure we wrap around the LRU (3 -> 0)
+                            if(internal_i[i].LRU == 3) begin
+                                internal_i[i].LRU = 0;
+                            end
+                            else begin
+                                internal_i[i].LRU = current_line_i[i].LRU + 1;
+                            end
                         end 
                     end
+
+                    // Set the LRU of the selected way to 0 only if this is a new instruction
+                    internal_i[i_select].LRU = 3'b0;
                 end
 
-                // Set the LRU of the selected way to 0
-                internal_i[i_select].LRU = 3'b0;
+
 
                 // Return the updated cache line
                 return_line_i = internal_i;    
@@ -278,13 +291,13 @@ module processor(
             3: begin
                 // Send the selected way to the FSM to update the MESI bits
                 block_out = current_line_d[d_select];
-                block_out.tag = instruction.address.tag;
 
                 // Update the internal cache line
                 internal_d = current_line_d;
 
                 // Update it with the MESI bits from the FSM
-                internal_d[d_select] = block_in;
+                internal_d[d_select].MESI_bits = block_in.MESI_bits;
+                internal_d[d_select].tag = instruction.address.tag;
 
                 // Check if there are any hits in the data cache
                 if(instruction !== prev_instruction) begin 
@@ -301,11 +314,11 @@ module processor(
                             internal_d[i].LRU = current_line_d[d_select].LRU + 1;
                         end 
                     end
-                end
-                
-                // Set the LRU of the selected way to 0
-                internal_d[d_select].LRU = 3'b0;
 
+                    // Set the LRU of the selected way to 0 only if this is a new instruction
+                    internal_d[d_select].LRU = 3'b0;
+                end    
+                
                 // Return the updated cache line
                 return_line_d = internal_d;
                 return_line_i = current_line_i;
@@ -314,13 +327,13 @@ module processor(
             4: begin
                 // Send the selected way to the FSM to update the MESI bits
                 block_out = current_line_d[d_select];
-                block_out.tag = instruction.address.tag;
 
                 // Update the internal cache line
                 internal_d = current_line_d;
 
                 // Update it with the MESI bits from the FSM
-                internal_d[d_select] = block_in;
+                internal_d[d_select].MESI_bits = block_in.MESI_bits;
+                internal_d[d_select].tag = instruction.address.tag;
 
                 // Check if there are any hits in the data cache
                 if(instruction !== prev_instruction) begin 
@@ -337,10 +350,10 @@ module processor(
                             internal_d[i].LRU = current_line_d[d_select].LRU + 1;
                         end 
                     end
-                end
 
-                // Set the LRU of the selected way to 0
-                internal_d[d_select].LRU = 3'b0;
+                    // Set the LRU of the selected way to 0
+                    internal_d[d_select].LRU = 3'b0;
+                end
 
                 // Return the updated cache line
                 return_line_d = internal_d;
