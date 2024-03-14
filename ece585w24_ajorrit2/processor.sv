@@ -35,6 +35,10 @@ module processor(
     int invalid_LRU_i;
     int invalid_LRU_d;
 
+    // top module flags
+    int evict_d = 0;
+    int evict_i = 0;
+
 
     // cache indexing
     int i = 0; 
@@ -233,7 +237,8 @@ module processor(
                     else begin
                         for(int i = 0; i<8; i++) begin
                             internal_d[i].LRU++;
-                        end 
+                        end
+                        evict_d++;
                     end
                 
                     // Set the LRU of the selected way to 0 only if this is a new instruction
@@ -267,6 +272,7 @@ module processor(
                         for(int i = 0; i < 4; i++) begin
                             internal_i[i].LRU++;
                         end 
+                        evict_i++;
                     end
 
                     // Set the LRU of the selected way to 0 only if this is a new instruction

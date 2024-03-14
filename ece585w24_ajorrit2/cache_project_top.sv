@@ -20,30 +20,44 @@ module top;
     cache_line_t cache_output_d[8];
     cache_line_t fsm_input_line;
     cache_line_t fsm_output_line;
+
+    // Parameters
+    parameter SETS = 16384;
+    parameter I_WAYS = 4;
+    parameter D_WAYS = 8;
+    parameter TIME_DURATION = 5;
+
+    parameter TEST_INSTRUCTIONS = 100;
+    parameter MODE_SILENT = 0;
+    parameter MODE_STATS = 1;
+    parameter MODE_VERBOSE = 2;
     
     // Helper variables
+    int instruction_index = 0;
     logic [2:0] mode_select;
     int sum_d;
     int sum_i;
-    static real hit_sum = 0;    // Number of hits
-    static real miss_sum = 0;   // Number of misses
-    static int read_sum = 0;    // Number of reads
-    static int write_sum = 0;   // Number of writes
-    real ratio;
     static int i_safe = 1; // Assume the instruction cache is safe
     static int d_safe = 1; // Assume the data cache is safe
-    int instruction_index = 0;
+    
+    // Flags for the processor (evict/writeback/writethrough)
+    int num_evicts_d = 0;
+    int num_evicts_i = 0;
+    int num_writethroughs_d = 0;
+    int num_writethroughs_i = 0;
+    int num_writebacks_d = 0;
+    int num_writebacks_i = 0;
 
-// Parameters
-parameter SETS = 16384;
-parameter I_WAYS = 4;
-parameter D_WAYS = 8;
-parameter TIME_DURATION = 5;
 
-parameter TEST_INSTRUCTIONS = 100;
-parameter MODE_SILENT = 0;
-parameter MODE_STATS = 1;
-parameter MODE_VERBOSE = 2;
+    // Statistics
+    static real hit_sum = 0;    // Number of hits
+    static real miss_sum = 0;   // Number of misses
+    static real ratio;          // Hit ratio
+    static int read_sum = 0;    // Number of reads
+    static int write_sum = 0;   // Number of writes
+    static int total_sum = 0;   // Total number of reads and writes
+    
+    
 
 // Define an array of instructions: n = 4 bits, address = 32 bits; 4+32 = 36 bits
 command_t instructions [TEST_INSTRUCTIONS];
@@ -453,21 +467,20 @@ always @(posedge clk) begin
                         end
                     endcase
                 end 
+                
                 E: begin
-		end
+		        end
 
-		S: begin
-		end
+                S: begin
+                end
 
-		I: begin
-			case(fsm.nextstate)
-				E: begin
-				$display("Read from L2 <%h>", instruction.address);
-				end
-		end 
-                // Current state is E
-                // Current state is S
-                // Current state is I
+                I: begin
+                    case(fsm.nextstate)
+                        E: begin
+                        $display("Read from L2 <%h>", instruction.address);
+                        end
+                    endcase
+                end 
 
                 // Invalid states
                 default: begin
@@ -544,6 +557,49 @@ always @(posedge clk) begin
         end
     endcase
 
+end
+
+// Check for special flags
+always_ff @(posedge clk) begin
+    // Check the data cache for new evicts
+    if (processor.evict_d > num_evicts_d) begin
+        
+        $display("WARNING (top): at time %0t Data cache is evicting a line.", $time);
+        $display("\tEvicted line = %p", processor.internal_d[processor.d_select]);
+        
+        // The first 8 lines are writethrough, the rest are writeback
+        if(++num_evicts_d < D_WAYS) begin
+            num_writethroughs_d++;
+            // Display what line was written to L2
+            $display("Writethrough to L2 <%h>", processor.internal_d[processor.d_select].tag);
+        end
+        else begin
+            num_writebacks_d++;
+            // Display what line was written to L2
+            $display("Writeback to L2 <%h>", processor.internal_d[processor.d_select].tag);
+        end
+    end
+
+    // Check the instruction cache for evicts (first 4 are writethrough)
+    if(processor.evict_i > num_evicts_i) begin
+
+        $display("(top): at time %0t Data cache is evicting a line.", $time);
+        $display("\tEvicted line = %p", processor.internal_i[processor.i_select]);
+
+        // The first 4 lines are writethrough, the rest are writeback
+        if(++num_evicts_i < I_WAYS) begin
+            num_writethroughs_i++;
+            // Display what line was written to L2
+            $display("Writethrough to L2 <%h>", processor.internal_i[processor.i_select].tag);
+        end
+        else begin
+            num_writebacks_i++;
+            // Display what line was written to L2
+            $display("Writeback to L2 <%h>", processor.internal_i[processor.i_select].tag);
+        end
+
+        processor.evict_i = 0; // Reset the flag
+    end
 end
 
 
