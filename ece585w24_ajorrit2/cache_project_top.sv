@@ -3,6 +3,7 @@ import my_struct_package::*;
 
 // Debugging define
 //`define DEBUG
+`define TRAILING_ZEROS
 
 // Mode select defines
 `define SILENT 0
@@ -116,7 +117,7 @@ function automatic string find(ref string a);
                 v = {v,s};
             end
             default: begin
-                $display("WARNING(string_parsing): Removing invalid character (%s) from the line", s);
+                // $display("WARNING(string_parsing): Removing invalid character (%s) from the line", s);
                 continue;
             end
         endcase 
@@ -150,23 +151,39 @@ function automatic string find(ref string a);
         $display("WARNING: line is %d characters long", v.len());
         $display("v = %s", v);
 
-        // Add the instruction (first character) to the string
-        r = {r,v.substr(0,0)};
+        // Trailing zeros
+        `ifdef TRAILING_ZEROS
+            // Add the entire string to the result
+            r = v;
 
-        // Calculate the number of missing characters
-        missing = 8 - (v.len()-1);
-        $display("missing = %d", missing);
+            // Calculate the number of missing characters
+            missing = 8 - (v.len()-1);
 
-        // For the remaining 8 characters needed, pad the string with 0s in front of the address
-        for(int i = 0; i < missing; i++) begin
-            r = {r,"0"};
-        end
+            // Now add the trailing zeros
+            for(int i = 0; i < missing; i++) begin
+                r = {r,"0"};
+            end
+        // Leading zeros (on the address only) [default]
+        `else
+            // Add the instruction (first character) to the string
+            r = {r,v.substr(0,0)};
 
-        // Now add the rest of the string (the address) 
-        r = {r,v.substr(1,v.len()-1)};
+            // Calculate the number of missing characters
+            missing = 8 - (v.len()-1);
+            // $display("missing = %d", missing);
 
-        // one line version
-        //r = {v.substr(0,0), {8-v.len(){'0'}}, v.substr(1,v.len()-1)};
+            // For the remaining 8 characters needed, pad the string with 0s in front of the address
+            for(int i = 0; i < missing; i++) begin
+                r = {r,"0"};
+            end
+
+            // Now add the rest of the string (the address) 
+            r = {r,v.substr(1,v.len()-1)};
+
+            // one line version
+            //r = {v.substr(0,0), {8-v.len(){'0'}}, v.substr(1,v.len()-1)};
+        
+        `endif
         
         // Display the result
         $display("WARNING: Padded address = %s", r);
@@ -212,7 +229,7 @@ function automatic void trace_in(ref command_t instructions[TEST_INSTRUCTIONS]);
     while (!$feof(fp)) begin
         // Read a line from the file
         $fgets(line, fp);
-        $display("Got line: %s",line);
+        // $display("Got line: %s",line);
         
         // Clean the line
         line = find(line);
@@ -230,7 +247,7 @@ function automatic void trace_in(ref command_t instructions[TEST_INSTRUCTIONS]);
         // $display("status = %p\n", status);
 
         // Display hex_value for debugging
-        $display("%p", hex_value);
+        // $display("%p", hex_value);
         // $display("Cleaned line: %s",line);
 
         // Check if i exceeds the array size
