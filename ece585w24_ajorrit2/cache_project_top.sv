@@ -589,7 +589,7 @@ always_ff @(posedge clk) begin
     // Check the instruction cache for evicts (first 4 are writethrough)
     if(processor.evict_i > num_evicts_i) begin
 
-        $display("(top): at time %0t Data cache is evicting a line.", $time);
+        $display("(top): at time %0t Instruction cache is evicting a line.", $time);
         $display("\tEvicted line = %p", processor.internal_i[processor.i_select]);
 
         // The first 4 lines are writethrough, the rest are writeback
