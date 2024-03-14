@@ -1,7 +1,11 @@
+
 import my_struct_package::*;
 
 // Debugging define
 //`define DEBUG
+
+`define TRAILING_ZEROS
+
 
 // Mode select defines
 `define SILENT 0
@@ -19,28 +23,47 @@ module top;
     cache_line_t cache_output_d[8];
     cache_line_t fsm_input_line;
     cache_line_t fsm_output_line;
+
+    // Parameters
+    parameter SETS = 16384;
+    parameter I_WAYS = 4;
+    parameter D_WAYS = 8;
+    parameter TIME_DURATION = 5;
+
+    parameter TEST_INSTRUCTIONS = 100;
+    parameter MODE_SILENT = 0;
+    parameter MODE_STATS = 1;
+    parameter MODE_VERBOSE = 2;
     
     // Helper variables
+    int instruction_index = 0;
     logic [2:0] mode_select;
     int sum_d;
     int sum_i;
-    real hit_sum = 0;
-    real miss_sum = 0; 
-    int read_sum = 0;
-    int write_sum = 0;
-    real ratio;
-    int instruction_index = 0;
+    static int i_safe = 1; // Assume the instruction cache is safe
+    static int d_safe = 1; // Assume the data cache is safe
+    
+    // Flags for the processor (evict/writeback/writethrough)
+    int num_evicts_d = 0;
+    int num_evicts_i = 0;
+    int num_writethroughs_d = 0;
+    int num_writethroughs_i = 0;
+    int num_writebacks_d = 0;
+    int num_writebacks_i = 0;
 
-// Parameters
-parameter SETS = 16384;
-parameter I_WAYS = 4;
-parameter D_WAYS = 8;
-parameter TIME_DURATION = 5;
 
-parameter TEST_INSTRUCTIONS = 100;
-parameter MODE_SILENT = 0;
-parameter MODE_STATS = 1;
-parameter MODE_VERBOSE = 2;
+    // Statistics
+    static real hit_sum = 0;    // Number of hits
+    static real miss_sum = 0;   // Number of misses
+    static real ratio;          // Hit ratio
+    static int read_sum = 0;    // Number of reads
+    static int write_sum = 0;   // Number of writes
+    static int total_sum = 0;   // Total number of reads and writes
+    
+    
+
+// Define an array of instructions: n = 4 bits, address = 32 bits; 4+32 = 36 bits
+command_t instructions [TEST_INSTRUCTIONS];
 
 // Instantiate the data cache with sets = 16384 and ways = 8
 cache #(.sets(SETS), .ways(D_WAYS)) data_cache (
@@ -75,34 +98,174 @@ mesi_fsm fsm(
         .return_line(fsm_input_line)
         );
 
+// Takes a line of text and returns a string with only the first 9 valid hex characters (pads address with 0s if necessary)
+function automatic string find(ref string a);
+    int len_a= a.len();
+    int missing;    // number of missing characters
+    string s;       // substring for valid hex characters
+    string v;       // string to store valid hex characters
+    string r;       // string to store the first 9 valid hex characters (will be returned)
 
-// Define an array of instructions: n = 4 bits, address = 32 bits; 4+32 = 36 bits
-logic [35:0] instructions [TEST_INSTRUCTIONS];
-initial begin
-    instructions[0] = {4'd8, 32'b0};         // reset
-    instructions[1] = {35'b0};                  // read data
-    instructions[2] = {4'd0,32'h984DE132};      // read data
-    instructions[3] = {4'd0,32'h116DE12F};      // read data
-    instructions[4] = {4'd0,32'h100DE130};      // read data
-    instructions[5] = {4'd0,32'h999DE12E};      // read data
-    instructions[6] = {4'd0,32'h645DE10A};      // read data
-    instructions[7] = {4'd0,32'h846DE107};      // read data
-    instructions[8] = {4'd0,32'h211DE128};      // read data
-    instructions[9] = {4'd0,32'h777DE133};      // read data
-    instructions[10] = {4'd9,32'h777DE133};     // print stats
-    instructions[11] = {4'd0,32'h846DE107};     // read data
-    instructions[12] = {4'd0,32'h846DE107};     // read data
-    instructions[13] = {4'd0,32'h846DE107};     // read data
-    instructions[14] = {4'd9,32'h777DE133};     // print stats
-    instructions[15] = {4'd2,32'h846DE107};     // read instruction
-    instructions[16] = {4'd2,32'h984DE132};     // read instruction
-    instructions[17] = {4'd2,32'h116DE12F};     // read instruction
-    instructions[18] = {4'd2,32'h100DE130};     // read instruction
-    instructions[19] = {4'd2,32'h999DE12E};     // read instruction
-    instructions[20] = {4'd2,32'h645DE10A};     // read instruction
-    instructions[21] = {4'd2,32'h846DE107};     // read instruction
+    // Strip the string of all non-hex characters
+    for(int i = 0; i < len_a; i++) begin
 
-end
+        // Get the current character
+        s = a.substr(i,i);
+        case(s)
+            "0","1","2","3","4","5","6","7",
+            "8","9","A","B","C","D","E","F",
+            "a","b","c","d","e","f": begin
+                // Add the valid hex character to the string
+                v = {v,s};
+            end
+            default: begin
+                // $display("WARNING(string_parsing): Removing invalid character (%s) from the line", s);
+                continue;
+            end
+        endcase 
+        //$display("s = %s", s);
+        //$display("v = %s", v);
+    end
+
+    // Check if there are no valid hex characters
+    if(v.len() == 0) begin
+        $display("WARNING: No valid hex characters found in the line, skipping");
+        $display("line = %s", a);
+        r = "skip";
+        return r;
+    end
+
+    // Check if the instruction is valid (0, 1, 2, 3, 4, 8, 9)
+    case(v.substr(0,0))
+        "0","1","2","3","4","8","9": begin
+            // Do nothing
+        end
+        default: begin
+            $display("WARNING: Invalid instruction found in the line, skipping");
+            $display("Extracted line = %s", v);
+            r = "skip";
+            return r;
+        end
+    endcase
+
+    // Check if the string is less than 9 characters (instruction is present)
+    if(v.len() < 9) begin
+        $display("WARNING: line is %d characters long", v.len());
+        $display("v = %s", v);
+
+        // Trailing zeros
+        `ifdef TRAILING_ZEROS
+            // Add the entire string to the result
+            r = v;
+
+            // Calculate the number of missing characters
+            missing = 8 - (v.len()-1);
+
+            // Now add the trailing zeros
+            for(int i = 0; i < missing; i++) begin
+                r = {r,"0"};
+            end
+        // Leading zeros (on the address only) [default]
+        `else
+            // Add the instruction (first character) to the string
+            r = {r,v.substr(0,0)};
+
+            // Calculate the number of missing characters
+            missing = 8 - (v.len()-1);
+            // $display("missing = %d", missing);
+
+            // For the remaining 8 characters needed, pad the string with 0s in front of the address
+            for(int i = 0; i < missing; i++) begin
+                r = {r,"0"};
+            end
+
+            // Now add the rest of the string (the address) 
+            r = {r,v.substr(1,v.len()-1)};
+
+            // one line version
+            //r = {v.substr(0,0), {8-v.len(){'0'}}, v.substr(1,v.len()-1)};
+        
+        `endif
+        
+        // Display the result
+        $display("WARNING: Padded address = %s", r);
+    end
+    else begin
+        // Take the first 9 characters
+        r = v.substr(0,8);
+    end
+
+    // $display("Extracted hex characters = %s", r);
+	return r;  
+	
+endfunction   
+
+
+function automatic void trace_in(ref command_t instructions[TEST_INSTRUCTIONS]);
+    string file;
+    int fp = 0;
+    int status = 0;
+    string line;
+    command_t hex_value = 36'b0;
+    int i = 0;
+
+    // Check if the FILENAME argument is provided
+    if (!$value$plusargs("FILENAME=%s", file)) begin
+        file = "trace.txt";
+        $display("WARNING: Using Default Trace settings.");
+    end 
+
+    // Try to open the file
+    fp = $fopen(file, "r");
+
+    // Check if the file was opened successfully
+    if (!fp) begin
+        $display("FILE READ ERROR");
+        $stop;
+    end
+
+    // Insert a reset instruction at the beginning of the array
+    instructions[i++] = {4'd8,32'b0};
+
+    // Read the file line by line
+    while (!$feof(fp)) begin
+        // Read a line from the file
+        $fgets(line, fp);
+        // $display("Got line: %s",line);
+        
+        // Clean the line
+        line = find(line);
+
+        // Check if the line is invalid
+        if(line == "skip") begin
+            continue;
+        end
+
+        
+        // Convert the clean line to hex_value
+        status = $sscanf(line, "%h", hex_value);
+
+        // how many items were successfully read
+        // $display("status = %p\n", status);
+
+        // Display hex_value for debugging
+        // $display("%p", hex_value);
+        // $display("Cleaned line: %s",line);
+
+        // Check if i exceeds the array size
+        if (i >= TEST_INSTRUCTIONS) begin
+            $display("SEGMENTATION FAULT");
+            break; // Exit the loop
+        end
+
+        // Store hex_value in instructions array
+        instructions[i++] = hex_value;
+    end
+
+    $fclose(fp); // Close the file after processing
+endfunction
+
+
 
 // Check if the MODE argument is provided
 initial begin
@@ -130,13 +293,16 @@ initial begin
     // Initialize the caches
     clk = 0;    // Start with a low clock (write mode)
     instruction = {4'd8,32'b0,3'b0,2'b0};    // Send a reset instruction
-
+    trace_in(instructions);
+    
     // Allow FSM to initialize
     rst = 1;
     #TIME_DURATION;
     rst = 0;
+
     $stop;
 end
+
 
 // Feed instructions to the processor on the negative edge of the clock
 always @(negedge clk) begin
@@ -145,7 +311,15 @@ always @(negedge clk) begin
     if (mode_select > MODE_SILENT) begin
         // Check if there are no more instructions left
         if($isunknown(instructions[instruction_index])) begin
+	        $display("");
             $display("Invalid / last instruction reached.");
+	        $display("read_sum = %d", read_sum);
+            $display("write_sum = %d", write_sum);
+            $display("miss_sum = %d", miss_sum);
+            $display("hit_sum = %d", hit_sum);
+            $display("ratio = %f", ratio);
+            $display("");
+
             
             // Go back to silent mode
             instruction_index = 0;
@@ -157,7 +331,8 @@ always @(negedge clk) begin
         else begin
             // Send the instruction to the processor
             instruction = instructions[instruction_index++];
-            // $display("Time = %t : Instruction = %p", $time, instruction);
+            //$display("Time = %t : Instruction = %p", $time, instruction);
+
         end   
     end
 
@@ -190,20 +365,7 @@ always @(mode_select) begin
 end
 
 // Whenever the instruction changes
-always @(instruction) begin
-   
-    // Display the cache lines if the instruction is 9
-    if(instruction.n == 9) begin
-        // Data cache
-        for(int i = 0; i < D_WAYS; i++) begin
-            $display("Time = %0t: \t\tData Cache Line[%h] = %p", $time, instruction.address.set_index, data_cache.cache[instruction.address.set_index][i]);
-        end
-        // Instruction cache
-        for(int i = 0; i < I_WAYS; i++) begin
-            $display("Time = %0t: \t\tInstruction Cache Line[%h] = %p", $time, instruction.address.set_index, instruction_cache.cache[instruction.address.set_index][i]);
-        end
-        $display("");
-    end
+always @(posedge clk) begin
 
     // Check if have something to do
     if(mode_select >= MODE_STATS) begin
@@ -226,7 +388,7 @@ always @(instruction) begin
             0,1,3,4: begin
                 if(|processor.data_read_bus)begin
                     // Increment the hit counter and recalculate the ratio
-                    hit_sum += 1;
+                    hit_sum ++;
                     ratio = hit_sum/(hit_sum + miss_sum);
                 end
                 else begin
@@ -245,7 +407,7 @@ always @(instruction) begin
             2: begin
                 if(|processor.instruction_read_bus) begin
                     // Increment the hit counter and recalculate the ratio
-                    hit_sum += 1;
+                    hit_sum++;
                     ratio = hit_sum/(hit_sum + miss_sum);
                 end
                 else begin
@@ -279,6 +441,7 @@ always @(instruction) begin
 
             9: begin
                 // Print the statistics
+		        $display("time = %0t", $time);
                 $display("read_sum =  %0d", read_sum);
                 $display("write_sum = %0d", write_sum);
                 $display("miss_sum =  %0d", miss_sum);
@@ -290,6 +453,7 @@ always @(instruction) begin
             default: begin
                 // If we are in verbose mode, also print the statistics every instruction
                 if (mode_select >= MODE_VERBOSE) begin
+                    $display("Verbose mode: time = %0t", $time);
                     $display("read_sum = %d", read_sum);
                     $display("write_sum = %d", write_sum);
                     $display("miss_sum = %d", miss_sum);
@@ -302,7 +466,7 @@ always @(instruction) begin
 
         // Now check if we need to print the transition
         if (mode_select >= MODE_VERBOSE) begin
-            $display("Transitioning from %p to %p", fsm.internal_line.MESI_bits, fsm.nextstate);
+            $display("Transitioning from %p to %p : time = %0t", fsm.internal_line.MESI_bits, fsm.nextstate,$time);
             
             case(fsm.internal_line.MESI_bits)
                 // Current state is M
@@ -322,7 +486,7 @@ always @(instruction) begin
                             $display("Write to L2 <%h>", instruction.address);
                             end
                         end
-
+		
                         // Next state is S
                         // Next state is E
 
@@ -333,13 +497,27 @@ always @(instruction) begin
                     endcase
                 end 
                 
-                // Current state is E
-                // Current state is S
-                // Current state is I
+                E: begin
+		        end
+
+                S: begin
+                end
+
+                I: begin
+                    case(fsm.nextstate)
+                        M: begin
+                            $display("Read for Ownership from L2 <%h>", instruction.address);	
+                        end 	
+                        
+                        E: begin
+                            $display("Read from L2 <%h>", instruction.address);
+                        end
+                    endcase
+                end 
 
                 // Invalid states
                 default: begin
-                // do nothing
+                    // do nothing
                 end
             endcase
         end
@@ -374,23 +552,92 @@ always @(instruction) begin
 
         // Otherwise, check the LRU values
         default: begin
-            // Check if the instruction cache has duplicate LRU bits
-            if (sum_i != 6) begin
-                $display("PROBLEM (top): %0t Duplicate LRU bits found in instruction cache.", $time);
-                // Nice formatting
-                if(sum_d == 28) begin
-                    $display("");   // Add a new line
+
+            // Check if the caches are safe
+            i_safe = 1; // Assume the instruction cache is safe
+            d_safe = 1; // Assume the data cache is safe
+
+            // Check that the instruction cache is not in an invalid state
+            for(int i = 0; i < I_WAYS; i++) begin
+                if (|cache_output_i[i] === 'x) begin
+                    // $display("WARNING (top): at time %0t Instruction cache is in an invalid state.", $time);
+                    i_safe = 0; // The instruction cache is not safe
                 end
             end
 
-            // Check if the data cache has duplicate LRU bits
-            if (sum_d != 28) begin
-                $display("PROBLEM (top): %0t Duplicate LRU bits found in data cache.\n", $time);
+            // Check that the data cache is not in an invalid state
+            for(int i = 0; i < D_WAYS; i++) begin
+                if (|cache_output_d[i] === 'x) begin
+                    // $display("WARNING (top): at time %0t Data cache is in an invalid state.", $time);
+                    d_safe = 0; // The data cache is not safe
+                end
+            end
+
+
+            // Check if the instruction cache has duplicate LRU bits (and isn't in an invalid state)
+            if ((sum_i != 6) && (i_safe == 1)) begin
+                $display("WARNING (top): at time %0t Duplicate LRU bits found in instruction cache.", $time);
+                // Nice formatting
+                if((sum_d == 28) || (d_safe == 0)) begin
+                    $display("");   // Add a new line since this is the last warning
+                end
+            end
+
+            // Check if the data cache has duplicate LRU bits (and isn't in an invalid state)
+            if ((sum_d != 28) && (d_safe == 1)) begin
+                $display("WARNING (top): at time %0t Duplicate LRU bits found in data cache.\n", $time);
             end
         end
     endcase
 
 end
 
+// Check for special flags
+always_ff @(posedge clk) begin
+    // Check the data cache for new evicts
+    if (processor.evict_d > num_evicts_d) begin
+        
+        $display("WARNING (top): at time %0t Data cache is evicting a line.", $time);
+        $display("\tEvicted line = %p", processor.internal_d[processor.d_select]);
+        
+        // The first 8 lines are writethrough, the rest are writeback
+        if(++num_evicts_d <= D_WAYS) begin
+            num_writethroughs_d++;
+            // Display what line was written to L2
+            $display("Writethrough[%0d]d to L2 <%h>", num_writethroughs_d, processor.internal_d[processor.d_select].tag);
+        end
+        else begin
+            num_writebacks_d++;
+            // Display what line was written to L2
+            $display("Writeback[%0d]d to L2 <%h>", num_writebacks_d, processor.internal_d[processor.d_select].tag);
+        end
+    end
+
+    // Check the instruction cache for evicts (first 4 are writethrough)
+    if(processor.evict_i > num_evicts_i) begin
+
+        $display("WARNING (top): at time %0t Instruction cache is evicting a line.", $time);
+        $display("\tEvicted line = %p", processor.internal_i[processor.i_select]);
+
+        // The first 4 lines are writethrough, the rest are writeback
+        if(++num_evicts_i <= I_WAYS) begin
+            num_writethroughs_i++;
+            // Display what line was written to L2
+            $display("Writethrough[%0d]i to L2 <%h>", num_writethroughs_i, processor.internal_i[processor.i_select].tag);
+        end
+        else begin
+            num_writebacks_i++;
+            // Display what line was written to L2
+            $display("Writeback[%0d]i to L2 <%h>", num_writebacks_i, processor.internal_i[processor.i_select].tag);
+
+        end
+    endcase
+
+        processor.evict_i = 0; // Reset the flag
+    end
+
+end
+
 
 endmodule
+

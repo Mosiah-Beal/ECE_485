@@ -26,9 +26,20 @@ module processor(
     logic [1:0] i_select;
     
     // Invalid LRU variables
-    int way_select_i, way_select_d, invalid_select_i, invalid_select_d;
-    int invalid_LRU_i, invalid_LRU_d;
-    cache_line_t way_line_i, way_line_d;
+    int way_select_i;
+    int invalid_select_i;
+    int way_select_d;
+    int invalid_select_d;
+    cache_line_t way_line_d;
+    cache_line_t way_line_i;
+    int invalid_LRU_i;
+    int invalid_LRU_d;
+
+    // top module flags
+    int evict_d = 0;
+    int evict_i = 0;
+
+
 
     // cache indexing
     int i = 0; 
@@ -46,24 +57,13 @@ module processor(
     // Loop through the ways to check for hits
     always_comb begin : check_hits
         // Check data cache ways for hits
-        for (i = 0; i < 8; i++) begin
+        for (int i = 0; i < 8; i++) begin
             data_read_bus[i] = 0;    // Assume this cache has no hit        
 
             // check if there is a match in the way, using the set index passed in (updates read_bus)
             if (instruction.address.tag == current_line_d[i].tag) begin
                 case (instruction.n)  // which instruction is this?
-                    0: begin // data read
-                        data_read_bus[i] = 1;   // if read instruction -> hit;
-                    end
-                    1: begin // data write
-                        data_read_bus[i] = 'z;   // if write instruction -> hitM;
-                    end
-                    2: begin // instruction fetch
-                        data_read_bus[i] = 1;
-                    end
-                    3: begin // L2 invalidate
-                        data_read_bus[i] = 'z;   // if hit found on other caches
-                    end
+                    0,1,2,3,4: data_read_bus[i] = 1;   // if read instruction -> hit;
                     default: begin
                         data_read_bus[i] = '0;   // dont care
                     end
@@ -80,18 +80,7 @@ module processor(
             // check if there is a match in the way, using the set index passed in (updates read_bus)
             if (instruction.address.tag == current_line_i[j].tag) begin
                 case (instruction.n)  // which instruction is this?
-                    0: begin // data read
-                        instruction_read_bus[j] = 1;   // if read instruction -> hit;
-                    end
-                    1: begin // data write
-                        instruction_read_bus[j] = 'z;   // if write instruction -> hitM;
-                    end
-                    2: begin // instruction fetch
-                        instruction_read_bus[j] = 1;
-                    end
-                    3: begin // L2 invalidate
-                        instruction_read_bus[j] = 'z;   // if hit found on other caches
-                    end
+                    0,1,2,3,4: instruction_read_bus[j] = 1;   // if read instruction -> hit;
                     default: begin
                         instruction_read_bus[j] = '0;   // dont care
                     end
@@ -100,24 +89,29 @@ module processor(
         end
     end 
 
+    // Update the current instruction (prev_instruction is used to check if the instruction has changed)
+    always_ff@(negedge clk) begin: Sequential_Logic
+        prev_instruction <= instruction;
+    end
+
     // Encode to select column of cache for instruction cache
     always_comb begin
-        case(instruction_read_bus) 
+        case(instruction_read_bus)
+
+            // Found a hit in the cache 
             4'b1000, 4'bz000: i_select = 2'b11;
             4'b0100, 4'b0z00: i_select = 2'b10;
             4'b0010, 4'b00z0: i_select = 2'b01;
             4'b0001, 4'b000z: i_select = 2'b00;
             
+            // No hit in the cache
             default: begin
+                // The way_select is uninitialized
                 if(i_select === 'x)begin
                     i_select = 3;
                 end
+                // The way_select is initialized
                 else begin
-                    // Display the current line
-                    // $display("current_line_i = ");
-                    // for(int i = 0; i < 4; i++) begin
-                    //     $display("%p", current_line_i[i]);
-                    // end
 
                     // Initialize housekeeping variables    (highest = oldest value)
                     way_select_i = 0;       // Holds the index of the way with the current oldest LRU way
@@ -137,7 +131,8 @@ module processor(
                         end
                         
                         // The current way is invalid and has an older LRU value
-                        if((way_line_i.MESI_bits == 0) && (way_line_i.LRU > invalid_LRU_i)) begin
+                        if((way_line_i.MESI_bits == I) && (way_line_i.LRU > invalid_LRU_i)) begin
+
                             invalid_select_i = i;
                             invalid_LRU_i = way_line_i.LRU;
                         end
@@ -170,11 +165,23 @@ module processor(
             8'b0000_0001, 8'b0000_000z: d_select = 3'b000;
 
 
-            default: begin 
-                if(d_select === 'x)begin
-                    d_select = 7;
-                end
-                else begin
+        default: begin 
+            if(d_select === 'x)begin
+                d_select = 7;
+            end
+            else begin
+                
+                // Initialize housekeeping variables    (highest = oldest value)
+                way_select_d = 0;       // Holds the index of the way with the current oldest LRU way
+                invalid_select_d = -1;  // Holds the index of the oldest invalid way (initially impossible value)
+                invalid_LRU_d = 0;      // Holds the LRU value of the oldest invalid way (initially most recent LRU value)
+
+                // Loop through the ways to find the highest LRU way and the highest invalid way
+                for(int i = 0; i < 8; i++) begin
+
+                    // grab 1 way
+                    way_line_d = current_line_d[i];
+
 
                     // Display the current line
                     // $display("current_line_d = ");
@@ -220,164 +227,91 @@ module processor(
         endcase
     end
 
-
-    // compare current instruction to previous instruction
-    always_ff@(negedge clk) begin: Sequential_Logic
-        prev_instruction <= current_instruction;
-        current_instruction <= instruction;
-    end
-
     // Update the cache line
-    always_comb begin 
+    always_comb begin
         case(instruction.n)
-            0, 1: begin // Data read or write
-                // Send the selected way to the FSM
+            // Data cache
+            0, 1, 3, 4: begin
+                // Send the selected way to the FSM to update the MESI bits
                 block_out = current_line_d[d_select];
-		        block_out.tag = instruction.address.tag;
-                
-                // Update the internal cache line with a copy of the current line
+
+                // Copy the current cache line to the internal cache line
                 internal_d = current_line_d;
-		     
-		        // Update it with the MESI bits from the FSM
-                internal_d[d_select] = block_in;
-			
-                // Make sure this is a new instruction
-		        if(current_instruction !== prev_instruction) begin 
-                    // Check if there are any hits in the data cache
-                    if(|data_read_bus == 1) begin 
-                        for(int i = 0; i < 8; i++) begin
-                            if(internal_d[i].LRU < internal_d[d_select].LRU) begin
-                                internal_d[i].LRU = internal_d[i].LRU + 1;
+            
+                // Update it with the MESI bits from the FSM
+                internal_d[d_select].MESI_bits = block_in.MESI_bits;
+                internal_d[d_select].tag = instruction.address.tag;
+        
+                // Update the LRU if this is a new instruction
+                if(instruction !== prev_instruction) begin 
+                    if(|data_read_bus) begin 
+                        for(int i = 0; i< 8; i++) begin
+                            if(internal_d[i].LRU < current_line_d[d_select].LRU) begin
+                                internal_d[i].LRU++;
                             end
                         end
                     end
+                    
                     // If there are no hits, update the LRU
                     else begin
                         for(int i = 0; i<8; i++) begin
-                            internal_d[i].LRU = current_line_d[i].LRU +1;
-                        end 
+                            internal_d[i].LRU++;
+                        end
+                        evict_d++;
                     end
-                end
                 
-                // Update the LRU of the selected way
-		        internal_d[d_select].LRU = 3'b0;
+                    // Set the LRU of the selected way to 0 only if this is a new instruction
+                    internal_d[d_select].LRU = 3'b0;
+                end
 
-                // Send the cache lines back out to the top module
+                // Return the updated cache line(s)
                 return_line_d = internal_d;
                 return_line_i = current_line_i;
             end
 
-            2: begin    // Instruction fetch
-                // Send the selected way to the FSM
+            // Instruction cache
+            2: begin
+                // Send the selected way to the FSM to update the MESI bits
                 block_out = current_line_i[i_select];
-                block_out.tag = instruction.address.tag;
 
-                // Update the internal cache line with a copy of the current line
-		        internal_i = current_line_i;   
-                    
+                // Copy the current cache line to the internal cache line
+                internal_i = current_line_i;
+
                 // Update it with the MESI bits from the FSM
-                internal_i[i_select] = block_in;
-                 
+                internal_i[i_select].MESI_bits = block_in.MESI_bits;
 
-                // Make sure this is a new instruction
-    		    if(current_instruction !== prev_instruction) begin 
-                    // Check if there are any hits in the instruction cache
-                    if(|instruction_read_bus == 1) begin 
+                // Update the tag of the selected way
+                internal_i[i_select].tag = instruction.address.tag;
+
+                // Check if there are any hits in the instruction cache
+                if(current_instruction !== prev_instruction) begin
+                    if(|instruction_read_bus) begin 
                         for(int i = 0; i < 4; i++) begin
-                            if(internal_i[i].LRU < internal_i[i_select].LRU) begin
-                                internal_i[i].LRU = internal_i[i].LRU + 1;
+                            // If the way has a lower LRU value than the selected way, increment the LRU
+                            if(internal_i[i].LRU < current_line_i[i_select].LRU) begin
+                                internal_i[i].LRU++;
+
                             end
                         end
                     end
                     // If there are no hits, update the LRU
                     else begin
                         for(int i = 0; i < 4; i++) begin
-                            internal_i[i].LRU = current_line_i[i].LRU +1;
+                            internal_i[i].LRU++;
                         end 
-                    end	
-	    	    end
+                        evict_i++;
 
-                // Update the LRU of the selected way
-                internal_i[i_select].LRU = 3'b0;
-
-                // Send the cache lines back out to the top module
-                return_line_i = internal_i;	    
-		        return_line_d = current_line_d;
-            end
-
-            3: begin    // L2 invalidate
-                // Send the selected way to the FSM
-                block_out = current_line_d[d_select];
-                block_out.tag = instruction.address.tag;
-                
-                // Update the internal cache line with a copy of the current line
-		        internal_d = current_line_d;
-
-                // Update it with the MESI bits from the FSM
-                internal_d[d_select]= block_in;
-                    
-
-                // Make sure this is a new instruction
-                if(current_instruction !== prev_instruction) begin 
-                    // Check if there are any hits in the data cache
-                    if(|data_read_bus == 1) begin 
-                        for(int i = 0; i < 8; i++) begin
-                            if(internal_d[i].LRU < internal_d[d_select].LRU) begin
-                                internal_d[i].LRU = internal_d[i].LRU + 1;
-                            end
-                        end
-                    end
-                    // If there are no hits, update the LRU
-                    else begin
-                        for(int i = 0; i<8; i++) begin
-                            internal_d[i].LRU = current_line_d[i].LRU +1;
-                        end 
-                    end
-                end
-                    
-                // Update the LRU of the selected way
-                internal_d[d_select].LRU = 3'b0;
-
-                // Send the cache lines back out to the top module
-                return_line_d = internal_d;
-                return_line_i = current_line_i;
-            end
-
-            4: begin    // L2 data request
-                // Send the selected way to the FSM
-                block_out = current_line_d[d_select];
-                block_out.tag = instruction.address.tag;
-
-                // Update the internal cache line with a copy of the current line
-		        internal_d = current_line_d;
-
-                // Update it with the MESI bits from the FSM
-                internal_d[d_select] = block_in;
-
-                // Make sure this is a new instruction
-                if(current_instruction !== prev_instruction) begin 
-                    // Check if there are any hits in the data cache
-                    if(|data_read_bus == 1) begin 
-                        for(int i = 0; i < 8; i++) begin
-                            if(internal_d[i].LRU < internal_d[d_select].LRU) begin
-                                internal_d[i].LRU = internal_d[i].LRU + 1;
-                            end
-                        end
-                    end
-                    // If there are no hits, update the LRU
-                    else begin
-                        for(int i = 0; i<8; i++) begin
-                            internal_d[i].LRU = current_line_d[i].LRU +1;
-                        end 
                     end
                 end
 
-                // Update the LRU of the selected way
-                internal_d[d_select].LRU = 3'b0;
+                    // Set the LRU of the selected way to 0 only if this is a new instruction
+                    internal_i[i_select].LRU = 3'b0;
+                end
 
-                // Send the cache lines back out to the top module
-                return_line_d = internal_d;
-		        return_line_i = current_line_i;              
+                // Return the updated cache line(s)
+                return_line_i = internal_i;
+                return_line_d = current_line_d;
+
             end
 
             8, 9: begin

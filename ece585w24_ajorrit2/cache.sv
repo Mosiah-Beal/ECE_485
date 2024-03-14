@@ -73,6 +73,7 @@ always_comb begin
                 end
                 
                 9: begin // Display cache line
+
                     // $display("Time = %0t: \t\tOutput Cache Line[%h] = %p", $time, instruction.address.set_index, cache[instruction.address.set_index][i]);
                 end
                 
@@ -81,6 +82,11 @@ always_comb begin
                 end
             endcase
         end
+    end
+
+    // Add a newline after printing the instruction and data cache lines
+    if(instruction.n == 9) begin
+        $display("");
     end
 end
 endmodule
