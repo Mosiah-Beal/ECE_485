@@ -209,15 +209,14 @@ module processor(
 
     // Update the cache line
     always_comb begin
-        // Update the internal cache lines
-        internal_d = current_line_d;
-        internal_i = current_line_i;
-
         case(instruction.n)
             // Data cache
             0, 1, 3, 4: begin
                 // Send the selected way to the FSM to update the MESI bits
                 block_out = current_line_d[d_select];
+
+                // Copy the current cache line to the internal cache line
+                internal_d = current_line_d;
             
                 // Update it with the MESI bits from the FSM
                 internal_d[d_select].MESI_bits = block_in.MESI_bits;
@@ -244,12 +243,19 @@ module processor(
                     // Set the LRU of the selected way to 0 only if this is a new instruction
                     internal_d[d_select].LRU = 3'b0;
                 end
+
+                // Return the updated cache line(s)
+                return_line_d = internal_d;
+                return_line_i = current_line_i;
             end
 
             // Instruction cache
             2: begin
                 // Send the selected way to the FSM to update the MESI bits
                 block_out = current_line_i[i_select];
+
+                // Copy the current cache line to the internal cache line
+                internal_i = current_line_i;
 
                 // Update it with the MESI bits from the FSM
                 internal_i[i_select].MESI_bits = block_in.MESI_bits;
@@ -278,16 +284,16 @@ module processor(
                     // Set the LRU of the selected way to 0 only if this is a new instruction
                     internal_i[i_select].LRU = 3'b0;
                 end
+
+                // Return the updated cache line(s)
+                return_line_i = internal_i;
+                return_line_d = current_line_d;
             end
 
             8, 9: begin
                 // Do nothing 
             end
         endcase
-
-        // Return the updated cache line(s)
-        return_line_d = internal_d;
-        return_line_i = internal_i;
     end       
 
 endmodule

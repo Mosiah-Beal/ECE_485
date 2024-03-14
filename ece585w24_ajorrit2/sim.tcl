@@ -11,7 +11,8 @@ proc add_cache_signals {} {
     /top/cache_input_d \
     /top/cache_output_d \
     /top/cache_input_i \
-    /top/cache_output_i 
+    /top/cache_output_i \
+    /top/instructions \
 }
 
 # Main procedure
@@ -37,7 +38,7 @@ proc main {mode trace_file} {
     vlog -work work -refresh -force_refresh -suppress 8386
 
     # simulate the design
-    vsim work.top -suppress 12003 -voptargs=+acc
+    vsim work.top -suppress 12003 -voptargs=+acc +MODE=$mode +FILENAME=$trace_file
 
     # Add signals to the wave window
     add_cache_signals
@@ -61,18 +62,30 @@ proc main {mode trace_file} {
 }
 
 
-
-
-# Check if the number of command-line arguments is correct
-if {[llength $argv] != 3} {
-    puts  $argv
-    puts "Usage: $argv0 <mode> <trace_file>"
+# Check if the script has arguments from ModelSim when being run as a macro
+if {[info exists mode] && [info exists trace_file]} {
+    # If the script has arguments, execute the main procedure
+    main $mode $trace_file
+} else {
+    # If the script does not have arguments, print an error message and exit
+    puts "Error: This script must be run from ModelSim"
+    puts "Usage: vsim -do \"set trace_file trace1.txt; set mode STATS; source sim.tcl\" work.top"
     exit 1
 }
 
-# Extract mode and trace file from command-line arguments
-set mode [lindex $argv 1]
-set trace_file [lindex $argv 2]
+# # Check if the number of command-line arguments is correct
+# if {[llength $argv] != 3} {
+#     puts  $argv
+#     puts "Usage: $argv0 <mode> <trace_file>"
+#     exit 1
+# }
+
+# # Extract mode and trace file from command-line arguments
+# set mode [lindex $argv 1]
+# set trace_file [lindex $argv 2]
 
 # Execute the main procedure
-main $mode $trace_file
+# main $mode $trace_file
+
+# Command to run the simulation
+# vsim -do "set trace_file trace1.txt; set mode STATS; source sim.tcl" work.top

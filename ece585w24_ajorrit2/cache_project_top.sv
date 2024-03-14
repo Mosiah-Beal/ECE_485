@@ -116,7 +116,7 @@ function automatic string find(ref string a);
                 v = {v,s};
             end
             default: begin
-                // Go to the next character
+                $display("WARNING(string_parsing): Removing invalid character (%s) from the line", s);
                 continue;
             end
         endcase 
@@ -148,15 +148,17 @@ function automatic string find(ref string a);
     // Check if the string is less than 9 characters (instruction is present)
     if(v.len() < 9) begin
         $display("WARNING: line is %d characters long", v.len());
-        //$display("v = %s", v);
+        $display("v = %s", v);
 
         // Add the instruction (first character) to the string
         r = {r,v.substr(0,0)};
 
-        missing = 9 - v.len();
+        // Calculate the number of missing characters
+        missing = 8 - (v.len()-1);
+        $display("missing = %d", missing);
 
         // For the remaining 8 characters needed, pad the string with 0s in front of the address
-        for(int i = 0; i < 8 - missing; i++) begin
+        for(int i = 0; i < missing; i++) begin
             r = {r,"0"};
         end
 
@@ -210,7 +212,7 @@ function automatic void trace_in(ref command_t instructions[TEST_INSTRUCTIONS]);
     while (!$feof(fp)) begin
         // Read a line from the file
         $fgets(line, fp);
-        //$display("%s",line);
+        $display("Got line: %s",line);
         
         // Clean the line
         line = find(line);
@@ -220,11 +222,16 @@ function automatic void trace_in(ref command_t instructions[TEST_INSTRUCTIONS]);
             continue;
         end
 
+        
         // Convert the clean line to hex_value
         status = $sscanf(line, "%h", hex_value);
 
+        // how many items were successfully read
+        // $display("status = %p\n", status);
+
         // Display hex_value for debugging
-        //$display("%h", hex_value);
+        $display("%p", hex_value);
+        // $display("Cleaned line: %s",line);
 
         // Check if i exceeds the array size
         if (i >= TEST_INSTRUCTIONS) begin
@@ -284,9 +291,9 @@ always @(negedge clk) begin
     if (mode_select > MODE_SILENT) begin
         // Check if there are no more instructions left
         if($isunknown(instructions[instruction_index])) begin
-	    $display("");
+	        $display("");
             $display("Invalid / last instruction reached.");
-	    $display("read_sum = %d", read_sum);
+	        $display("read_sum = %d", read_sum);
             $display("write_sum = %d", write_sum);
             $display("miss_sum = %d", miss_sum);
             $display("hit_sum = %d", hit_sum);
@@ -303,7 +310,7 @@ always @(negedge clk) begin
         else begin
             // Send the instruction to the processor
             instruction = instructions[instruction_index++];
-            // $display("Time = %t : Instruction = %p", $time, instruction);
+            $display("Time = %t : Instruction = %p", $time, instruction);
         end   
     end
 
@@ -474,23 +481,21 @@ always @(posedge clk) begin
                 S: begin
                 end
 
-		I: begin
-			case(fsm.nextstate)
-				M: begin
-				$display("Read for Ownership from L2 <%h>", instruction.address);	
-				end 	
-				E: begin
-				$display("Read from L2 <%h>", instruction.address);
-				end
-            endcase
-		end 
-                // Current state is E
-                // Current state is S
-                // Current state is I
+                I: begin
+                    case(fsm.nextstate)
+                        M: begin
+                            $display("Read for Ownership from L2 <%h>", instruction.address);	
+                        end 	
+                        
+                        E: begin
+                            $display("Read from L2 <%h>", instruction.address);
+                        end
+                    endcase
+                end 
 
                 // Invalid states
                 default: begin
-                // do nothing
+                    // do nothing
                 end
             endcase
         end
@@ -589,7 +594,7 @@ always_ff @(posedge clk) begin
     // Check the instruction cache for evicts (first 4 are writethrough)
     if(processor.evict_i > num_evicts_i) begin
 
-        $display("(top): at time %0t Instruction cache is evicting a line.", $time);
+        $display("WARNING (top): at time %0t Instruction cache is evicting a line.", $time);
         $display("\tEvicted line = %p", processor.internal_i[processor.i_select]);
 
         // The first 4 lines are writethrough, the rest are writeback
