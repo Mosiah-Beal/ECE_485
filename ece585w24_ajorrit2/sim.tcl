@@ -13,6 +13,7 @@ proc add_cache_signals {} {
     /top/cache_input_i \
     /top/cache_output_i \
     /top/instructions \
+    /top/mode_select
 }
 
 # Main procedure

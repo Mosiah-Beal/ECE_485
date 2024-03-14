@@ -129,8 +129,8 @@ function automatic string find(ref string a);
 
     // Check if there are no valid hex characters
     if(v.len() == 0) begin
-        $display("WARNING: No valid hex characters found in the line, skipping");
-        $display("line = %s", a);
+        // $display("WARNING: No valid hex characters found in the line, skipping");
+        // $display("line = %s", a);
         r = "skip";
         return r;
     end
@@ -442,6 +442,18 @@ always @(posedge clk) begin
             9: begin
                 // Print the statistics
 		        $display("time = %0t", $time);
+                for(int i = 0; i < I_WAYS; i++) begin
+                    $display("Instruction Cache[%h] = %p", instruction.address.set_index, instruction_cache.cache[instruction.address.set_index][i]);
+                end
+
+                $display("");
+
+                for(int i = 0; i < D_WAYS; i++) begin
+                    $display("Data Cache[%h] = %p", instruction.address.set_index, data_cache.cache[instruction.address.set_index][i]);
+                end
+                
+                // $display("Time = %0t: \t\tInput Cache Line[%h] = %p", $time, instruction.address.set_index, data_cache.cache[instruction.address.set_index][i]);
+                // $display("Time = %0t: \t\tInput Cache Line[%h] = %p", $time, instruction.address.set_index, instruction_cache.cache[instruction.address.set_index][i]);
                 $display("read_sum =  %0d", read_sum);
                 $display("write_sum = %0d", write_sum);
                 $display("miss_sum =  %0d", miss_sum);
