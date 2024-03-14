@@ -443,7 +443,7 @@ always @(posedge clk) begin
                             $display("Write to L2 <%h>", instruction.address);
                             end
                         end
-
+		
                         // Next state is S
                         // Next state is E
 
@@ -453,7 +453,18 @@ always @(posedge clk) begin
                         end
                     endcase
                 end 
-                
+                E: begin
+		end
+
+		S: begin
+		end
+
+		I: begin
+			case(fsm.nextstate)
+				E: begin
+				$display("Read from L2 <%h>", instruction.address);
+				end
+		end 
                 // Current state is E
                 // Current state is S
                 // Current state is I
