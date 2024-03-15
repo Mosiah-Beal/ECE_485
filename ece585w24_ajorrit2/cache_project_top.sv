@@ -697,8 +697,7 @@ module top;
         // end
         // $display("");
 
-        $display("All valid lines in the data cache:");
-        
+        $display("All valid lines in the data cache:"); 
         line_count = 0;
         // Now display all ways in the cache that are valid
         for(int i = 0; i < SETS; i++) begin
@@ -734,6 +733,7 @@ module top;
         // $display("");
 
         $display("All valid lines in the instruction cache:");
+        line_count = 0;
         for(int i = 0; i < SETS; i++) begin
             for(int j = 0; j < I_WAYS; j++) begin
                 if(instruction_cache.cache[i][j].tag === 'x) begin
@@ -749,8 +749,8 @@ module top;
                 line_count = 0;
             end
         end
+        $display("");
     endtask
-
 
     // Task to check the caches for duplicate LRU bits
     task check_lru;
