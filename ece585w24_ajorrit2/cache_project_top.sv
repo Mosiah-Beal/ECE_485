@@ -42,13 +42,15 @@ module top;
     logic [2:0] mode_select;
     int sum_d;
     int sum_i;
+    cache_line_t evict_line_d;
+    cache_line_t evict_line_i;
     
     static int i_safe = 1; // Assume the instruction cache is safe
     static int d_safe = 1; // Assume the data cache is safe
     
     // Flags for the processor (evict/writeback/writethrough)
-    static int num_evicts_d = 0;
-    static int num_evicts_i = 0;
+    int num_evicts_d = 0;
+    int num_evicts_i = 0;
     static int num_writethroughs_d = 0;
     static int num_writethroughs_i = 0;
     static int num_writebacks_d = 0;
@@ -392,280 +394,302 @@ end
 // Whenever the instruction changes
 always @(posedge clk) begin
 
-    // Check if have something to do
-    if(mode_select >= MODE_STATS) begin
-            
-        // Read and write statistics
-        case(instruction.n) 
+    // Check if the instruction is valid
+    if(instructions[instruction_index] === 'x) begin
+        // $display("WARNING: Invalid instruction");
+    end
+    else begin
 
-            0,2,4: read_sum += 1;
-            1,3:   write_sum += 1;
-            
-            // Other values do not affect the write/read ratio
-            default: begin
-                //do nothing
-            end
-        endcase
-
-        // Hit and miss statistics
-        case(instruction.n)
-            // Check if there were any hits on the data cache
-            0,1,3,4: begin
-                if(|processor.data_read_bus)begin
-                    // Increment the hit counter and recalculate the ratio
-                    hit_sum ++;
-                    ratio = hit_sum/(hit_sum + miss_sum);
-                end
-                else begin
-                    // Increment the miss counter and recalculate the ratio
-                    miss_sum += 1;
-                    ratio = hit_sum/(hit_sum + miss_sum);
-
-                    // Check if we need to print the address
-                    if (mode_select == MODE_VERBOSE) begin
-                        $display("Read from L2 <%h> (data)", instruction.address);
-                    end
-                end
-            end
-
-            // Check if there were any hits on the instruction cache
-            2: begin
-                if(|processor.instruction_read_bus) begin
-                    // Increment the hit counter and recalculate the ratio
-                    hit_sum++;
-                    ratio = hit_sum/(hit_sum + miss_sum);
-                end
-                else begin
-                    // Increment the miss counter and recalculate the ratio
-                    miss_sum += 1;
-                    ratio = hit_sum/(hit_sum + miss_sum);
-
-                    // Check if we need to print the address
-                    if (mode_select == MODE_VERBOSE) begin
-                        $display("Read from L2 <%h> (instruction)", instruction.address);
-                    end
-                end
-            end
-
-            // Other values do not affect the hit/miss ratio
-            default: begin
-                // Do nothing
-            end
-        endcase
-
-        // Check if we need to print the statistics or other information
-        case(instruction.n)
-            8: begin
-                // Reset the statistics
-                reset_stats;
-            end
-
-            9: begin
-                // Print the caches
-                print_data_cache;
-                print_instruction_cache;
+        // Check if have something to do
+        if(mode_select >= MODE_STATS) begin
                 
-                // Print the statistics
-                print_stats;
-            end
+            // Read and write statistics
+            case(instruction.n) 
 
-            default: begin
-                // If we are in verbose mode, also print the statistics every instruction
-                if (mode_select >= MODE_VERBOSE) begin
-                    $display("Verbose mode: time = %0t", $time);
-                    $display("Instruction = %p", instruction);
-
-                    // Print the statistics
-                    print_stats;
-                end
-            end
-        endcase
-
-        // Check if we need to print information about the other modules
-        if (mode_select >= MODE_VERBOSE) begin
-            // FSM MESI transitions
-            $display("time = %0t: Transitioning from %p to %p For instruction[%0d]", $time, fsm.internal_line.MESI_bits, fsm.nextstate, instruction_index);
-            
-            case(fsm.internal_line.MESI_bits)
-                // Current state is Modified
-                M: begin
-                    case(fsm.nextstate)
-                        // Next state is Modified
-                        M: begin
-                            $display("Write to L2 <%h>",instruction.address);
-                        end
-
-                        // Next state is Exclusive
-                        E: begin
-                            // Do nothing
-                        end
-                        
-                        // Next state is Shared
-                        S: begin
-                            // Do nothing
-                        end
-
-                        // Next state is Invalid
-                        I: begin 
-                            if(instruction.n == 4) begin
-                                $display("Return data to L2 <%h>", instruction.address);			
-                            end
-                            else begin
-                                $display("Write to L2 <%h>", instruction.address);
-                            end
-                        end
-
-                        // Invalid states
-                        default: begin
-                        // $display("WARNING: Invalid state transition from M to %p", fsm.nextstate);
-                        end
-                    endcase
-                end 
+                0,2,4: read_sum += 1;
+                1,3:   write_sum += 1;
                 
-                // Current state is Exclusive
-                E: begin
-                    case(fsm.nextstate)
-                        // Next state is Modified
-                        M: begin
-                            // Do nothing
-                        end
-
-                        // Next state is Exclusive
-                        E: begin
-                            // Do nothing
-                        end
-
-                        // Next state is Shared
-                        S: begin
-                            // Do nothing
-                        end
-
-                        // Next state is Invalid
-                        I: begin
-                            // Do nothing
-                        end
-
-                        // Invalid states
-                        default: begin
-                            // $display("WARNING: Invalid state transition from E to %p", fsm.nextstate);
-                        end
-                    endcase
-		        end
-
-                // Current state is Shared
-                S: begin
-                    case(fsm.nextstate)
-                        // Next state is Modified
-                        M: begin
-                            // Do nothing
-                        end
-
-                        // Next state is Exclusive
-                        E: begin
-                            // Do nothing
-                        end
-
-                        // Next state is Shared
-                        S: begin
-                            // Do nothing
-                        end
-
-                        // Next state is Invalid
-                        I: begin
-                            // Do nothing
-                        end
-
-                        // Invalid states
-                        default: begin
-                            // $display("WARNING: Invalid state transition from S to %p", fsm.nextstate);
-                        end
-                    endcase
-                end
-
-                // Current state is Invalid
-                I: begin
-                    case(fsm.nextstate)
-                        // Next state is Modified
-                        M: begin
-                            $display("Read for Ownership from L2 <%h>", instruction.address);	
-                        end 	
-                        
-                        // Next state is Exclusive
-                        E: begin
-                            $display("Read from L2 <%h>", instruction.address);
-                        end
-
-                        // Next state is Shared
-                        S: begin
-                            // Do nothing
-                        end
-
-                        // Next state is Invalid
-                        I: begin
-                            // Do nothing
-                        end
-
-                        // Invalid states
-                        default: begin
-                            // $display("WARNING: Invalid state transition from I to %p", fsm.nextstate);
-                        end
-                    endcase
-                end 
-
-                // Invalid states
+                // Other values do not affect the write/read ratio
                 default: begin
-                    // $display("WARNING: Invalid state %p", fsm.internal_line.MESI_bits);
+                    //do nothing
                 end
             endcase
 
-            // Processor evicts
+            // Hit and miss statistics
+            case(instruction.n)
+                // Check if there were any hits on the data cache
+                0,1,3,4: begin
+                    if(|processor.data_read_bus)begin
+                        // Increment the hit counter and recalculate the ratio
+                        hit_sum ++;
+                        ratio = hit_sum/(hit_sum + miss_sum);
+                    end
+                    else begin
+                        // Increment the miss counter and recalculate the ratio
+                        miss_sum += 1;
+                        ratio = hit_sum/(hit_sum + miss_sum);
 
-            // Check if the data cache is evicting a line
-            if(processor.evict_d > num_evicts_d) begin
-                `ifdef DEBUG
-                    $display("Data cache is evicting a line.");
-                    $display("Evicted line = %p", processor.internal_d[processor.d_select]);
-                `endif
+                        // Check if we need to print the address
+                        if (mode_select == MODE_VERBOSE) begin
+                            $display("Read from L2 <%h> (data)", instruction.address);
+                        end
+                    end
+                end
 
-                // The first 8 lines are writethrough, the rest are writeback
-                if(++num_evicts_d <= D_WAYS) begin
-                    num_writethroughs_d++;
-                    // Display what line was written to L2
-                    $display("Writethrough in data cache[%h] to L2 <%h>", instruction.address.set_index, processor.internal_d[processor.d_select].tag);
-                end
-                else begin
-                    num_writebacks_d++;
-                    // Display what line was written to L2
-                    $display("Writeback in data cache[%h] to L2 <%h>", instruction.address.set_index, processor.internal_d[processor.d_select].tag);
-                end
-            end
+                // Check if there were any hits on the instruction cache
+                2: begin
+                    if(|processor.instruction_read_bus) begin
+                        // Increment the hit counter and recalculate the ratio
+                        hit_sum++;
+                        ratio = hit_sum/(hit_sum + miss_sum);
+                    end
+                    else begin
+                        // Increment the miss counter and recalculate the ratio
+                        miss_sum += 1;
+                        ratio = hit_sum/(hit_sum + miss_sum);
 
-            // Check if the instruction cache is evicting a line
-            if(processor.evict_i > num_evicts_i) begin
+                        // Check if we need to print the address
+                        if (mode_select == MODE_VERBOSE) begin
+                            $display("Read from L2 <%h> (instruction)", instruction.address);
+                        end
+                    end
+                end
 
-                `ifdef DEBUG
-                    $display("Instruction cache is evicting a line.");
-                    $display("Evicted line = %p", processor.internal_i[processor.i_select]);
-                `endif
-            
-                // The first 4 lines are writethrough, the rest are writeback
-                if(++num_evicts_i <= I_WAYS) begin
-                    num_writethroughs_i++;
-                    // Display what line was written to L2
-                    $display("Writethrough in instruction cache[%h] to L2 <%h>", instruction.address.set_index, processor.internal_i[processor.i_select].tag);
+                // Other values do not affect the hit/miss ratio
+                default: begin
+                    // Do nothing
                 end
-                else begin
-                    num_writebacks_i++;
-                    // Display what line was written to L2
-                    $display("Writeback in instruction cache[%h] to L2 <%h>", instruction.address.set_index, processor.internal_i[processor.i_select].tag);
+            endcase
+
+            // Check if we need to print the statistics or other information
+            case(instruction.n)
+                8: begin
+                    // Reset the statistics
+                    reset_stats;
                 end
+
+                9: begin
+                    // Print the caches
+                    print_data_cache;
+                    print_instruction_cache;
+                    
+                    // Print the statistics
+                    print_stats;
+                end
+
+                default: begin
+                    // If we are in DEBUG mode, also print the statistics every instruction
+                    `ifdef DEBUG
+                        $display("Verbose mode: time = %0t", $time);
+                        $display("Instruction = %p", instruction);
+
+                        // Print the statistics
+                        print_stats;
+                    `endif
+                end
+            endcase
+
+            // Check if we need to print information about the other modules
+            if ((mode_select >= MODE_VERBOSE) && (instruction.n < 7)) begin
+                // FSM MESI transitions
+                $display("\ntime = %0t: Transitioning from %p to %p For instruction[%0d]: n=%0d", $time, fsm.internal_line.MESI_bits, fsm.nextstate, instruction_index, instruction.n);
+                
+                case(fsm.internal_line.MESI_bits)
+                    // Current state is Modified (write to L2)
+                    M: begin
+                        case(fsm.nextstate)
+                            // Next state is Modified
+                            M: begin
+                                $display("Write to L2 <%h>", instruction.address);
+                            end
+
+                            // Next state is Exclusive
+                            E: begin
+                                // Do nothing
+                            end
+                            
+                            // Next state is Shared
+                            S: begin
+                                // Do nothing
+                            end
+
+                            // Next state is Invalid
+                            I: begin 
+                                if(instruction.n == 4) begin
+                                    $display("Return data to L2 <%h>", instruction.address);			
+                                end
+                                else begin
+                                    $display("Write to L2 <%h>", instruction.address);
+                                end
+                            end
+
+                            // Invalid states
+                            default: begin
+                            // $display("WARNING: Invalid state transition from M to %p", fsm.nextstate);
+                            end
+                        endcase
+                    end 
+                    
+                    // Current state is Exclusive (do nothing)
+                    E: begin
+                        case(fsm.nextstate)
+                            // Next state is Modified
+                            M: begin
+                                // Do nothing
+                            end
+
+                            // Next state is Exclusive
+                            E: begin
+                                // Do nothing
+                            end
+
+                            // Next state is Shared
+                            S: begin
+                                // Do nothing
+                            end
+
+                            // Next state is Invalid
+                            I: begin
+                                // Do nothing
+                            end
+
+                            // Invalid states
+                            default: begin
+                                // $display("WARNING: Invalid state transition from E to %p", fsm.nextstate);
+                            end
+                        endcase
+                    end
+
+                    // Current state is Shared (do nothing)
+                    S: begin
+                        case(fsm.nextstate)
+                            // Next state is Modified
+                            M: begin
+                                // Do nothing
+                            end
+
+                            // Next state is Exclusive
+                            E: begin
+                                // Do nothing
+                            end
+
+                            // Next state is Shared
+                            S: begin
+                                // Do nothing
+                            end
+
+                            // Next state is Invalid
+                            I: begin
+                                // Do nothing
+                            end
+
+                            // Invalid states
+                            default: begin
+                                // $display("WARNING: Invalid state transition from S to %p", fsm.nextstate);
+                            end
+                        endcase
+                    end
+
+                    // Current state is Invalid (read from L2)
+                    I: begin
+                        case(fsm.nextstate)
+                            // Next state is Modified
+                            M: begin
+                                $display("Read for Ownership from L2 <%h>", instruction.address);	
+                            end 	
+                            
+                            // Next state is Exclusive
+                            E: begin
+                                $display("Read from L2 <%h>", instruction.address);
+                            end
+
+                            // Next state is Shared
+                            S: begin
+                                // Do nothing
+                            end
+
+                            // Next state is Invalid
+                            I: begin
+                                // Do nothing
+                            end
+
+                            // Invalid states
+                            default: begin
+                                // $display("WARNING: Invalid state transition from I to %p", fsm.nextstate);
+                            end
+                        endcase
+                    end 
+
+                    // Invalid states
+                    default: begin
+                        // $display("WARNING: Invalid state %p", fsm.internal_line.MESI_bits);
+                    end
+                endcase
+
+                // Processor evicts
+                case(instruction.n)
+                    0, 1, 3, 4: begin
+                        // Check if the data cache is evicting a line
+                        if(processor.evict_d > num_evicts_d) begin
+                            `ifdef DEBUG
+                                $display("Data cache is evicting a line.");
+                                $display("Evicted line = %p", processor.internal_d[processor.d_select]);
+                            `endif
+
+                            // Check if the way being evicted has a valid tag
+                            evict_line_d = data_cache.cache[instruction.address.set_index][processor.d_select];
+                            
+                            // if so, it is a writeback. Otherwise, it is a writethrough
+                            if(evict_line_d.tag === 'x) begin
+                                num_writethroughs_d++;
+                                // Display what line was written to L2
+                                $display("Writethrough in data cache[%h] to L2: <%h>", instruction.address.set_index, instruction.address.tag);
+                            end
+                            else begin
+                                num_writebacks_d++;
+                                // Display what line was written to L2
+                                $display("Writeback in data cache[%h] to L2: <%h>", instruction.address.set_index, evict_line_d.tag);
+                            end
+                            num_evicts_d = processor.evict_d;   // Not the ideal way to do this, but asynchronicity is a pain
+                        end
+                    end
+
+                    2: begin
+                        // Check if the instruction cache is evicting a line
+                        if(processor.evict_i > num_evicts_i) begin
+
+                            `ifdef DEBUG
+                                $display("Instruction cache is evicting a line.");
+                                $display("Evicted line = %p", processor.internal_i[processor.i_select]);
+                            `endif
+
+                            // Check if the way being evicted has a valid tag
+                            evict_line_i = instruction_cache.cache[instruction.address.set_index][processor.i_select];
+
+                            // if so, it is a writeback. Otherwise, it is a writethrough
+                            if(evict_line_i.tag === 'x) begin
+                                num_writethroughs_i++;
+                                // Display what line was written to L2
+                                $display("Writethrough in instruction cache[%h] to L2: <%h>", instruction.address.set_index, instruction.address.tag);
+                            end
+                            else begin
+                                num_writebacks_i++;
+                                // Display what line was written to L2
+                                $display("Writeback in instruction cache[%h] to L2: <%h>", instruction.address.set_index, evict_line_i.tag);
+                            end
+                            num_evicts_i = processor.evict_i;   // Not the ideal way to do this, but asynchronicity is a pain
+                        end
+                    end
+                    default: begin
+                        // Do nothing
+                    end
+                endcase
             end
         end
+
+        // Check if the caches have duplicate LRU bits
+        check_lru;
     end
-
-    // Check if the caches have duplicate LRU bits
-    check_lru;
-
 end
 
 
@@ -717,30 +741,70 @@ endtask
 
 // Task to print the data cache
 task print_data_cache;
+    int line_count;
     // string tag_hex_d;
     // for(int i = 0; i < D_WAYS; i++) begin
     //     tag_hex_d = $sformatf("%h", cache_output_d[i].tag);
     //     $display("Data Cache[%s] = %p", tag_hex_d, processor.current_line_d[i]);
     // end
 
-    for(int i = 0; i < D_WAYS; i++) begin
-        $display("Data Cacheline[%0d] = %p", i, cache_output_d[i]);
+    // for(int i = 0; i < D_WAYS; i++) begin
+    //     $display("Data Cacheline[%0d] = %p", i, cache_output_d[i]);
+    // end
+    // $display("");
+
+    $display("All valid lines in the data cache:");
+    
+    line_count = 0;
+    // Now display all ways in the cache that are valid
+    for(int i = 0; i < SETS; i++) begin
+        for(int j = 0; j < D_WAYS; j++) begin
+            if(data_cache.cache[i][j].tag === 'x) begin
+                // Do nothing because the line is invalid
+            end
+            else begin
+                $display("Data Cache[%0d][%0d] = %p", i, j, cache_output_d[j]);
+                line_count++;
+            end
+        end
+        if(line_count > 0) begin
+            $display("");
+            line_count = 0;
+        end
     end
     $display("");
 endtask
 
 // Task to print the instruction cache
 task print_instruction_cache;
+    int line_count;
     // string tag_hex_i;
     // for(int i = 0; i < I_WAYS; i++) begin
     //     tag_hex_i = $sformatf("%h", cache_output_i[i].tag);
     //     $display("Instruction Cache[%s] = %p", tag_hex_i, processor.current_line_i[i]);
     // end
     
-    for(int i = 0; i < I_WAYS; i++) begin
-        $display("Instruction Cacheline[%0d] = %p", i, cache_output_i[i]);
+    // for(int i = 0; i < I_WAYS; i++) begin
+    //     $display("Instruction Cacheline[%0d] = %p", i, cache_output_i[i]);
+    // end
+    // $display("");
+
+    $display("All valid lines in the instruction cache:");
+    for(int i = 0; i < SETS; i++) begin
+        for(int j = 0; j < I_WAYS; j++) begin
+            if(instruction_cache.cache[i][j].tag === 'x) begin
+                // Do nothing because the line is invalid
+            end
+            else begin
+                $display("Instruction Cache[%0d][%0d] = %p", i, j, cache_output_i[j]);
+                line_count++;
+            end
+        end
+        if(line_count > 0) begin
+            $display("");
+            line_count = 0;
+        end
     end
-    $display("");
 endtask
 
 

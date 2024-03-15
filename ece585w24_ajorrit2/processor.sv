@@ -216,12 +216,12 @@ module processor(
         case(instruction.n)
             // Data cache
             0, 1, 3, 4: begin
-                // Send the selected way to the FSM to update the MESI bits
-                block_out = current_line_d[d_select];
-
                 // Copy the current cache line to the internal cache line
                 internal_d = current_line_d;
-            
+                
+                // Send the selected way to the FSM to update the MESI bits
+                block_out = current_line_d[d_select];
+                
                 // Update it with the MESI bits from the FSM
                 internal_d[d_select].MESI_bits = block_in.MESI_bits;
                 internal_d[d_select].tag = instruction.address.tag;
@@ -258,11 +258,11 @@ module processor(
 
             // Instruction cache
             2: begin
-                // Send the selected way to the FSM to update the MESI bits
-                block_out = current_line_i[i_select];
-
                 // Copy the current cache line to the internal cache line
                 internal_i = current_line_i;
+
+                // Send the selected way to the FSM to update the MESI bits
+                block_out = current_line_i[i_select];
 
                 // Update it with the MESI bits from the FSM
                 internal_i[i_select].MESI_bits = block_in.MESI_bits;
@@ -291,7 +291,7 @@ module processor(
                             else begin
                                 internal_i[i].LRU++;
                             end
-                        end 
+                        end
                         evict_i++;
                     end
 
