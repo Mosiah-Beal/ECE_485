@@ -12,7 +12,7 @@ module mesi_fsm(
     input  command_t instruction,
     input  cache_line_t internal_line,  
     output cache_line_t return_line
-);
+    );
 
     // Declare state variables
     states_t state, nextstate;
@@ -70,5 +70,4 @@ module mesi_fsm(
         return_line = internal_line;
         return_line.MESI_bits = state;
     end
-
 endmodule

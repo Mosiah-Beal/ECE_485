@@ -16,7 +16,7 @@ module processor(
     output cache_line_t return_line_d[D_WAYS],
     output cache_line_t block_out
     
-);
+    );
     // repeat instructions
     command_t prev_instruction;
     command_t current_instruction;
@@ -310,5 +310,4 @@ module processor(
             end
         endcase
     end       
-
 endmodule
