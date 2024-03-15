@@ -232,9 +232,6 @@ module processor(
                         for(int i = 0; i< D_WAYS; i++) begin
                             if(internal_d[i].LRU < current_line_d[d_select].LRU) begin
                                 internal_d[i].LRU++;
-
-                                // mod 8 to keep the LRU value within the range of 0-7
-                                internal_d[i].LRU = internal_d[i].LRU % D_WAYS;
                             end
                         end
                     end
@@ -280,8 +277,6 @@ module processor(
                             // If the way has a lower LRU value than the selected way, increment the LRU
                             if(internal_i[i].LRU < current_line_i[i_select].LRU) begin
                                 internal_i[i].LRU++;
-                                // mod 4 to keep the LRU value within the range of 0-3
-                                internal_i[i].LRU = internal_i[i].LRU % I_WAYS;
                             end
                         end
                     end
