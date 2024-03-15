@@ -15,9 +15,6 @@ import my_struct_package::*;
 module top;
 
     // Parameters
-    parameter SETS = 16384;
-    parameter I_WAYS = 4;
-    parameter D_WAYS = 8;
     parameter I_LRU_SUM = ((I_WAYS)*(I_WAYS-1))/2;  // Sum of the first I_WAYS-1 integers (0+1+2+3 = 6)
     parameter D_LRU_SUM = ((D_WAYS)*(D_WAYS-1))/2;  // Sum of the first D_WAYS-1 integers (0+1+2+3+4+5+6+7 = 28)
     parameter TIME_DURATION = 5;
@@ -377,7 +374,7 @@ always @(mode_select) begin
     // Reset the instruction index
     instruction_index = 0;
     // Send a reset instruction
-    instruction = {4'd8,32'b0,3'b0,2'b0};
+    instruction = {4'd8,32'b0};
 
     // Check if we are in silent mode
     if(mode_select == MODE_SILENT) begin
@@ -676,9 +673,9 @@ end
 task reset_stats;
 
     // Print the statistics and flags before resetting
-    $display("Statistics before reset:");
-    print_stats;
-    print_flags;
+    // $display("Statistics before reset:");
+    // print_stats;
+    // print_flags;
 
     // Reset the statistics
     hit_sum = 0;
@@ -694,7 +691,7 @@ task reset_stats;
     num_writethroughs_i = 0;
     num_writebacks_d = 0;
     num_writebacks_i = 0;
-    $display("Statistics reset.\n");
+    // $display("Statistics reset.\n");
 endtask
 
 // Task to print the statistics
@@ -720,16 +717,28 @@ endtask
 
 // Task to print the data cache
 task print_data_cache;
+    // string tag_hex_d;
+    // for(int i = 0; i < D_WAYS; i++) begin
+    //     tag_hex_d = $sformatf("%h", cache_output_d[i].tag);
+    //     $display("Data Cache[%s] = %p", tag_hex_d, processor.current_line_d[i]);
+    // end
+
     for(int i = 0; i < D_WAYS; i++) begin
-        $display("Data Cache[%h] = %p", instruction.address.set_index, data_cache.cache[instruction.address.set_index][i]);
+        $display("Data Cacheline[%0d] = %p", i, cache_output_d[i]);
     end
     $display("");
 endtask
 
 // Task to print the instruction cache
 task print_instruction_cache;
+    // string tag_hex_i;
+    // for(int i = 0; i < I_WAYS; i++) begin
+    //     tag_hex_i = $sformatf("%h", cache_output_i[i].tag);
+    //     $display("Instruction Cache[%s] = %p", tag_hex_i, processor.current_line_i[i]);
+    // end
+    
     for(int i = 0; i < I_WAYS; i++) begin
-        $display("Instruction Cache[%h] = %p", instruction.address.set_index, instruction_cache.cache[instruction.address.set_index][i]);
+        $display("Instruction Cacheline[%0d] = %p", i, cache_output_i[i]);
     end
     $display("");
 endtask
