@@ -4,7 +4,9 @@ import my_struct_package::*;
 // Debugging define
 //`define DEBUG
 
+// Method defines
 `define TRAILING_ZEROS
+`define FIRST_N
 
 
 // Mode select defines
@@ -627,63 +629,7 @@ always @(posedge clk) begin
                 endcase
 
                 // Processor evicts
-                case(instruction.n)
-                    0, 1, 3, 4: begin
-                        // Check if the data cache is evicting a line
-                        if(processor.evict_d > num_evicts_d) begin
-                            `ifdef DEBUG
-                                $display("Data cache is evicting a line.");
-                                $display("Evicted line = %p", processor.internal_d[processor.d_select]);
-                            `endif
-
-                            // Check if the way being evicted has a valid tag
-                            evict_line_d = data_cache.cache[instruction.address.set_index][processor.d_select];
-                            
-                            // if so, it is a writeback. Otherwise, it is a writethrough
-                            if(evict_line_d.tag === 'x) begin
-                                num_writethroughs_d++;
-                                // Display what line was written to L2
-                                $display("Writethrough in data cache[%h] to L2: <%h>", instruction.address.set_index, instruction.address.tag);
-                            end
-                            else begin
-                                num_writebacks_d++;
-                                // Display what line was written to L2
-                                $display("Writeback in data cache[%h] to L2: <%h>", instruction.address.set_index, evict_line_d.tag);
-                            end
-                            num_evicts_d = processor.evict_d;   // Not the ideal way to do this, but asynchronicity is a pain
-                        end
-                    end
-
-                    2: begin
-                        // Check if the instruction cache is evicting a line
-                        if(processor.evict_i > num_evicts_i) begin
-
-                            `ifdef DEBUG
-                                $display("Instruction cache is evicting a line.");
-                                $display("Evicted line = %p", processor.internal_i[processor.i_select]);
-                            `endif
-
-                            // Check if the way being evicted has a valid tag
-                            evict_line_i = instruction_cache.cache[instruction.address.set_index][processor.i_select];
-
-                            // if so, it is a writeback. Otherwise, it is a writethrough
-                            if(evict_line_i.tag === 'x) begin
-                                num_writethroughs_i++;
-                                // Display what line was written to L2
-                                $display("Writethrough in instruction cache[%h] to L2: <%h>", instruction.address.set_index, instruction.address.tag);
-                            end
-                            else begin
-                                num_writebacks_i++;
-                                // Display what line was written to L2
-                                $display("Writeback in instruction cache[%h] to L2: <%h>", instruction.address.set_index, evict_line_i.tag);
-                            end
-                            num_evicts_i = processor.evict_i;   // Not the ideal way to do this, but asynchronicity is a pain
-                        end
-                    end
-                    default: begin
-                        // Do nothing
-                    end
-                endcase
+                check_evicts;
             end
         end
 
@@ -887,6 +833,119 @@ task check_lru;
             end
         end
     endcase
+endtask
+
+task check_evicts;
+    `ifdef FIRST_N
+        case(instruction.n)
+            0, 1, 3, 4: begin        
+                // Check if the data cache is evicting a line
+                if(processor.evict_d > num_evicts_d) begin
+                    `ifdef DEBUG
+                        $display("Data cache is evicting a line.");
+                        $display("Evicted line = %p", processor.internal_d[processor.d_select]);
+                    `endif
+
+                    // The first DATA_WAYS evictions are writethroughs
+                    if(++num_evicts_d <= D_WAYS) begin
+                        num_writethroughs_d++;
+                        // Display what line was written to L2
+                        $display("Writethrough in data cache[%h] to L2: <%h>", instruction.address.set_index, instruction.address.tag);
+                    end
+                    else begin
+                        num_writebacks_d++;
+                        // Display what line was written to L2
+                        $display("Writeback in data cache[%h] to L2: <%h>", instruction.address.set_index, processor.internal_d[processor.d_select].tag);
+                    end
+                end
+            end
+
+            2: begin
+                // Check if the instruction cache is evicting a line
+                if(processor.evict_i > num_evicts_i) begin
+                    `ifdef DEBUG
+                        $display("Instruction cache is evicting a line.");
+                        $display("Evicted line = %p", processor.internal_i[processor.i_select]);
+                    `endif
+
+                    // The first INSTRUCTION_WAYS evictions are writethroughs
+                    if(++num_evicts_i <= I_WAYS) begin
+                        num_writethroughs_i++;
+                        // Display what line was written to L2
+                        $display("Writethrough in instruction cache[%h] to L2: <%h>", instruction.address.set_index, instruction.address.tag);
+                    end
+                    else begin
+                        num_writebacks_i++;
+                        // Display what line was written to L2
+                        $display("Writeback in instruction cache[%h] to L2: <%h>", instruction.address.set_index, processor.internal_i[processor.i_select].tag);
+                    end
+                end
+            end
+
+            default: begin
+                // Do nothing
+            end
+        endcase
+    `else
+        case(instruction.n)
+            0, 1, 3, 4: begin
+                // Check if the data cache is evicting a line
+                if(processor.evict_d > num_evicts_d) begin
+                    `ifdef DEBUG
+                        $display("Data cache is evicting a line.");
+                        $display("Evicted line = %p", processor.internal_d[processor.d_select]);
+                    `endif
+
+                    // Check if the way being evicted has a valid tag
+                    evict_line_d = data_cache.cache[instruction.address.set_index][processor.d_select];
+                    
+                    // if so, it is a writeback. Otherwise, it is a writethrough
+                    if(evict_line_d.tag === 'x) begin
+                        num_writethroughs_d++;
+                        // Display what line was written to L2
+                        $display("Writethrough in data cache[%h] to L2: <%h>", instruction.address.set_index, instruction.address.tag);
+                    end
+                    else begin
+                        num_writebacks_d++;
+                        // Display what line was written to L2
+                        $display("Writeback in data cache[%h] to L2: <%h>", instruction.address.set_index, evict_line_d.tag);
+                    end
+                    num_evicts_d = processor.evict_d;   // Not the ideal way to do this, but asynchronicity is a pain
+                end
+            end
+
+            2: begin
+                // Check if the instruction cache is evicting a line
+                if(processor.evict_i > num_evicts_i) begin
+
+                    `ifdef DEBUG
+                        $display("Instruction cache is evicting a line.");
+                        $display("Evicted line = %p", processor.internal_i[processor.i_select]);
+                    `endif
+
+                    // Check if the way being evicted has a valid tag
+                    evict_line_i = instruction_cache.cache[instruction.address.set_index][processor.i_select];
+
+                    // if so, it is a writeback. Otherwise, it is a writethrough
+                    if(evict_line_i.tag === 'x) begin
+                        num_writethroughs_i++;
+                        // Display what line was written to L2
+                        $display("Writethrough in instruction cache[%h] to L2: <%h>", instruction.address.set_index, instruction.address.tag);
+                    end
+                    else begin
+                        num_writebacks_i++;
+                        // Display what line was written to L2
+                        $display("Writeback in instruction cache[%h] to L2: <%h>", instruction.address.set_index, evict_line_i.tag);
+                    end
+                    num_evicts_i = processor.evict_i;   // Not the ideal way to do this, but asynchronicity is a pain
+                end
+            end
+            
+            default: begin
+                // Do nothing
+            end
+        endcase
+    `endif
 endtask
 
 endmodule
